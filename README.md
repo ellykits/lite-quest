@@ -8,12 +8,28 @@ A lightweight, FHIR-inspired questionnaire library for Kotlin Multiplatform appl
 
 ## Features
 
-- 🌍 **Multi-language Support** - Remote translation loading with caching
-- ⚡ **Reactive State** - StateFlow-based automatic state propagation
-- 🧮 **Dynamic Calculations** - JsonLogic expressions for validation, visibility, and computed values
-- 🎯 **Type-Safe** - Full Kotlin type safety with kotlinx.serialization
-- 📱 **Cross-Platform** - Single codebase for Android, iOS, Desktop, and Web
-- 🔌 **Extensible** - Plugin-based architecture for custom behaviors
+### Core Engine
+
+- ✅ **Reactive State** - StateFlow-based automatic state propagation
+- ✅ **Dynamic Calculations** - JsonLogic expressions for validation, visibility, and computed values
+- ✅ **Type-Safe** - Full Kotlin type safety with kotlinx.serialization
+- ✅ **Cross-Platform** - Single codebase for Android, iOS, Desktop, and Web
+- ✅ **Extensible** - Extend JsonLogicEvaluator for custom evaluation logic
+
+### UI Components
+
+- ✅ **Unified Questionnaire Screen** - Single component for Edit and Summary modes
+- ✅ **Multi-Page Support** - Pagination with progress indicators and navigation
+- ✅ **Rich Widgets** - Text, Decimal, Integer, Boolean, Choice, Date, Time, Display, Group widgets
+- ✅ **Repeating Groups** - Dynamic add/remove of grouped items
+- ✅ **Card-Based Summary** - Beautiful summary view with page organization
+- ✅ **Theme Support** - Light and Dark themes with Material 3 design
+
+### Planned Features
+
+- 🔄 **Multi-language Support** - Remote translation loading with caching
+- 🔄 **Media Widgets** - Photo, Barcode, Location, Signature widgets
+- 🔄 **FHIR Conversion** - Bidirectional FHIR Questionnaire conversion
 
 ## Quick Start
 
@@ -36,50 +52,79 @@ kotlin {
 ### Basic Usage
 
 ```kotlin
-// Define a questionnaire
-val questionnaire = Questionnaire(
-    id = "patient-intake",
-    version = "1.0.0",
-    title = "Patient Intake Form",
-    items = listOf(
-        Item(
-            linkId = "name",
-            type = ItemType.STRING,
-            text = "What is your full name?",
-            required = true
-        ),
-        Item(
-            linkId = "age",
-            type = ItemType.INTEGER,
-            text = "What is your age?",
-            validations = listOf(
-                ValidationRule(
-                    message = "Must be 18 or older",
-                    expression = buildJsonObject {
-                        put(">=", buildJsonObject {
-                            put("0", buildJsonObject { put("var", "age") })
-                            put("1", 18)
-                        })
-                    }
-                )
+@Composable
+fun MyQuestionnaireScreen() {
+    // Define a questionnaire
+    val questionnaire = Questionnaire(
+        id = "patient-intake",
+        version = "1.0.0",
+        title = "Patient Intake Form",
+        items = listOf(
+            Item(
+                linkId = "name",
+                type = ItemType.TEXT,
+                text = "What is your full name?",
+                required = true
+            ),
+            Item(
+                linkId = "age",
+                type = ItemType.INTEGER,
+                text = "What is your age?",
+                required = true
             )
+        )
+    )
+
+    // Initialize manager with evaluator
+    val evaluator = remember { LiteQuestEvaluator(questionnaire) }
+    val manager = remember { QuestionnaireManager(questionnaire, evaluator) }
+    val state by manager.state.collectAsState()
+    
+    // Mode switching between Edit and Summary
+    var mode by remember { mutableStateOf(QuestionnaireMode.Edit) }
+
+    // Render the questionnaire
+    QuestionnaireScreen(
+        type = QuestionnaireType.Single(questionnaire),
+        state = state,
+        mode = mode,
+        onAnswerChange = { linkId, value -> manager.updateAnswer(linkId, value) },
+        onSubmit = { 
+            // Handle form submission
+            println("Form submitted: ${state.response}")
+        },
+        onModeChange = { newMode -> mode = newMode },
+        onDismiss = { /* Handle dismiss */ }
+    )
+}
+
+// For multi-page questionnaires
+val paginatedQuestionnaire = PaginatedQuestionnaire(
+    id = "health-survey",
+    title = "Health Survey",
+    pages = listOf(
+        QuestionnairePage(
+            id = "demographics",
+            title = "Demographics",
+            order = 0,
+            items = listOf(/* page 1 items */)
+        ),
+        QuestionnairePage(
+            id = "health-history",
+            title = "Health History",
+            order = 1,
+            items = listOf(/* page 2 items */)
         )
     )
 )
 
-// Initialize manager
-val evaluator = LiteQuestEvaluator(questionnaire)
-val manager = QuestionnaireManager(questionnaire, evaluator)
-
-// Update answers
-manager.updateAnswer("name", JsonPrimitive("John Doe"))
-manager.updateAnswer("age", JsonPrimitive(25))
-
-// Access state
-manager.state.collect { state ->
-    println("Valid: ${state.isValid}")
-    println("Errors: ${state.validationErrors}")
-}
+QuestionnaireScreen(
+    type = QuestionnaireType.Paginated(paginatedQuestionnaire),
+    state = state,
+    onAnswerChange = { linkId, value -> manager.updateAnswer(linkId, value) },
+    onSubmit = { /* Handle submission */ },
+    onDismiss = { /* Handle dismiss */ }
+)
 ```
 
 ## Running the Demo
@@ -108,14 +153,19 @@ LiteQuest follows a clean, layered architecture:
 
 ```txt
 library/
-├── model/        # Data structures and definitions
-├── engine/       # Business logic (validation, visibility, calculations)
-├── i18n/         # Translation management
-├── state/        # Reactive state orchestration
+├── model/        # Data structures (Questionnaire, Item, Response)
+├── engine/       # JsonLogic evaluation, validation, visibility, calculations
+├── state/        # QuestionnaireManager - reactive state orchestration
+├── ui/           # Compose UI components
+│   ├── screen/   # QuestionnaireScreen - unified Edit/Summary screen
+│   ├── widget/   # Input widgets for different item types
+│   ├── summary/  # Summary/review page components
+│   ├── pagination/ # Multi-page support with navigation
+│   └── renderer/ # Form rendering logic
 └── util/         # Helper utilities
 ```
 
-For detailed architecture and design decisions, see [Technical Specification v1.0.0](docs/spec/LITEQUEST_TECHNICAL_SPECIFICATION_V1_0_0.md).
+For detailed architecture and design decisions, see [Form Visualizer Technical Specification v1.0.0](docs/spec/FORM_VISUALIZER_TECHNICAL_SPECIFICATION_V1_0_0.md).
 
 ## Key Concepts
 
@@ -255,9 +305,9 @@ See [gradle/libs.versions.toml](gradle/libs.versions.toml) for complete dependen
 
 ## Documentation
 
-- [Technical Specification v1.0.0](docs/spec/LITEQUEST_TECHNICAL_SPECIFICATION_V1_0_0.md) - Detailed architecture and design decisions
-- [API Documentation](https://litequest.io/api) - Comprehensive API reference
-- [Examples](demo/) - Working examples for all platforms
+- [LiteQuest Technical Specification v1.0.0](docs/spec/LITEQUEST_TECHNICAL_SPECIFICATION_V1_0_0.md) - Core engine architecture and JsonLogic evaluation
+- [Form Visualizer Technical Specification v1.0.0](docs/spec/FORM_VISUALIZER_TECHNICAL_SPECIFICATION_V1_0_0.md) - UI components and form rendering
+- [Demo App](demo/) - Working examples for all platforms
 
 ## Community
 
@@ -269,17 +319,23 @@ See [gradle/libs.versions.toml](gradle/libs.versions.toml) for complete dependen
 
 ### Version 1.1
 
+- Multi-language support with remote translation loading
 - FHIR Questionnaire bidirectional conversion
-- Enhanced skip logic
-- File attachment support
+- File attachment and media upload support
 
 ### Version 1.2
 
-- Visual form builder
-- Analytics integration
-- Advanced validation rules
+- Media widgets (Photo, Barcode, Location, Signature)
+- Advanced validation rules with custom validators
+- Form analytics and telemetry
 
-See [Technical Specification v1.0.0](docs/spec/LITEQUEST_TECHNICAL_SPECIFICATION_V1_0_0.md) for detailed roadmap.
+### Version 2.0
+
+- Visual form builder/editor
+- Form versioning and migration tools
+- Advanced conditional logic builder
+
+See [Form Visualizer Technical Specification v1.0.0](docs/spec/FORM_VISUALIZER_TECHNICAL_SPECIFICATION_V1_0_0.md) for more details.
 
 ## License
 
