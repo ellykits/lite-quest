@@ -1,0 +1,147 @@
+{
+  "id": "patient-vitals",
+  "title": "Patient Vitals Form",
+  "description": "Collect patient vital signs and medical history",
+  "items": [
+    {
+      "linkId": "patient-info",
+      "type": "DISPLAY",
+      "text": "Patient Information",
+      "required": false,
+      "repeats": false,
+      "items": []
+    },
+    {
+      "linkId": "full-name",
+      "type": "TEXT",
+      "text": "Full Name",
+      "required": true,
+      "repeats": false,
+      "items": []
+    },
+    {
+      "linkId": "age",
+      "type": "INTEGER",
+      "text": "Age (years)",
+      "required": true,
+      "repeats": false,
+      "validations": [
+        {
+          "type": "MIN_VALUE",
+          "value": "0",
+          "message": "Age must be at least 0"
+        },
+        {
+          "type": "MAX_VALUE",
+          "value": "150",
+          "message": "Age must be less than 150"
+        }
+      ],
+      "items": []
+    },
+    {
+      "linkId": "vitals-section",
+      "type": "DISPLAY",
+      "text": "Vital Signs",
+      "required": false,
+      "repeats": false,
+      "items": []
+    },
+    {
+      "linkId": "weight",
+      "type": "DECIMAL",
+      "text": "Weight (kg)",
+      "required": true,
+      "repeats": false,
+      "validations": [
+        {
+          "type": "MIN_VALUE",
+          "value": "0",
+          "message": "Weight must be positive"
+        }
+      ],
+      "items": []
+    },
+    {
+      "linkId": "height",
+      "type": "DECIMAL",
+      "text": "Height (m)",
+      "required": true,
+      "repeats": false,
+      "validations": [
+        {
+          "type": "MIN_VALUE",
+          "value": "0",
+          "message": "Height must be positive"
+        }
+      ],
+      "items": []
+    },
+    {
+      "linkId": "medications",
+      "type": "GROUP",
+      "text": "Current Medications",
+      "required": false,
+      "repeats": true,
+      "items": [
+        {
+          "linkId": "medication-name",
+          "type": "TEXT",
+          "text": "Medication Name",
+          "required": true,
+          "repeats": false,
+          "items": []
+        },
+        {
+          "linkId": "medication-dosage",
+          "type": "TEXT",
+          "text": "Dosage",
+          "required": true,
+          "repeats": false,
+          "items": []
+        },
+        {
+          "linkId": "medication-frequency",
+          "type": "TEXT",
+          "text": "Frequency",
+          "required": false,
+          "repeats": false,
+          "items": []
+        }
+      ]
+    },
+    {
+      "linkId": "allergies",
+      "type": "GROUP",
+      "text": "Allergies",
+      "required": false,
+      "repeats": true,
+      "items": [
+        {
+          "linkId": "allergen",
+          "type": "TEXT",
+          "text": "Allergen",
+          "required": true,
+          "repeats": false,
+          "items": []
+        },
+        {
+          "linkId": "reaction",
+          "type": "TEXT",
+          "text": "Reaction",
+          "required": false,
+          "repeats": false,
+          "items": []
+        }
+      ]
+    },
+    {
+      "linkId": "has-diabetes",
+      "type": "BOOLEAN",
+      "text": "Has Diabetes",
+      "required": false,
+      "repeats": false,
+      "items": []
+    }
+  ]
+}

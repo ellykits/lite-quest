@@ -1,0 +1,63 @@
+package io.litequest.engine
+
+import io.litequest.model.Item
+import io.litequest.model.Questionnaire
+import io.litequest.model.QuestionnaireResponse
+import io.litequest.model.ValidationError
+import io.litequest.util.DataContextBuilder
+
+class LiteQuestEvaluator(
+  private val questionnaire: Questionnaire,
+  jsonLogicEvaluator: JsonLogicEvaluator = JsonLogicEvaluator(),
+) {
+  private val calculatedValuesEngine = CalculatedValuesEngine(jsonLogicEvaluator)
+  private val visibilityEngine = VisibilityEngine(jsonLogicEvaluator)
+  private val validationEngine = ValidationEngine(jsonLogicEvaluator)
+  private val extractionEngine = ExtractionEngine()
+
+  fun isItemVisible(
+    item: Item,
+    response: QuestionnaireResponse,
+  ): Boolean {
+    val dataContext = buildDataContext(response)
+    return visibilityEngine.isVisible(item, dataContext)
+  }
+
+  fun validateResponse(response: QuestionnaireResponse): List<ValidationError> {
+    val dataContext = buildDataContext(response)
+    return validationEngine.validateResponse(
+      items = questionnaire.items,
+      responseItems = response.items,
+      dataContext = dataContext,
+    )
+  }
+
+  fun getVisibleItems(response: QuestionnaireResponse): List<Item> {
+    val dataContext = buildDataContext(response)
+    return visibilityEngine.getVisibleItems(questionnaire.items, dataContext)
+  }
+
+  fun calculateValues(response: QuestionnaireResponse): Map<String, Any?> {
+    val dataContext = DataContextBuilder.build(response)
+    return calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
+  }
+
+  fun extractData(response: QuestionnaireResponse): kotlinx.serialization.json.JsonElement? {
+    val template = questionnaire.extractionTemplate ?: return null
+    val dataContext = buildDataContext(response)
+    val calculatedValues = calculateValues(response)
+
+    return extractionEngine.extract(
+      response = response,
+      template = template,
+      calculatedValues = calculatedValues,
+      answerMap = dataContext,
+    )
+  }
+
+  fun buildDataContext(response: QuestionnaireResponse): MutableMap<String, Any?> {
+    val dataContext = DataContextBuilder.build(response)
+    calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
+    return dataContext
+  }
+}
