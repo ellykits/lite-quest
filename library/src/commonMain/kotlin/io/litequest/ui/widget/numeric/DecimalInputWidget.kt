@@ -10,6 +10,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -26,7 +27,7 @@ class DecimalInputWidget(override val item: Item) : ItemWidget {
       value = text,
       onValueChange = { newValue ->
         if (newValue.isEmpty()) {
-          onValueChange(JsonPrimitive(""))
+          onValueChange(JsonNull)
         } else {
           newValue.toDoubleOrNull()?.let { onValueChange(JsonPrimitive(it)) }
         }

@@ -21,8 +21,7 @@ object DataContextBuilder {
         val values = item.answers.map { it.value }
         val processedValue =
           if (values.size == 1) {
-            val singleValue = values.first()
-            when (singleValue) {
+            when (val singleValue = values.first()) {
               is JsonArray -> processJsonArray(singleValue)
               is JsonObject -> processJsonObject(singleValue)
               else -> singleValue.toAnyOrNull()

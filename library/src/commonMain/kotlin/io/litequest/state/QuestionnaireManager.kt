@@ -3,9 +3,11 @@ package io.litequest.state
 import io.litequest.engine.LiteQuestEvaluator
 import io.litequest.i18n.TranslationManager
 import io.litequest.model.Answer
+import io.litequest.model.Item
 import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.model.ResponseItem
+import io.litequest.model.ValidationError
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 
 class QuestionnaireManager(
   private val questionnaire: Questionnaire,
@@ -37,21 +40,11 @@ class QuestionnaireManager(
     val updatedItems = updateResponseItem(currentResponse.items, linkId, value)
     val updatedResponse = currentResponse.copy(items = updatedItems)
 
-    recomputeState(updatedResponse)
+    val items = questionnaire.items.filter { item -> item.linkId == linkId }
+    recomputeState(updatedResponse, items)
   }
 
-  fun updateAnswers(
-    linkId: String,
-    values: List<JsonElement>,
-  ) {
-    val currentResponse = _state.value.response
-    val updatedItems = updateResponseItemMultiple(currentResponse.items, linkId, values)
-    val updatedResponse = currentResponse.copy(items = updatedItems)
-
-    recomputeState(updatedResponse)
-  }
-
-  fun validate(): List<io.litequest.model.ValidationError> {
+  fun validate(): List<ValidationError> {
     return evaluator.validateResponse(_state.value.response)
   }
 
@@ -71,10 +64,10 @@ class QuestionnaireManager(
     recomputeState(response)
   }
 
-  private fun recomputeState(response: QuestionnaireResponse) {
+  private fun recomputeState(response: QuestionnaireResponse, items: List<Item>? = null) {
     val calculatedValues = evaluator.calculateValues(response)
     val visibleItems = evaluator.getVisibleItems(response)
-    val validationErrors = evaluator.validateResponse(response)
+    val validationErrors = evaluator.validateResponse(response, items)
 
     _state.value =
       QuestionnaireState(
@@ -97,7 +90,15 @@ class QuestionnaireManager(
     return if (existingItem != null) {
       items.map { item ->
         if (item.linkId == linkId) {
-          item.copy(answers = listOf(Answer(value)), items = emptyList())
+          item.copy(
+            answers =
+              if (value is JsonNull) {
+                emptyList()
+              } else {
+                listOf(Answer(value))
+              },
+            items = emptyList(),
+          )
         } else {
           val updatedNestedItems =
             if (item.items.isNotEmpty()) {
@@ -113,37 +114,11 @@ class QuestionnaireManager(
         }
       }
     } else {
-      items + ResponseItem(linkId = linkId, answers = listOf(Answer(value)))
-    }
-  }
-
-  private fun updateResponseItemMultiple(
-    items: List<ResponseItem>,
-    linkId: String,
-    values: List<JsonElement>,
-  ): List<ResponseItem> {
-    val existingItem = items.find { it.linkId == linkId }
-
-    return if (existingItem != null) {
-      items.map { item ->
-        if (item.linkId == linkId) {
-          item.copy(answers = values.map { Answer(it) }, items = emptyList())
-        } else {
-          val updatedNestedItems =
-            if (item.items.isNotEmpty()) {
-              updateResponseItemMultiple(item.items, linkId, values)
-            } else {
-              item.items
-            }
-          if (updatedNestedItems != item.items) {
-            item.copy(items = updatedNestedItems)
-          } else {
-            item
-          }
-        }
-      }
-    } else {
-      items + ResponseItem(linkId = linkId, answers = values.map { Answer(it) })
+      items +
+        ResponseItem(
+          linkId = linkId,
+          answers = if (value is JsonNull) emptyList() else listOf(Answer(value)),
+        )
     }
   }
 

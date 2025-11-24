@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -22,7 +23,13 @@ class TextInputWidget(override val item: Item) : ItemWidget {
 
     OutlinedTextField(
       value = text,
-      onValueChange = { onValueChange(JsonPrimitive(it)) },
+      onValueChange = { newValue ->
+        if (newValue.isEmpty()) {
+          onValueChange(JsonNull)
+        } else {
+          onValueChange(JsonPrimitive(newValue))
+        }
+      },
       label = { Text(item.text) },
       isError = errorMessage != null,
       supportingText = errorMessage?.let { { Text(it) } },

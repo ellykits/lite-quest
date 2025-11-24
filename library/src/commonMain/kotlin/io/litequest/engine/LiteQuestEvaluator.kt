@@ -15,18 +15,13 @@ class LiteQuestEvaluator(
   private val validationEngine = ValidationEngine(jsonLogicEvaluator)
   private val extractionEngine = ExtractionEngine()
 
-  fun isItemVisible(
-    item: Item,
+  fun validateResponse(
     response: QuestionnaireResponse,
-  ): Boolean {
-    val dataContext = buildDataContext(response)
-    return visibilityEngine.isVisible(item, dataContext)
-  }
-
-  fun validateResponse(response: QuestionnaireResponse): List<ValidationError> {
+    items: List<Item>? = null,
+  ): List<ValidationError> {
     val dataContext = buildDataContext(response)
     return validationEngine.validateResponse(
-      items = questionnaire.items,
+      items = items ?: questionnaire.items,
       responseItems = response.items,
       dataContext = dataContext,
     )

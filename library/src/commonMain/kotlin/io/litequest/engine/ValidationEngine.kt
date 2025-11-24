@@ -14,6 +14,16 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
     dataContext: Map<String, Any?>,
     path: List<String> = emptyList(),
   ): List<ValidationError> {
+    val responseMap = responseItems.associateBy { it.linkId }
+    return validateResponseMap(items, responseMap, dataContext, path)
+  }
+
+  private fun validateResponseMap(
+    items: List<Item>,
+    responseItems: Map<String, ResponseItem>,
+    dataContext: Map<String, Any?>,
+    path: List<String> = emptyList(),
+  ): List<ValidationError> {
     val errors = mutableListOf<ValidationError>()
 
     items.forEach { item ->
@@ -21,7 +31,7 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
         return@forEach
       }
 
-      val responseItem = responseItems.find { it.linkId == item.linkId }
+      val responseItem = responseItems[item.linkId]
       val currentPath = path + item.linkId
 
       if (item.required && (responseItem == null || responseItem.answers.isEmpty())) {
@@ -50,9 +60,9 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
       }
 
       if (item.items.isNotEmpty()) {
-        val nestedResponseItems = responseItem?.items ?: emptyList()
+        val nestedResponseMap = responseItem?.items?.associateBy { it.linkId } ?: emptyMap()
         errors.addAll(
-          validateResponse(item.items, nestedResponseItems, dataContext, currentPath),
+          validateResponseMap(item.items, nestedResponseMap, dataContext, currentPath),
         )
       }
     }

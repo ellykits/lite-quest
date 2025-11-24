@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Send
@@ -470,8 +471,7 @@ private fun DefaultSingleFormActions(
               onClick = { onModeChange(QuestionnaireMode.Summary) },
               modifier = Modifier.height(40.dp),
               shape = MaterialTheme.shapes.large,
-              border =
-                androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
+              border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
             ) {
               Text(
                 "Review",
@@ -487,8 +487,7 @@ private fun DefaultSingleFormActions(
               onClick = { onModeChange(QuestionnaireMode.Edit) },
               modifier = Modifier.height(40.dp),
               shape = MaterialTheme.shapes.large,
-              border =
-                androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
+              border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
             ) {
               Text(
                 "Edit",
@@ -517,7 +516,7 @@ private fun DefaultSingleFormActions(
         )
         Spacer(Modifier.width(8.dp))
         Icon(
-          imageVector = Icons.Default.Send,
+          imageVector = Icons.AutoMirrored.Filled.Send,
           contentDescription = null,
         )
       }
@@ -552,8 +551,7 @@ private fun DefaultPaginatedFormActions(
           onClick = { pageNavigator.goPrevious() },
           modifier = Modifier.height(40.dp),
           shape = MaterialTheme.shapes.large,
-          border =
-            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
+          border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
         ) {
           Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
