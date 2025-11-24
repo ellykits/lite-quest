@@ -24,7 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -547,11 +546,15 @@ private fun DefaultPaginatedFormActions(
       verticalAlignment = Alignment.CenterVertically,
     ) {
       if (!isFirstPage) {
-        OutlinedButton(
+        Button(
           onClick = { pageNavigator.goPrevious() },
           modifier = Modifier.height(40.dp),
           shape = MaterialTheme.shapes.large,
-          border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
+          elevation =
+            ButtonDefaults.buttonElevation(
+              defaultElevation = 4.dp,
+              pressedElevation = 8.dp,
+            ),
         ) {
           Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -584,7 +587,7 @@ private fun DefaultPaginatedFormActions(
           )
           Spacer(Modifier.width(8.dp))
           Icon(
-            imageVector = Icons.Default.Send,
+            imageVector = Icons.AutoMirrored.Filled.Send,
             contentDescription = null,
           )
         }
