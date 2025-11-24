@@ -286,12 +286,12 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ## Platform Support
 
-| Platform | Status | Min Version |
-|----------|--------|-------------|
-| Android | ✅ Stable | API 24 (Android 7.0) |
-| iOS | ✅ Stable | iOS 14.0+ |
-| Desktop | ✅ Stable | JVM 11+ |
-| Web (WASM) | ⚠️ Experimental | Modern browsers |
+| Platform   | Status          | Min Version          |
+|------------|-----------------|----------------------|
+| Android    | ✅ Stable        | API 24 (Android 7.0) |
+| iOS        | ✅ Stable        | iOS 14.0+            |
+| Desktop    | ✅ Stable        | JVM 11+              |
+| Web (WASM) | ⚠️ Experimental | Modern browsers      |
 
 ## Dependencies
 
