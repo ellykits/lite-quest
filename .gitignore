@@ -19,3 +19,4 @@ local.properties
 *.log
 .kotlin
 .vscode
+kotlin-js-store

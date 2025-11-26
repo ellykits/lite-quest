@@ -1,18 +1,19 @@
 [versions]
-agp = "8.8.0"
-android-compileSdk = "35"
+agp = "8.12.0"
+android-compileSdk = "36"
 android-minSdk = "24"
-android-targetSdk = "35"
-androidx-activityCompose = "1.9.0"
-androidx-lifecycle-viewmodel = "2.9.3"
-androidx-navigation = "2.8.0-alpha10"
-compose-plugin = "1.6.11"
-kotlin = "2.0.21"
-kotlinx-coroutines = "1.9.0"
-kotlinx-serialization = "1.7.3"
-kotlinx-datetime = "0.6.1"
-ktor = "3.0.1"
-spotless = "6.25.0"
+android-targetSdk = "36"
+androidx-activityCompose = "1.12.0"
+androidx-lifecycle-viewmodel = "2.9.6"
+androidx-navigation = "2.9.1"
+compose-plugin = "1.9.3"
+kotlin = "2.2.21"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.9.0"
+kotlinx-datetime = "0.7.1"
+ktor = "3.3.2"
+materialIconsCore = "1.7.3"
+spotless = "8.1.0"
 ktlint = "1.0.1"
 
 [libraries]
@@ -21,6 +22,7 @@ androidx-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecy
 androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle-viewmodel" }
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
@@ -31,6 +33,7 @@ ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "k
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
+material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "materialIconsCore" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

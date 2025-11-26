@@ -1,3 +1,8 @@
+@file:OptIn(ExperimentalWasmDsl::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
   alias(libs.plugins.kotlinSerialization)
@@ -11,11 +16,22 @@ group = "io.litequest"
 version = "1.0.0"
 
 kotlin {
-  androidTarget { compilations.all { kotlinOptions { jvmTarget = "11" } } }
+  androidTarget {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_11)
+    }
+  }
 
-  jvm("desktop") { compilations.all { kotlinOptions { jvmTarget = "11" } } }
+  jvm("desktop") {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_11)
+    }
+  }
 
-  wasmJs { browser() }
+  wasmJs {
+    browser()
+    binaries.library()
+  }
 
   listOf(
       iosX64(),
@@ -43,13 +59,15 @@ kotlin {
         implementation(compose.foundation)
         implementation(compose.material3)
         implementation(compose.ui)
+
+        implementation(libs.material.icons.core)
       }
     }
 
     val commonTest by getting {
       dependencies {
         implementation(kotlin("test"))
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+        implementation(libs.kotlinx.coroutines.test)
       }
     }
 
@@ -74,8 +92,8 @@ kotlin {
 }
 
 android {
-  namespace = "io.litequest"
-  compileSdk = 34
+  namespace = "io.litequest.library"
+  compileSdk = 36
 
   defaultConfig { minSdk = 24 }
 

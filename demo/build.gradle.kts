@@ -1,6 +1,10 @@
+@file:OptIn(ExperimentalWasmDsl::class)
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
@@ -18,6 +22,27 @@ kotlin {
 
   jvm("desktop")
 
+  wasmJs {
+    browser {
+      val rootDirPath = project.rootDir.path
+      val projectDirPath = project.projectDir.path
+      commonWebpackConfig {
+        outputFileName = "sdcKmpDemo.js"
+        devServer =
+          (devServer ?: KotlinWebpackConfig.DevServer()).apply {
+            static =
+              (static ?: mutableListOf()).apply {
+                // Serve sources to debug inside browser
+                add(rootDirPath)
+                add(projectDirPath)
+              }
+          }
+      }
+    }
+    outputModuleName = "liteQuest"
+    binaries.executable()
+  }
+
   listOf(
       iosX64(),
       iosArm64(),
@@ -32,6 +57,8 @@ kotlin {
 
   sourceSets {
     val desktopMain by getting
+
+    val wasmJsMain by getting
 
     androidMain.dependencies {
       implementation(compose.preview)
@@ -48,6 +75,7 @@ kotlin {
       implementation(libs.androidx.lifecycle.viewmodel.compose)
       implementation(libs.androidx.lifecycle.runtime.compose)
       implementation(libs.androidx.navigation.compose)
+      implementation(libs.material.icons.core)
       implementation(project(":library"))
     }
 
@@ -83,7 +111,6 @@ android {
 compose.desktop {
   application {
     mainClass = "io.litequest.demo.MainKt"
-
     nativeDistributions {
       targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
       packageName = "io.litequest.demo"

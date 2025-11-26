@@ -33,14 +33,14 @@ subprojects {
 
         format("xml") {
             target("**/*.xml")
-            indentWithSpaces()
+            leadingTabsToSpaces(2)
             trimTrailingWhitespace()
             endWithNewline()
         }
 
         format("json") {
             target("**/*.json")
-            indentWithSpaces(2)
+            leadingTabsToSpaces(2)
             trimTrailingWhitespace()
         }
     }

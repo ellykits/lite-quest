@@ -13,9 +13,9 @@ import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlin.time.ExperimentalTime
 
 class QuestionnaireManager(
   private val questionnaire: Questionnaire,
@@ -132,7 +132,7 @@ class QuestionnaireManager(
     )
   }
 
-  private fun initializeResponseItems(items: List<io.litequest.model.Item>): List<ResponseItem> {
+  private fun initializeResponseItems(items: List<Item>): List<ResponseItem> {
     return items.map { item ->
       ResponseItem(
         linkId = item.linkId,
@@ -152,7 +152,8 @@ class QuestionnaireManager(
     return Uuid.toString()
   }
 
+  @OptIn(ExperimentalTime::class)
   private fun getCurrentTimestamp(): String {
-    return Clock.System.now().toString()
+    return kotlin.time.Clock.System.now().toString()
   }
 }
