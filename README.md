@@ -1,7 +1,7 @@
 # LiteQuest
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-purple.svg)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-purple.svg)](https://kotlinlang.org)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-green.svg)](https://kotlinlang.org/docs/multiplatform.html)
 
 A lightweight, FHIR-inspired questionnaire library for Kotlin Multiplatform applications.
@@ -42,7 +42,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.litequest:lite-quest:1.0.0")
+                implementation("io.litequest:lite-quest:1.0.0-alpha01")
             }
         }
     }

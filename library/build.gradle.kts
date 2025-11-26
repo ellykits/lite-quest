@@ -9,11 +9,12 @@ plugins {
   alias(libs.plugins.androidLibrary)
   alias(libs.plugins.composeMultiplatform)
   alias(libs.plugins.composeCompiler)
+  alias(libs.plugins.maven.publish)
 }
 
 group = "io.litequest"
 
-version = "1.0.0"
+version = "1.0.0-alpha01"
 
 kotlin {
   androidTarget {
