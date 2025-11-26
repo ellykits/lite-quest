@@ -90,3 +90,47 @@ android {
     targetCompatibility = JavaVersion.VERSION_11
   }
 }
+
+// Prepare for publishing
+val localRepo: Directory = project.layout.buildDirectory.get().dir("liteQuestRepo")
+
+publishing {
+  repositories { maven { url = localRepo.asFile.toURI() } }
+  publications {
+    withType<MavenPublication> {
+      pom {
+        name = "Lite Quest"
+        description =
+          "A lightweight, FHIR-inspired questionnaire library for Kotlin Multiplatform applications."
+        inceptionYear = "2025"
+        url = "https://github.com/ellykits/lite-quest"
+        licenses {
+          license {
+            name.set("The Apache License, Version 2.0")
+            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            distribution = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        }
+      }
+    }
+  }
+}
+
+val deleteRepoTask =
+  tasks.register<Delete>("deleteLocalRepo") {
+    description =
+      "Deletes the local repository to get rid of stale artifacts before local publishing"
+    this.delete(localRepo)
+  }
+
+tasks.named("publishAllPublicationsToMavenRepository").configure { dependsOn(deleteRepoTask) }
+
+tasks.register("zipRepo", Zip::class) {
+  description = "Create a zip of the maven repository"
+  this.destinationDirectory.set(project.layout.buildDirectory.dir("repoZip"))
+  archiveBaseName.set("lite-quest")
+
+  // Hint to gradle that the repo files are produced by the task named publish.
+  // This establishes a dependency from the zipRepo task to the task named publish.
+  this.from(tasks.named("publish").map { _ -> localRepo })
+}
