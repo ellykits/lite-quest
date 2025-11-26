@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest.util
 
 import io.litequest.model.Answer
@@ -20,14 +35,8 @@ class DataContextBuilderTest {
         authored = "2025-11-07",
         items =
           listOf(
-            ResponseItem(
-              linkId = "name",
-              answers = listOf(Answer(JsonPrimitive("John"))),
-            ),
-            ResponseItem(
-              linkId = "age",
-              answers = listOf(Answer(JsonPrimitive(25))),
-            ),
+            ResponseItem(linkId = "name", answers = listOf(Answer(JsonPrimitive("John")))),
+            ResponseItem(linkId = "age", answers = listOf(Answer(JsonPrimitive(25)))),
           ),
       )
 
@@ -53,9 +62,9 @@ class DataContextBuilderTest {
                   ResponseItem(
                     linkId = "nested-field",
                     answers = listOf(Answer(JsonPrimitive("nested-value"))),
-                  ),
+                  )
                 ),
-            ),
+            )
           ),
       )
 
@@ -81,7 +90,7 @@ class DataContextBuilderTest {
                   Answer(JsonPrimitive("tag2")),
                   Answer(JsonPrimitive("tag3")),
                 ),
-            ),
+            )
           ),
       )
 
@@ -123,20 +132,11 @@ class DataContextBuilderTest {
               linkId = "vitals-group",
               items =
                 listOf(
-                  ResponseItem(
-                    linkId = "weight-kg",
-                    answers = listOf(Answer(JsonPrimitive(80.5))),
-                  ),
-                  ResponseItem(
-                    linkId = "height-m",
-                    answers = listOf(Answer(JsonPrimitive(1.8))),
-                  ),
+                  ResponseItem(linkId = "weight-kg", answers = listOf(Answer(JsonPrimitive(80.5)))),
+                  ResponseItem(linkId = "height-m", answers = listOf(Answer(JsonPrimitive(1.8)))),
                 ),
             ),
-            ResponseItem(
-              linkId = "has-symptoms",
-              answers = listOf(Answer(JsonPrimitive(true))),
-            ),
+            ResponseItem(linkId = "has-symptoms", answers = listOf(Answer(JsonPrimitive(true)))),
           ),
       )
 
@@ -156,14 +156,14 @@ class DataContextBuilderTest {
           put("medication-name", JsonPrimitive("Aspirin"))
           put("medication-dosage", JsonPrimitive("100mg"))
           put("medication-frequency", JsonPrimitive("Daily"))
-        },
+        }
       )
       add(
         buildJsonObject {
           put("medication-name", JsonPrimitive("Ibuprofen"))
           put("medication-dosage", JsonPrimitive("200mg"))
           put("medication-frequency", JsonPrimitive("Twice daily"))
-        },
+        }
       )
     }
 
@@ -173,12 +173,7 @@ class DataContextBuilderTest {
         questionnaireId = "q1",
         authored = "2025-11-07",
         items =
-          listOf(
-            ResponseItem(
-              linkId = "medications",
-              answers = listOf(Answer(medicationsArray)),
-            ),
-          ),
+          listOf(ResponseItem(linkId = "medications", answers = listOf(Answer(medicationsArray)))),
       )
 
     val context = DataContextBuilder.build(response)
@@ -215,13 +210,7 @@ class DataContextBuilderTest {
         id = "test-7",
         questionnaireId = "q1",
         authored = "2025-11-07",
-        items =
-          listOf(
-            ResponseItem(
-              linkId = "patient-info",
-              answers = listOf(Answer(patientInfo)),
-            ),
-          ),
+        items = listOf(ResponseItem(linkId = "patient-info", answers = listOf(Answer(patientInfo)))),
       )
 
     val context = DataContextBuilder.build(response)

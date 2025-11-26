@@ -17,34 +17,21 @@ group = "io.litequest"
 version = "1.0.0-alpha01"
 
 kotlin {
-  androidTarget {
-    compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_11)
-    }
-  }
+  androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
 
-  jvm("desktop") {
-    compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_11)
-    }
-  }
+  jvm("desktop") { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
 
   wasmJs {
     browser()
     binaries.library()
   }
 
-  listOf(
-      iosX64(),
-      iosArm64(),
-      iosSimulatorArm64(),
-    )
-    .forEach { iosTarget ->
-      iosTarget.binaries.framework {
-        baseName = "LiteQuest"
-        isStatic = true
-      }
+  listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
+    iosTarget.binaries.framework {
+      baseName = "LiteQuest"
+      isStatic = true
     }
+  }
 
   sourceSets {
     val commonMain by getting {

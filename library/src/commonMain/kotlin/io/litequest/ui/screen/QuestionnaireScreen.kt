@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest.ui.screen
 
 import androidx.compose.foundation.BorderStroke
@@ -187,10 +202,7 @@ private fun SingleQuestionnaireScreen(
                 modifier = Modifier.size(18.dp),
               )
               Spacer(Modifier.width(6.dp))
-              Text(
-                "Edit",
-                style = MaterialTheme.typography.labelLarge,
-              )
+              Text("Edit", style = MaterialTheme.typography.labelLarge)
             }
             Spacer(Modifier.width(8.dp))
           }
@@ -205,13 +217,10 @@ private fun SingleQuestionnaireScreen(
               },
               colors =
                 IconButtonDefaults.iconButtonColors(
-                  contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                  contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
             ) {
-              Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-              )
+              Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
             }
           }
         },
@@ -231,19 +240,12 @@ private fun SingleQuestionnaireScreen(
             modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
             color = MaterialTheme.colorScheme.surfaceContainer,
             shape =
-              androidx.compose.foundation.shape.RoundedCornerShape(
-                topStart = 28.dp,
-                topEnd = 28.dp,
-              ),
+              androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
           ) {
             customActions()
           }
         } else {
-          DefaultSingleFormActions(
-            mode = mode,
-            onModeChange = onModeChange,
-            onSubmit = onSubmit,
-          )
+          DefaultSingleFormActions(mode = mode, onModeChange = onModeChange, onSubmit = onSubmit)
         }
       }
     },
@@ -253,11 +255,7 @@ private fun SingleQuestionnaireScreen(
     when (mode) {
       QuestionnaireMode.Edit -> {
         Box(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp)) {
-          FormRenderer(
-            items = state.visibleItems,
-            state = state,
-            onAnswerChange = onAnswerChange,
-          )
+          FormRenderer(items = state.visibleItems, state = state, onAnswerChange = onAnswerChange)
         }
       }
       QuestionnaireMode.Summary -> {
@@ -343,10 +341,7 @@ private fun PaginatedQuestionnaireScreen(
                 modifier = Modifier.size(18.dp),
               )
               Spacer(Modifier.width(6.dp))
-              Text(
-                "Edit",
-                style = MaterialTheme.typography.labelLarge,
-              )
+              Text("Edit", style = MaterialTheme.typography.labelLarge)
             }
             Spacer(Modifier.width(8.dp))
           }
@@ -361,13 +356,10 @@ private fun PaginatedQuestionnaireScreen(
               },
               colors =
                 IconButtonDefaults.iconButtonColors(
-                  contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                  contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
             ) {
-              Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-              )
+              Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
             }
           }
         },
@@ -387,10 +379,7 @@ private fun PaginatedQuestionnaireScreen(
             modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
             color = MaterialTheme.colorScheme.surfaceContainer,
             shape =
-              androidx.compose.foundation.shape.RoundedCornerShape(
-                topStart = 28.dp,
-                topEnd = 28.dp,
-              ),
+              androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
           ) {
             customActions()
           }
@@ -408,9 +397,7 @@ private fun PaginatedQuestionnaireScreen(
   ) { padding ->
     when (mode) {
       QuestionnaireMode.Edit -> {
-        Column(
-          modifier = Modifier.fillMaxSize().padding(padding),
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
           LinearProgressIndicator(
             progress = { (pageIndex + 1) / totalPages.toFloat() },
             modifier = Modifier.fillMaxWidth(),
@@ -502,11 +489,7 @@ private fun DefaultSingleFormActions(
         onClick = onSubmit,
         modifier = Modifier.height(40.dp),
         shape = MaterialTheme.shapes.large,
-        elevation =
-          ButtonDefaults.buttonElevation(
-            defaultElevation = 4.dp,
-            pressedElevation = 8.dp,
-          ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 8.dp),
       ) {
         Text(
           "Submit",
@@ -514,10 +497,7 @@ private fun DefaultSingleFormActions(
           modifier = Modifier.padding(horizontal = 8.dp),
         )
         Spacer(Modifier.width(8.dp))
-        Icon(
-          imageVector = Icons.AutoMirrored.Filled.Send,
-          contentDescription = null,
-        )
+        Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = null)
       }
     }
   }
@@ -551,15 +531,9 @@ private fun DefaultPaginatedFormActions(
           modifier = Modifier.height(40.dp),
           shape = MaterialTheme.shapes.large,
           elevation =
-            ButtonDefaults.buttonElevation(
-              defaultElevation = 4.dp,
-              pressedElevation = 8.dp,
-            ),
+            ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 8.dp),
         ) {
-          Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = null,
-          )
+          Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
           Spacer(Modifier.width(8.dp))
           Text(
             "Previous",
@@ -575,10 +549,7 @@ private fun DefaultPaginatedFormActions(
           modifier = Modifier.height(40.dp),
           shape = MaterialTheme.shapes.large,
           elevation =
-            ButtonDefaults.buttonElevation(
-              defaultElevation = 4.dp,
-              pressedElevation = 8.dp,
-            ),
+            ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 8.dp),
         ) {
           Text(
             "Submit",
@@ -586,10 +557,7 @@ private fun DefaultPaginatedFormActions(
             modifier = Modifier.padding(horizontal = 4.dp),
           )
           Spacer(Modifier.width(8.dp))
-          Icon(
-            imageVector = Icons.AutoMirrored.Filled.Send,
-            contentDescription = null,
-          )
+          Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = null)
         }
       } else {
         Button(
@@ -597,10 +565,7 @@ private fun DefaultPaginatedFormActions(
           modifier = Modifier.height(40.dp),
           shape = MaterialTheme.shapes.large,
           elevation =
-            ButtonDefaults.buttonElevation(
-              defaultElevation = 4.dp,
-              pressedElevation = 8.dp,
-            ),
+            ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 8.dp),
         ) {
           Text(
             "Next",
@@ -608,10 +573,7 @@ private fun DefaultPaginatedFormActions(
             modifier = Modifier.padding(horizontal = 4.dp),
           )
           Spacer(Modifier.width(8.dp))
-          Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-            contentDescription = null,
-          )
+          Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
         }
       }
     }
@@ -619,11 +581,7 @@ private fun DefaultPaginatedFormActions(
 }
 
 @Composable
-private fun PageIndicators(
-  currentPage: Int,
-  totalPages: Int,
-  modifier: Modifier = Modifier,
-) {
+private fun PageIndicators(currentPage: Int, totalPages: Int, modifier: Modifier = Modifier) {
   Row(
     modifier = modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.Center,
@@ -639,8 +597,8 @@ private fun PageIndicators(
                 MaterialTheme.colorScheme.primary
               } else {
                 MaterialTheme.colorScheme.outlineVariant
-              },
-            ),
+              }
+            )
       )
       if (index < totalPages - 1) {
         Spacer(Modifier.width(12.dp))
@@ -675,7 +633,7 @@ private fun SwipeablePager(
               }
             }
             offsetX = 0f
-          },
+          }
         ) { _, dragAmount ->
           val newOffset = offsetX + dragAmount.x
           offsetX =
@@ -685,14 +643,10 @@ private fun SwipeablePager(
               else -> newOffset
             }
         }
-      },
+      }
   ) {
     val page = pageNavigator.pages[currentPage]
-    FormRenderer(
-      items = page.items,
-      state = state,
-      onAnswerChange = onAnswerChange,
-    )
+    FormRenderer(items = page.items, state = state, onAnswerChange = onAnswerChange)
   }
 }
 
@@ -706,12 +660,7 @@ private fun DismissDialog(
   if (showDialog) {
     AlertDialog(
       onDismissRequest = onDismissRequest,
-      title = {
-        Text(
-          "Dismiss Form?",
-          style = MaterialTheme.typography.headlineSmall,
-        )
-      },
+      title = { Text("Dismiss Form?", style = MaterialTheme.typography.headlineSmall) },
       text = {
         Text(
           "Are you sure you want to dismiss this form? Any unsaved changes may be lost.",

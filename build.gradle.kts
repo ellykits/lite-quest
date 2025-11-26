@@ -22,7 +22,7 @@ subprojects {
             )
             ktfmt().googleStyle()
             trimTrailingWhitespace()
-            licenseHeaderFile("LICENSE.txt",)
+            licenseHeaderFile(rootProject.file("LICENSE"))
             endWithNewline()
         }
 

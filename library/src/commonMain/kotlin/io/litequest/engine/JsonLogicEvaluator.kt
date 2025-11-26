@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest.engine
 
 import io.litequest.util.asObject
@@ -6,17 +21,11 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 
 open class JsonLogicEvaluator {
-  fun evaluate(
-    logic: JsonElement,
-    data: Map<String, Any?>,
-  ): Any? {
+  fun evaluate(logic: JsonElement, data: Map<String, Any?>): Any? {
     return evaluateNode(logic, data)
   }
 
-  private fun evaluateNode(
-    node: JsonElement,
-    data: Map<String, Any?>,
-  ): Any? {
+  private fun evaluateNode(node: JsonElement, data: Map<String, Any?>): Any? {
     val obj = node.asObject()
     if (obj != null && obj.size == 1) {
       val (operator, args) = obj.entries.first()
@@ -52,18 +61,12 @@ open class JsonLogicEvaluator {
     }
   }
 
-  private fun evaluateVar(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Any? {
+  private fun evaluateVar(args: JsonElement, data: Map<String, Any?>): Any? {
     val varName = (args as? JsonPrimitive)?.content ?: return null
     return data[varName]
   }
 
-  private fun evaluateEquals(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateEquals(args: JsonElement, data: Map<String, Any?>): Boolean {
     val argsList = args.asObject()?.values?.toList() ?: return false
     if (argsList.size < 2) return false
     val left = evaluateNode(argsList[0], data)
@@ -71,17 +74,11 @@ open class JsonLogicEvaluator {
     return left == right
   }
 
-  private fun evaluateNotEquals(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateNotEquals(args: JsonElement, data: Map<String, Any?>): Boolean {
     return !evaluateEquals(args, data)
   }
 
-  private fun evaluateGreaterThan(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateGreaterThan(args: JsonElement, data: Map<String, Any?>): Boolean {
     val argsList = args.asObject()?.values?.toList() ?: return false
     if (argsList.size < 2) return false
     val left = (evaluateNode(argsList[0], data) as? Number)?.toDouble() ?: return false
@@ -89,10 +86,7 @@ open class JsonLogicEvaluator {
     return left > right
   }
 
-  private fun evaluateGreaterOrEqual(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateGreaterOrEqual(args: JsonElement, data: Map<String, Any?>): Boolean {
     val argsList = args.asObject()?.values?.toList() ?: return false
     if (argsList.size < 2) return false
     val left = (evaluateNode(argsList[0], data) as? Number)?.toDouble() ?: return false
@@ -100,10 +94,7 @@ open class JsonLogicEvaluator {
     return left >= right
   }
 
-  private fun evaluateLessThan(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateLessThan(args: JsonElement, data: Map<String, Any?>): Boolean {
     val argsList = args.asObject()?.values?.toList() ?: return false
     if (argsList.size < 2) return false
     val left = (evaluateNode(argsList[0], data) as? Number)?.toDouble() ?: return false
@@ -111,10 +102,7 @@ open class JsonLogicEvaluator {
     return left < right
   }
 
-  private fun evaluateLessOrEqual(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateLessOrEqual(args: JsonElement, data: Map<String, Any?>): Boolean {
     val argsList = args.asObject()?.values?.toList() ?: return false
     if (argsList.size < 2) return false
     val left = (evaluateNode(argsList[0], data) as? Number)?.toDouble() ?: return false
@@ -122,10 +110,7 @@ open class JsonLogicEvaluator {
     return left <= right
   }
 
-  private fun evaluateAnd(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateAnd(args: JsonElement, data: Map<String, Any?>): Boolean {
     val argsList = args.asObject()?.values?.toList() ?: return false
     return argsList.all { arg ->
       val result = evaluateNode(arg, data)
@@ -133,10 +118,7 @@ open class JsonLogicEvaluator {
     }
   }
 
-  private fun evaluateOr(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateOr(args: JsonElement, data: Map<String, Any?>): Boolean {
     val argsList = args.asObject()?.values?.toList() ?: return false
     return argsList.any { arg ->
       val result = evaluateNode(arg, data)
@@ -144,18 +126,12 @@ open class JsonLogicEvaluator {
     }
   }
 
-  private fun evaluateNot(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Boolean {
+  private fun evaluateNot(args: JsonElement, data: Map<String, Any?>): Boolean {
     val result = evaluateNode(args, data)
     return !isTruthy(result)
   }
 
-  private fun evaluateIf(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Any? {
+  private fun evaluateIf(args: JsonElement, data: Map<String, Any?>): Any? {
     val argsList = args.asObject()?.values?.toList() ?: return null
 
     var i = 0
@@ -175,10 +151,7 @@ open class JsonLogicEvaluator {
     return null
   }
 
-  private fun evaluateAdd(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Double? {
+  private fun evaluateAdd(args: JsonElement, data: Map<String, Any?>): Double? {
     val argsList = args.asObject()?.values?.toList() ?: return null
     return argsList.fold(0.0) { acc, arg ->
       val value = (evaluateNode(arg, data) as? Number)?.toDouble() ?: 0.0
@@ -186,10 +159,7 @@ open class JsonLogicEvaluator {
     }
   }
 
-  private fun evaluateSubtract(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Double? {
+  private fun evaluateSubtract(args: JsonElement, data: Map<String, Any?>): Double? {
     val argsList = args.asObject()?.values?.toList() ?: return null
     if (argsList.isEmpty()) return null
 
@@ -202,10 +172,7 @@ open class JsonLogicEvaluator {
     }
   }
 
-  private fun evaluateMultiply(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Double? {
+  private fun evaluateMultiply(args: JsonElement, data: Map<String, Any?>): Double? {
     val argsList = args.asObject()?.values?.toList() ?: return null
     return argsList.fold(1.0) { acc, arg ->
       val value = (evaluateNode(arg, data) as? Number)?.toDouble() ?: 1.0
@@ -213,10 +180,7 @@ open class JsonLogicEvaluator {
     }
   }
 
-  private fun evaluateDivide(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Double? {
+  private fun evaluateDivide(args: JsonElement, data: Map<String, Any?>): Double? {
     val argsList = args.asObject()?.values?.toList() ?: return null
     if (argsList.size < 2) return null
 
@@ -227,10 +191,7 @@ open class JsonLogicEvaluator {
     return numerator / denominator
   }
 
-  private fun evaluateModulo(
-    args: JsonElement,
-    data: Map<String, Any?>,
-  ): Double? {
+  private fun evaluateModulo(args: JsonElement, data: Map<String, Any?>): Double? {
     val argsList = args.asObject()?.values?.toList() ?: return null
     if (argsList.size < 2) return null
 

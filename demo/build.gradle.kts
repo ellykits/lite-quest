@@ -43,17 +43,12 @@ kotlin {
     binaries.executable()
   }
 
-  listOf(
-      iosX64(),
-      iosArm64(),
-      iosSimulatorArm64(),
-    )
-    .forEach { iosTarget ->
-      iosTarget.binaries.framework {
-        baseName = "LiteQuestDemo"
-        isStatic = true
-      }
+  listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
+    iosTarget.binaries.framework {
+      baseName = "LiteQuestDemo"
+      isStatic = true
     }
+  }
 
   sourceSets {
     val desktopMain by getting

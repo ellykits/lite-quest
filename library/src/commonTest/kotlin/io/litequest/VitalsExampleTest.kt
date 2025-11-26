@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest
 
 import io.litequest.engine.LiteQuestEvaluator
@@ -32,10 +47,7 @@ class VitalsExampleTest {
       translations =
         Translations(
           defaultLocale = "en",
-          sources =
-            mapOf(
-              "en" to "https://example.com/translations/vitals/en.json",
-            ),
+          sources = mapOf("en" to "https://example.com/translations/vitals/en.json"),
         ),
       calculatedValues =
         listOf(
@@ -107,7 +119,7 @@ class VitalsExampleTest {
                   },
                 )
               },
-          ),
+          )
         ),
       extractionTemplate =
         buildJsonObject {
@@ -201,7 +213,7 @@ class VitalsExampleTest {
                               },
                             )
                           },
-                      ),
+                      )
                     ),
                 ),
                 Item(
@@ -227,11 +239,7 @@ class VitalsExampleTest {
                 ),
               ),
           ),
-          Item(
-            linkId = "has-symptoms",
-            type = ItemType.BOOLEAN,
-            text = "vitals.symptoms.check",
-          ),
+          Item(linkId = "has-symptoms", type = ItemType.BOOLEAN, text = "vitals.symptoms.check"),
           Item(
             linkId = "symptoms-list",
             type = ItemType.TEXT,
@@ -266,16 +274,10 @@ class VitalsExampleTest {
               linkId = "vitals-group",
               items =
                 listOf(
-                  ResponseItem(
-                    linkId = "weight-kg",
-                    answers = listOf(Answer(JsonPrimitive(80.5))),
-                  ),
-                  ResponseItem(
-                    linkId = "height-m",
-                    answers = listOf(Answer(JsonPrimitive(1.8))),
-                  ),
+                  ResponseItem(linkId = "weight-kg", answers = listOf(Answer(JsonPrimitive(80.5)))),
+                  ResponseItem(linkId = "height-m", answers = listOf(Answer(JsonPrimitive(1.8)))),
                 ),
-            ),
+            )
           ),
       )
 
@@ -297,10 +299,7 @@ class VitalsExampleTest {
         authored = "2025-10-26T10:00:00Z",
         items =
           listOf(
-            ResponseItem(
-              linkId = "has-symptoms",
-              answers = listOf(Answer(JsonPrimitive(false))),
-            ),
+            ResponseItem(linkId = "has-symptoms", answers = listOf(Answer(JsonPrimitive(false))))
           ),
       )
 
@@ -316,10 +315,7 @@ class VitalsExampleTest {
         authored = "2025-10-26T10:00:00Z",
         items =
           listOf(
-            ResponseItem(
-              linkId = "has-symptoms",
-              answers = listOf(Answer(JsonPrimitive(true))),
-            ),
+            ResponseItem(linkId = "has-symptoms", answers = listOf(Answer(JsonPrimitive(true))))
           ),
       )
 
@@ -348,12 +344,9 @@ class VitalsExampleTest {
                     linkId = "weight-kg",
                     answers = listOf(Answer(JsonPrimitive(350.0))),
                   ),
-                  ResponseItem(
-                    linkId = "height-m",
-                    answers = listOf(Answer(JsonPrimitive(1.8))),
-                  ),
+                  ResponseItem(linkId = "height-m", answers = listOf(Answer(JsonPrimitive(1.8)))),
                 ),
-            ),
+            )
           ),
       )
 
@@ -378,20 +371,11 @@ class VitalsExampleTest {
               linkId = "vitals-group",
               items =
                 listOf(
-                  ResponseItem(
-                    linkId = "weight-kg",
-                    answers = listOf(Answer(JsonPrimitive(80.5))),
-                  ),
-                  ResponseItem(
-                    linkId = "height-m",
-                    answers = listOf(Answer(JsonPrimitive(1.8))),
-                  ),
+                  ResponseItem(linkId = "weight-kg", answers = listOf(Answer(JsonPrimitive(80.5)))),
+                  ResponseItem(linkId = "height-m", answers = listOf(Answer(JsonPrimitive(1.8)))),
                 ),
             ),
-            ResponseItem(
-              linkId = "has-symptoms",
-              answers = listOf(Answer(JsonPrimitive(false))),
-            ),
+            ResponseItem(linkId = "has-symptoms", answers = listOf(Answer(JsonPrimitive(false)))),
           ),
       )
 
@@ -445,8 +429,8 @@ class VitalsExampleTest {
                       required = true,
                     ),
                   ),
-              ),
-            ),
+              )
+            )
       )
 
     val manager =
@@ -460,13 +444,13 @@ class VitalsExampleTest {
         buildJsonObject {
           put("medication-name", JsonPrimitive("Aspirin"))
           put("medication-dosage", JsonPrimitive("100mg"))
-        },
+        }
       )
       add(
         buildJsonObject {
           put("medication-name", JsonPrimitive("Ibuprofen"))
           put("medication-dosage", JsonPrimitive("200mg"))
-        },
+        }
       )
     }
 

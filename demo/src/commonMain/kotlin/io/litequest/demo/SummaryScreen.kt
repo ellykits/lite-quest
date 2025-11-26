@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest.demo
 
 import androidx.compose.foundation.layout.Column
@@ -30,10 +45,7 @@ import io.litequest.ui.screen.QuestionnaireScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SummaryScreen(
-  onDismiss: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
+fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
   var selectedTab by remember { mutableIntStateOf(0) }
   val tabs = listOf("Single Page", "Multi-Page")
 
@@ -63,13 +75,10 @@ fun SummaryScreen(
             onClick = onDismiss,
             colors =
               androidx.compose.material3.IconButtonDefaults.iconButtonColors(
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
               ),
           ) {
-            Icon(
-              imageVector = Icons.Default.Close,
-              contentDescription = "Close",
-            )
+            Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
           }
         },
         colors =
@@ -82,9 +91,7 @@ fun SummaryScreen(
     containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
     modifier = modifier,
   ) { padding ->
-    Column(
-      modifier = Modifier.fillMaxSize().padding(padding),
-    ) {
+    Column(modifier = Modifier.fillMaxSize().padding(padding)) {
       SecondaryTabRow(
         selectedTabIndex = selectedTab,
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -94,12 +101,7 @@ fun SummaryScreen(
           Tab(
             selected = selectedTab == index,
             onClick = { selectedTab = index },
-            text = {
-              Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-              )
-            },
+            text = { Text(text = title, style = MaterialTheme.typography.titleMedium) },
           )
         }
       }

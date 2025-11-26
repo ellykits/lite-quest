@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest.demo
 
 import androidx.compose.foundation.clickable
@@ -63,10 +78,7 @@ import kotlinx.coroutines.launch
 fun App() {
   MaterialTheme(colorScheme = if (isSystemInDarkTheme()) DarkColorScheme else LightColorScheme) {
     val navController = rememberNavController()
-    NavHost(
-      navController = navController,
-      startDestination = Route.ModeSelection,
-    ) {
+    NavHost(navController = navController, startDestination = Route.ModeSelection) {
       composable<Route.ModeSelection> {
         ModeSelectionScreen(
           onModeSelected = { mode ->
@@ -75,7 +87,7 @@ fun App() {
               "pagination" -> navController.navigate(Route.PaginationMode)
               "summary" -> navController.navigate(Route.Summary)
             }
-          },
+          }
         )
       }
 
@@ -94,10 +106,7 @@ fun App() {
           onModeChange = { newMode -> mode = newMode },
           onDismiss = { navController.popBackStack() },
         )
-        SubmissionHandler(
-          submittedJson = submittedJson,
-          onDismiss = { viewModel.resetForm() },
-        )
+        SubmissionHandler(submittedJson = submittedJson, onDismiss = { viewModel.resetForm() })
       }
 
       composable<Route.PaginationMode> {
@@ -112,17 +121,10 @@ fun App() {
           onSubmit = { viewModel.submit() },
           onDismiss = { navController.popBackStack() },
         )
-        SubmissionHandler(
-          submittedJson = submittedJson,
-          onDismiss = { viewModel.resetForm() },
-        )
+        SubmissionHandler(submittedJson = submittedJson, onDismiss = { viewModel.resetForm() })
       }
 
-      composable<Route.Summary> {
-        SummaryScreen(
-          onDismiss = { navController.popBackStack() },
-        )
-      }
+      composable<Route.Summary> { SummaryScreen(onDismiss = { navController.popBackStack() }) }
     }
   }
 }
@@ -204,7 +206,7 @@ fun ModeSelectionScreen(onModeSelected: (String) -> Unit) {
             onClick = {
               when (option.id) {
                 "components",
-                "showcase", -> {
+                "showcase" -> {
                   coroutineScope.launch { snackbarHostState.showSnackbar("Coming Soon! 🚀") }
                 }
                 else -> onModeSelected(option.id)
@@ -235,13 +237,9 @@ fun ModeCard(
             MaterialTheme.colorScheme.primaryContainer
           } else {
             MaterialTheme.colorScheme.surfaceContainerHigh
-          },
+          }
       ),
-    elevation =
-      CardDefaults.cardElevation(
-        defaultElevation = 2.dp,
-        pressedElevation = 6.dp,
-      ),
+    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp, pressedElevation = 6.dp),
     shape = MaterialTheme.shapes.large,
   ) {
     Row(
@@ -261,10 +259,7 @@ fun ModeCard(
           },
       )
 
-      Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-      ) {
+      Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
           text = title,
           style = MaterialTheme.typography.titleMedium,
@@ -294,10 +289,7 @@ fun ModeCard(
 }
 
 @Composable
-fun SubmissionHandler(
-  submittedJson: String?,
-  onDismiss: () -> Unit,
-) {
+fun SubmissionHandler(submittedJson: String?, onDismiss: () -> Unit) {
   SubmissionResultDialog(
     showDialog = submittedJson != null,
     jsonResponse = submittedJson ?: "",
@@ -321,25 +313,22 @@ fun SubmissionResultDialog(
           usePlatformDefaultWidth = false,
         ),
     ) {
-      Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-      ) {
+      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Surface(
           modifier =
             Modifier.fillMaxSize().clickable(
               interactionSource =
                 remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
               indication = null,
-            ) { /* Prevent dismiss when clicking on dialog */},
+            ) {
+              /* Prevent dismiss when clicking on dialog */
+            },
           shape = RectangleShape,
           color = MaterialTheme.colorScheme.surface,
           shadowElevation = 0.dp,
           tonalElevation = 0.dp,
         ) {
-          Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-          ) {
+          Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
             // Header with title and close button
             Row(
               modifier = Modifier.fillMaxWidth(),
@@ -385,10 +374,7 @@ fun SubmissionResultDialog(
               modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
               verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-              HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                thickness = 1.dp,
-              )
+              HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
 
               Text(
                 text = "Response Data",
