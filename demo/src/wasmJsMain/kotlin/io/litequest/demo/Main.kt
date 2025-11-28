@@ -13,8 +13,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.litequest.model
+package io.litequest.demo
 
-import kotlinx.serialization.Serializable
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.window.ComposeViewport
+import kotlinx.browser.document
 
-@Serializable data class Translations(val defaultLocale: String, val sources: Map<String, String>)
+@OptIn(ExperimentalComposeUiApi::class)
+fun main() {
+  ComposeViewport(document.body!!) { App() }
+}

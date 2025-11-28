@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest.ui.summary
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -64,10 +79,7 @@ fun SummaryPage(
         Card(
           modifier = Modifier.fillMaxWidth(),
           elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-          colors =
-            CardDefaults.cardColors(
-              containerColor = MaterialTheme.colorScheme.surface,
-            ),
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
           shape = MaterialTheme.shapes.large,
         ) {
           Column(
@@ -75,10 +87,7 @@ fun SummaryPage(
             verticalArrangement = Arrangement.spacedBy(16.dp),
           ) {
             state.questionnaire.items.forEach { item ->
-              SummaryItem(
-                item = item,
-                response = state.response,
-              )
+              SummaryItem(item = item, response = state.response)
             }
           }
         }
@@ -98,15 +107,10 @@ private fun PageCard(
   Card(
     modifier = modifier.fillMaxWidth(),
     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surface,
-      ),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     shape = MaterialTheme.shapes.large,
   ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(20.dp),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
       Row(
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth(),
@@ -148,26 +152,15 @@ private fun PageCard(
       HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
       Spacer(Modifier.height(16.dp))
 
-      Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-      ) {
-        items.forEach { item ->
-          SummaryItem(
-            item = item,
-            response = response,
-          )
-        }
+      Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        items.forEach { item -> SummaryItem(item = item, response = response) }
       }
     }
   }
 }
 
 @Composable
-private fun SummaryItem(
-  item: Item,
-  response: QuestionnaireResponse,
-  level: Int = 0,
-) {
+private fun SummaryItem(item: Item, response: QuestionnaireResponse, level: Int = 0) {
   val responseItem = response.items.find { it.linkId == item.linkId }
   val value = responseItem?.answers?.firstOrNull()?.value
 
@@ -194,7 +187,7 @@ private fun SummaryItem(
                 modifier = Modifier.fillMaxWidth(),
                 colors =
                   CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                   ),
               ) {
                 Column(
@@ -237,11 +230,7 @@ private fun SummaryItem(
         }
 
         item.items.forEach { childItem ->
-          SummaryItem(
-            item = childItem,
-            response = response,
-            level = level + 1,
-          )
+          SummaryItem(item = childItem, response = response, level = level + 1)
         }
       }
     }
@@ -249,24 +238,14 @@ private fun SummaryItem(
       /* Not necessary */
     }
     value != null -> {
-      SummaryFieldItem(
-        label = item.text,
-        value = value.jsonPrimitive.content,
-      )
+      SummaryFieldItem(label = item.text, value = value.jsonPrimitive.content)
     }
   }
 }
 
 @Composable
-private fun SummaryFieldItem(
-  label: String,
-  value: String,
-  modifier: Modifier = Modifier,
-) {
-  Column(
-    modifier = modifier.fillMaxWidth(),
-    verticalArrangement = Arrangement.spacedBy(4.dp),
-  ) {
+private fun SummaryFieldItem(label: String, value: String, modifier: Modifier = Modifier) {
+  Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
     Text(
       text = label,
       style = MaterialTheme.typography.bodySmall,

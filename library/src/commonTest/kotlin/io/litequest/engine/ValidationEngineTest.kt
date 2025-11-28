@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest.engine
 
 import io.litequest.model.Answer
@@ -19,14 +34,7 @@ class ValidationEngineTest {
   @Test
   fun testRequiredFieldMissing() {
     val items =
-      listOf(
-        Item(
-          linkId = "name",
-          type = ItemType.STRING,
-          text = "Name",
-          required = true,
-        ),
-      )
+      listOf(Item(linkId = "name", type = ItemType.STRING, text = "Name", required = true))
     val responseItems = emptyList<ResponseItem>()
     val dataContext = emptyMap<String, Any?>()
 
@@ -40,21 +48,9 @@ class ValidationEngineTest {
   @Test
   fun testRequiredFieldPresent() {
     val items =
-      listOf(
-        Item(
-          linkId = "name",
-          type = ItemType.STRING,
-          text = "Name",
-          required = true,
-        ),
-      )
+      listOf(Item(linkId = "name", type = ItemType.STRING, text = "Name", required = true))
     val responseItems =
-      listOf(
-        ResponseItem(
-          linkId = "name",
-          answers = listOf(Answer(JsonPrimitive("John"))),
-        ),
-      )
+      listOf(ResponseItem(linkId = "name", answers = listOf(Answer(JsonPrimitive("John")))))
     val dataContext = mapOf("name" to "John")
 
     val errors = engine.validateResponse(items, responseItems, dataContext)
@@ -84,17 +80,12 @@ class ValidationEngineTest {
                       },
                     )
                   },
-              ),
+              )
             ),
-        ),
+        )
       )
     val responseItems =
-      listOf(
-        ResponseItem(
-          linkId = "age",
-          answers = listOf(Answer(JsonPrimitive(25))),
-        ),
-      )
+      listOf(ResponseItem(linkId = "age", answers = listOf(Answer(JsonPrimitive(25)))))
     val dataContext = mapOf("age" to 25)
 
     val errors = engine.validateResponse(items, responseItems, dataContext)
@@ -124,17 +115,12 @@ class ValidationEngineTest {
                       },
                     )
                   },
-              ),
+              )
             ),
-        ),
+        )
       )
     val responseItems =
-      listOf(
-        ResponseItem(
-          linkId = "age",
-          answers = listOf(Answer(JsonPrimitive(15))),
-        ),
-      )
+      listOf(ResponseItem(linkId = "age", answers = listOf(Answer(JsonPrimitive(15)))))
     val dataContext = mapOf("age" to 15)
 
     val errors = engine.validateResponse(items, responseItems, dataContext)
@@ -159,17 +145,11 @@ class ValidationEngineTest {
                 type = ItemType.STRING,
                 text = "Nested Field",
                 required = true,
-              ),
+              )
             ),
-        ),
+        )
       )
-    val responseItems =
-      listOf(
-        ResponseItem(
-          linkId = "group1",
-          items = emptyList(),
-        ),
-      )
+    val responseItems = listOf(ResponseItem(linkId = "group1", items = emptyList()))
     val dataContext = emptyMap<String, Any?>()
 
     val errors = engine.validateResponse(items, responseItems, dataContext)
@@ -202,7 +182,7 @@ class ValidationEngineTest {
                 required = true,
               ),
             ),
-        ),
+        )
       )
     val responseItems =
       listOf(
@@ -210,16 +190,10 @@ class ValidationEngineTest {
           linkId = "vitals-group",
           items =
             listOf(
-              ResponseItem(
-                linkId = "weight-kg",
-                answers = listOf(Answer(JsonPrimitive(70.0))),
-              ),
-              ResponseItem(
-                linkId = "height-m",
-                answers = listOf(Answer(JsonPrimitive(1.75))),
-              ),
+              ResponseItem(linkId = "weight-kg", answers = listOf(Answer(JsonPrimitive(70.0)))),
+              ResponseItem(linkId = "height-m", answers = listOf(Answer(JsonPrimitive(1.75)))),
             ),
-        ),
+        )
       )
     val dataContext = mapOf("weight-kg" to 70.0, "height-m" to 1.75)
 
@@ -235,18 +209,8 @@ class ValidationEngineTest {
   fun testMultipleValidationErrors() {
     val items =
       listOf(
-        Item(
-          linkId = "name",
-          type = ItemType.STRING,
-          text = "Name",
-          required = true,
-        ),
-        Item(
-          linkId = "age",
-          type = ItemType.INTEGER,
-          text = "Age",
-          required = true,
-        ),
+        Item(linkId = "name", type = ItemType.STRING, text = "Name", required = true),
+        Item(linkId = "age", type = ItemType.INTEGER, text = "Age", required = true),
       )
     val responseItems = emptyList<ResponseItem>()
     val dataContext = emptyMap<String, Any?>()

@@ -1,3 +1,18 @@
+/*
+* Copyright 2025 LiteQuest Contributors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package io.litequest.ui.widget.group
 
 import androidx.compose.foundation.layout.Arrangement
@@ -66,9 +81,7 @@ class RepeatingGroupWidget(
 
     val jsonArray = buildJsonArray {
       instances.forEach { instance ->
-        add(
-          buildJsonObject { instance.forEach { (key, value) -> put(key, value ?: JsonNull) } },
-        )
+        add(buildJsonObject { instance.forEach { (key, value) -> put(key, value ?: JsonNull) } })
       }
     }
 
@@ -84,10 +97,7 @@ class RepeatingGroupWidget(
     val instances = getGroupInstances()
     var instanceCount by remember { mutableStateOf(instances.size.coerceAtLeast(1)) }
 
-    Column(
-      modifier = Modifier.fillMaxWidth(),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       if (item.text.isNotEmpty()) {
         Text(
           text = item.text,
@@ -129,9 +139,7 @@ class RepeatingGroupWidget(
                   shape = CircleShape,
                   color = MaterialTheme.colorScheme.primary,
                 ) {
-                  Box(
-                    contentAlignment = Alignment.Center,
-                  ) {
+                  Box(contentAlignment = Alignment.Center) {
                     Text(
                       text = "${index + 1}",
                       style = MaterialTheme.typography.labelSmall,
@@ -154,10 +162,7 @@ class RepeatingGroupWidget(
                   modifier = Modifier.height(32.dp),
                   contentPadding = PaddingValues(horizontal = 12.dp),
                 ) {
-                  Text(
-                    "Remove",
-                    style = MaterialTheme.typography.labelSmall,
-                  )
+                  Text("Remove", style = MaterialTheme.typography.labelSmall)
                 }
               }
             }
@@ -174,10 +179,7 @@ class RepeatingGroupWidget(
         }
       }
 
-      Button(
-        onClick = { instanceCount++ },
-        modifier = Modifier.fillMaxWidth(),
-      ) {
+      Button(onClick = { instanceCount++ }, modifier = Modifier.fillMaxWidth()) {
         Text("+ Add ${item.text}")
       }
     }
@@ -190,9 +192,7 @@ class RepeatingGroupWidget(
 
       val jsonArray = buildJsonArray {
         instances.forEach { instance ->
-          add(
-            buildJsonObject { instance.forEach { (key, value) -> put(key, value ?: JsonNull) } },
-          )
+          add(buildJsonObject { instance.forEach { (key, value) -> put(key, value ?: JsonNull) } })
         }
       }
 
