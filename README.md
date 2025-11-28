@@ -6,6 +6,8 @@
 
 A lightweight, FHIR-inspired questionnaire library for Kotlin Multiplatform applications.
 
+## This library is :construction: work in progress and not production ready.
+
 ## Features
 
 ### Core Engine
@@ -42,7 +44,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.litequest:lite-quest:1.0.0-alpha01")
+                implementation("io.litequest:library:1.0.0-alpha01")
             }
         }
     }
