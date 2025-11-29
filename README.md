@@ -1,5 +1,6 @@
 # LiteQuest
 
+![Maven Central Version](https://img.shields.io/maven-central/v/io.github.ellykits.litequest/litequest-library)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-purple.svg)](https://kotlinlang.org)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-green.svg)](https://kotlinlang.org/docs/multiplatform.html)
@@ -44,7 +45,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.ellykits.litequest:library:1.0.0-alpha01")
+                implementation("io.github.ellykits.litequest:litequest-library:1.0.0-alpha02")
             }
         }
     }
