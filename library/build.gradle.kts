@@ -14,7 +14,7 @@ plugins {
 
 group = "io.github.ellykits.litequest"
 
-version = "1.0.0-alpha01"
+version = "1.0.0-alpha02"
 
 kotlin {
   androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
@@ -97,7 +97,7 @@ mavenPublishing {
 
   signAllPublications()
 
-  coordinates(group.toString(), "library", version.toString())
+  coordinates(group.toString(), "litequest-library", version.toString())
 
   pom {
     name = "Lite Quest"
