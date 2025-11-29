@@ -12,7 +12,7 @@ plugins {
   alias(libs.plugins.maven.publish)
 }
 
-group = "io.litequest"
+group = "io.github.ellykits.litequest"
 
 version = "1.0.0-alpha01"
 
@@ -80,7 +80,7 @@ kotlin {
 }
 
 android {
-  namespace = "io.litequest.library"
+  namespace = "io.github.ellykits.litequest.library"
   compileSdk = 36
 
   defaultConfig { minSdk = 24 }

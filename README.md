@@ -44,7 +44,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.litequest:library:1.0.0-alpha01")
+                implementation("io.github.ellykits.litequest:library:1.0.0-alpha01")
             }
         }
     }
