@@ -143,8 +143,12 @@ class QuestionnaireManager(
     val visibleItems = evaluator.getVisibleItems(response)
     val visibleLinkIds = collectVisibleLinkIds(visibleItems)
     val cleanedResponse = clearHiddenItemAnswers(response, visibleLinkIds)
+
+    val previousVisibleLinkIds = collectVisibleLinkIds(_state.value.visibleItems)
+    val visibilityChanged = visibleLinkIds != previousVisibleLinkIds
+
     val calculatedValues =
-      if (changedFields != null) {
+      if (changedFields != null && !visibilityChanged) {
         val currentCalculated = _state.value.calculatedValues
         val incrementalResults =
           evaluator.calculateValuesIncremental(cleanedResponse, changedFields, currentCalculated)

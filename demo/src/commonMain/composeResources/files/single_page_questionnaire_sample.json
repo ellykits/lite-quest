@@ -32,12 +32,10 @@
       "text": "Household Identification",
       "type": "GROUP",
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {
@@ -57,8 +55,11 @@
         },
         {
           "linkId": "waterUsage",
-          "text": "Monthly Water Usage (Liters)",
-          "type": "QUANTITY"
+          "text": "Monthly Water Usage",
+          "type": "QUANTITY",
+          "extension": {
+            "unit": "L"
+          }
         }
       ]
     },
@@ -67,12 +68,10 @@
       "text": "Head of Household Details",
       "type": "GROUP",
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {
@@ -165,12 +164,10 @@
       "text": "Health Metrics (Head)",
       "type": "GROUP",
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {
@@ -229,12 +226,10 @@
       "text": "Documentation & Media",
       "type": "GROUP",
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {
@@ -255,12 +250,10 @@
       "type": "GROUP",
       "repeats": true,
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {

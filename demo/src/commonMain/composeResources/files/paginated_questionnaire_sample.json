@@ -34,12 +34,10 @@
       "description": "Infrastructure and location.",
       "order": 2,
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {
@@ -73,12 +71,10 @@
       "description": "Personal details and identifiers.",
       "order": 3,
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {
@@ -176,12 +172,10 @@
       "description": "Vitals and documentation.",
       "order": 4,
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {
@@ -258,12 +252,10 @@
       "description": "Secondary household members.",
       "order": 5,
       "visibleIf": {
-        "==": {
-          "0": {
-            "var": "consentSection.consentGiven"
-          },
-          "1": true
-        }
+        "==": [
+          {"var": "consentSection.consentGiven"},
+          true
+        ]
       },
       "items": [
         {
