@@ -9,36 +9,7 @@ A lightweight, FHIR-inspired questionnaire library for Kotlin Multiplatform appl
 
 ## This library is :construction: work in progress and not production ready.
 
-## Features
-
-### Core Engine
-
-- ✅ **Reactive State** - StateFlow-based automatic state propagation
-- ✅ **Dynamic Calculations** - JsonLogic expressions for validation, visibility, and computed values
-- ✅ **Type-Safe** - Full Kotlin type safety with kotlinx.serialization
-- ✅ **Cross-Platform** - Single codebase for Android, iOS, Desktop, and Web
-- ✅ **Extensible** - Extend JsonLogicEvaluator for custom evaluation logic
-
-### UI Components
-
-- ✅ **Unified Questionnaire Screen** - Single component for Edit and Summary modes
-- ✅ **Multi-Page Support** - Pagination with progress indicators and navigation
-- ✅ **Rich Widgets** - Text, Decimal, Integer, Boolean, Choice, Date, Time, DateTime, Quantity, Display, Group widgets
-- ✅ **Media Widgets** - Photo (FileKit), Barcode (KScan), Attachment (FileKit)
-- ✅ **Layout Components** - Row, Column, and Box layout containers for visual organization
-- ✅ **Repeating Groups** - Dynamic add/remove of grouped items
-- ✅ **Card-Based Summary** - Beautiful summary view with page organization
-- ✅ **Theme Support** - Light and Dark themes with Material 3 design
-
-### Planned Features
-
-- 🔄 **Multi-language Support** - Remote translation loading with caching
-- 🔄 **Media Widgets** - Photo, Barcode, Location, Signature widgets
-- 🔄 **FHIR Conversion** - Bidirectional FHIR Questionnaire conversion
-
-## Quick Start
-
-### Installation
+## Installation
 
 Add to your `build.gradle.kts`:
 
@@ -54,13 +25,13 @@ kotlin {
 }
 ```
 
-### Basic Usage
+## Usage
+
+### Basic Questionnaire
 
 ```kotlin
 @Composable
-@Suppress("functionName")
 fun MyQuestionnaireScreen() {
-    // Define a questionnaire
     val questionnaire = Questionnaire(
         id = "patient-intake",
         version = "1.0.0",
@@ -81,30 +52,26 @@ fun MyQuestionnaireScreen() {
         )
     )
 
-    // Initialize manager with evaluator
     val evaluator = remember { LiteQuestEvaluator(questionnaire) }
     val manager = remember { QuestionnaireManager(questionnaire, evaluator) }
     val state by manager.state.collectAsState()
-    
-    // Mode switching between Edit and Summary
     var mode by remember { mutableStateOf(QuestionnaireMode.Edit) }
 
-    // Render the questionnaire
     QuestionnaireScreen(
         type = QuestionnaireType.Single(questionnaire),
         state = state,
         mode = mode,
-        onAnswerChange = { linkId, value -> manager.updateAnswer(linkId, value) },
-        onSubmit = { 
-            // Handle form submission
-            println("Form submitted: ${state.response}")
-        },
+        onAnswerChange = { linkId, value, text -> manager.updateAnswer(linkId, value, text) },
+        onSubmit = { println("Form submitted: ${state.response}") },
         onModeChange = { newMode -> mode = newMode },
         onDismiss = { /* Handle dismiss */ }
     )
 }
+```
 
-// For multipage questionnaires
+### Paginated Questionnaires
+
+```kotlin
 val paginatedQuestionnaire = PaginatedQuestionnaire(
     id = "health-survey",
     title = "Health Survey",
@@ -127,239 +94,116 @@ val paginatedQuestionnaire = PaginatedQuestionnaire(
 QuestionnaireScreen(
     type = QuestionnaireType.Paginated(paginatedQuestionnaire),
     state = state,
-    onAnswerChange = { linkId, value -> manager.updateAnswer(linkId, value) },
+    onAnswerChange = { linkId, value, text -> manager.updateAnswer(linkId, value, text) },
     onSubmit = { /* Handle submission */ },
     onDismiss = { /* Handle dismiss */ }
 )
 ```
 
+### JsonLogic Expressions
 
-
-### Widget Types Mapping
-
-| ItemType      | Widget               | Data Type    | Features                                            |
-|---------------|----------------------|--------------|-----------------------------------------------------|
-| STRING        | TextInputWidget      | String       | Single-line text input                              |
-| TEXT          | TextInputWidget      | String       | Multi-line text area                                |
-| BOOLEAN       | BooleanWidget        | Boolean      | Switch/Checkbox toggle                              |
-| DECIMAL       | DecimalInputWidget   | Double       | Numeric keyboard with decimal support               |
-| INTEGER       | IntegerInputWidget   | Int          | Numeric keyboard for whole numbers                  |
-| DATE          | DatePickerWidget     | String (ISO) | Platform-native date selection                      |
-| TIME          | TimePickerWidget     | String (ISO) | Platform-native time selection                      |
-| DATETIME      | DateTimePickerWidget | String (ISO) | Combined date and time selection                    |
-| CHOICE        | ChoiceWidget         | String(s)    | Radio buttons, Dropdowns, or Chips                  |
-| OPEN_CHOICE   | OpenChoiceWidget     | String(s)    | Choice with "Other" free-text option                |
-| DISPLAY       | DisplayWidget        | N/A          | Static text or instructional content                |
-| GROUP         | GroupWidget          | N/A          | logical grouping of items, supports repetition      |
-| QUANTITY      | QuantityWidget       | Object       | Numeric value with associated unit                  |
-| REFERENCE     | ReferenceWidget      | Object       | Searchable reference to external entities           |
-| BARCODE       | BarcodeScannerWidget | String       | Integrated camera barcode scanning (KScan)          |
-| PHOTO         | PhotoSelectorWidget  | File/Base64  | Image capture or gallery selection (FileKit)        |
-| ATTACHMENT    | AttachmentWidget     | File/Base64  | Generic file attachment support (FileKit)           |
-| LAYOUT_ROW    | RowLayoutWidget      | N/A          | Horizontal arrangement of child widgets             |
-| LAYOUT_COLUMN | ColumnLayoutWidget   | N/A          | Vertical arrangement of child widgets               |
-| LAYOUT_BOX    | BoxLayoutWidget      | N/A          | Stacked or layered arrangement of child widgets     |
-
----
-
-## Pagination System
-
-Multipage questionnaires are supported through `PaginatedQuestionnaire` which organizes items into logical pages. The `PageNavigator` handles page transitions with validation, while the UI displays progress indicators and Previous/Next/Submit actions based on the current page.
-
----
-
-## Theme Support
-
-The application supports both **Light** and **Dark** themes using Material 3 design system. Theme selection adapts to the system preference automatically, ensuring consistent and accessible UI across all form components.
-
----
-
-## Extension & Customization
-
-### Custom Widget Example
+Visibility conditions (skip logic):
 
 ```kotlin
-// 1. Create custom widget
+Item(
+    linkId = "symptoms",
+    text = "Please describe your symptoms",
+    visibleIf = buildJsonObject {
+        put("==", buildJsonObject {
+            put("0", buildJsonObject { put("var", "has-symptoms") })
+            put("1", true)
+        })
+    }
+)
+```
+
+Calculated expressions:
+
+```kotlin
+// BMI calculation
+Item(
+    linkId = "bmi",
+    type = ItemType.DECIMAL,
+    text = "Body Mass Index",
+    readOnly = true,
+    calculatedExpression = buildJsonObject {
+        put("/", buildJsonArray {
+            add(buildJsonObject { put("var", "weight") })
+            add(buildJsonObject {
+                put("*", buildJsonArray {
+                    add(buildJsonObject { put("var", "height") })
+                    add(buildJsonObject { put("var", "height") })
+                })
+            })
+        })
+    }
+)
+
+// String concatenation
+Item(
+    linkId = "fullName",
+    type = ItemType.STRING,
+    text = "Full Name",
+    readOnly = true,
+    calculatedExpression = buildJsonObject {
+        put("cat", buildJsonArray {
+            add(buildJsonObject { put("var", "firstName") })
+            add(JsonPrimitive(" "))
+            add(buildJsonObject { put("var", "lastName") })
+        })
+    }
+)
+```
+
+### Custom Widgets
+
+```kotlin
 class RatingWidget(override val item: Item) : ItemWidget {
     @Composable
-    override fun Render(value: JsonElement?, onValueChange: (JsonElement) -> Unit, 
-                       isError: Boolean, config: WidgetConfig) {
+    override fun Render(
+        value: JsonElement?,
+        onValueChange: (JsonElement, String?) -> Unit,
+        errorMessage: String?
+    ) {
         val rating = value?.jsonPrimitive?.intOrNull ?: 0
-        Row {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             repeat(5) { index ->
                 Icon(
-                    if (index < rating) Icons.Filled.Star else Icons.Outlined.Star,
-                    modifier = Modifier.clickable { onValueChange(JsonPrimitive(index + 1)) },
-                    contentDescription = null
+                    imageVector = if (index < rating) Icons.Filled.Star else Icons.Outlined.Star,
+                    contentDescription = "Star ${index + 1}",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { onValueChange(JsonPrimitive(index + 1), null) },
+                    tint = if (index < rating) Color(0xFFFFB300) else Color.Gray
                 )
             }
         }
     }
 }
 
-// 2. Register it
+// Register custom widget
 val factory = DefaultWidgetFactory().apply {
     registerWidget(ItemType.RATING) { RatingWidget(it) }
 }
 ```
 
-### Override Existing Widget
+### Custom JsonLogic Evaluator
 
 ```kotlin
-class CustomTextWidget(override val item: Item) : ItemWidget {
-    @Composable
-    override fun Render( value: JsonElement?,
-                         onValueChange: (JsonElement) -> Unit,
-                         errorMessage: String? = null) {
-        // Custom implementation
-    }
-}
-
-val factory = DefaultWidgetFactory().apply {
-    registerWidget(ItemType.TEXT) { CustomTextWidget(it) }
-}
-```
-
-### Custom Layout Strategy
-
-```kotlin
-class MasonryLayoutStrategy : LayoutStrategy {
-    @Composable
-    override fun Layout(items: List<Item>, widgets: Map<String, ItemWidget>,
-                       config: LayoutConfig) {
-        // Staggered grid implementation
-    }
-}
-
-val config = RenderConfig(layout = LayoutConfig(strategy = MasonryLayoutStrategy()))
-```
-
----
-
-## Other Usage Examples
-
-### Edit and Summary Modes
-
-```kotlin
-// Using the unified QuestionnaireScreen with mode switching
-var mode by remember { mutableStateOf(QuestionnaireMode.Edit) }
-
-QuestionnaireScreen(
-    type = QuestionnaireType.Single(questionnaire),
-    state = questionnaireState,
-    mode = mode,
-    onAnswerChange = { linkId, value -> viewModel.updateAnswer(linkId, value) },
-    onSubmit = { viewModel.submit() },
-    onModeChange = { newMode -> mode = newMode },
-    onDismiss = { /* handle dismiss */ }
-)
-
-// For paginated questionnaires
-QuestionnaireScreen(
-    type = QuestionnaireType.Paginated(paginatedQuestionnaire),
-    state = questionnaireState,
-    mode = QuestionnaireMode.Edit,
-    onAnswerChange = { linkId, value -> viewModel.updateAnswer(linkId, value) },
-    onSubmit = { viewModel.submit() },
-    onDismiss = { /* handle dismiss */ }
-)
-```
-
-### Custom Evaluation Logic
-
-```kotlin
-// Extend JsonLogicEvaluator to provide custom evaluation logic
 class CustomJsonLogicEvaluator : JsonLogicEvaluator() {
-    
-    override fun evaluate(
-        logic: JsonElement,
-        data: Map<String, Any?>
-    ): JsonElement {
-        // Add custom operators or override existing logic
-        // For example, add a custom "contains" operator
+    override fun evaluate(logic: JsonElement, data: Map<String, Any?>): Any? {
+        // Add custom operators
         if (logic is JsonObject && logic.containsKey("custom_contains")) {
-             TODO("Your custom logic here")
+            // Your custom logic here
         }
-        
-        // Delegate to parent for standard JsonLogic operations
         return super.evaluate(logic, data)
     }
 }
 
-// Pass custom evaluator to LiteQuestEvaluator
-val customJsonLogicEvaluator = CustomJsonLogicEvaluator()
-val evaluator = LiteQuestEvaluator(questionnaire, customJsonLogicEvaluator)
+val customEvaluator = CustomJsonLogicEvaluator()
+val evaluator = LiteQuestEvaluator(questionnaire, customEvaluator)
 val manager = QuestionnaireManager(questionnaire, evaluator)
 ```
-
-### Custom Widget
-
-```kotlin
-// Create a custom widget for a specific item type
-@Composable
-@Suppress("functionName")
-fun RatingWidget(
-  item: Item,
-  value: JsonElement?,
-  onValueChange: (JsonElement) -> Unit,
-  isError: Boolean
-) {
-  val rating = value?.jsonPrimitive?.intOrNull ?: 0
-
-  Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-    repeat(5) { index ->
-      Icon(
-        imageVector = if (index < rating) Icons.Filled.Star else Icons.Outlined.Star,
-        contentDescription = "Star ${index + 1}",
-        modifier = Modifier
-          .size(32.dp)
-          .clickable { onValueChange(JsonPrimitive(index + 1)) },
-        tint = if (index < rating) Color(0xFFFFB300) else Color.Gray
-      )
-    }
-  }
-}
-
-// Use custom widget in FormRenderer by checking item type or extension
-when (item.type) {
-  ItemType.INTEGER -> {
-    if (item.linkId == "satisfaction-rating") {
-      RatingWidget(
-        item = item,
-        value = state.response.items.find { it.linkId == item.linkId }?.answer,
-        onValueChange = { value -> onAnswerChange(item.linkId, value) },
-        isError = false
-      )
-    } else {
-      // Default integer widget
-    }
-  }
-  // ... other types
-}
-```
-
----
-
-
-## Running the Demo
-
-The project includes a Compose Multiplatform demo app showcasing library features.
-
-### Desktop
-
-```bash
-./gradlew :demo:run
-```
-
-### Android
-
-```bash
-./gradlew :demo:installDebug
-```
-
-### iOS
-
-Open `iosApp/iosApp.xcodeproj` in Xcode and run.
 
 ## Architecture
 
@@ -379,52 +223,41 @@ library/
 └── util/         # Helper utilities
 ```
 
-
 ## Key Concepts
 
 ### JsonLogic Expressions
 
-All dynamic behavior is expressed using JsonLogic, a JSON-based expression language:
+LiteQuest uses a **custom Kotlin Multiplatform implementation of [JsonLogic](https://jsonlogic.com/)** for all dynamic behavior. This pure-Kotlin evaluator works across all platforms (Android, iOS, Desktop, Web) without external dependencies.
 
-```kotlin
-// Visibility condition
-Item(
-    linkId = "symptoms",
-    text = "Please describe your symptoms",
-    visibleIf = buildJsonObject {
-        put("==", buildJsonObject {
-            put("0", buildJsonObject { put("var", "has-symptoms") })
-            put("1", true)
-        })
-    }
-)
+**Supported Operators:**
 
-// Calculated value
-CalculatedValue(
-    name = "bmi",
-    expression = buildJsonObject {
-        put("/", buildJsonObject {
-            put("0", buildJsonObject { put("var", "weight") })
-            put("1", buildJsonObject {
-                put("*", buildJsonObject {
-                    put("0", buildJsonObject { put("var", "height") })
-                    put("1", buildJsonObject { put("var", "height") })
-                })
-            })
-        })
-    }
-)
+| Operator | Category    | Description                                                         | Example                                                         |
+|----------|-------------|---------------------------------------------------------------------|-----------------------------------------------------------------|
+| `var`    | Variables   | Access form field values with dot notation support for nested paths | `{"var": "firstName"}` or `{"var": "patient.demographics.age"}` |
+| `==`     | Comparison  | Equality check - returns true if values are equal                   | `{"==": [{"var": "age"}, 18]}`                                  |
+| `!=`     | Comparison  | Inequality check - returns true if values are not equal             | `{"!=": [{"var": "status"}, "active"]}`                         |
+| `>`      | Comparison  | Greater than - numeric comparison                                   | `{">": [{"var": "age"}, 18]}`                                   |
+| `>=`     | Comparison  | Greater than or equal to - numeric comparison                       | `{">=": [{"var": "score"}, 70]}`                                |
+| `<`      | Comparison  | Less than - numeric comparison                                      | `{"<": [{"var": "temperature"}, 38]}`                           |
+| `<=`     | Comparison  | Less than or equal to - numeric comparison                          | `{"<=": [{"var": "bmi"}, 25]}`                                  |
+| `and`    | Logic       | Logical AND - returns true if all conditions are true               | `{"and": [{"var": "isAdult"}, {"var": "hasConsent"}]}`          |
+| `or`     | Logic       | Logical OR - returns true if any condition is true                  | `{"or": [{"var": "isEmergency"}, {"var": "hasPermission"}]}`    |
+| `!`      | Logic       | Logical NOT - negates a boolean value                               | `{"!": {"var": "isDisabled"}}`                                  |
+| `!!`     | Logic       | Truthy check - returns true if value exists and is truthy           | `{"!!": {"var": "optionalField"}}`                              |
+| `if`     | Conditional | Ternary conditional - if/then/else logic                            | `{"if": [{"var": "isAdult"}, "adult", "minor"]}`                |
+| `+`      | Arithmetic  | Addition - sums numeric values                                      | `{"+": [{"var": "score1"}, {"var": "score2"}]}`                 |
+| `-`      | Arithmetic  | Subtraction - subtracts second value from first                     | `{"-": [{"var": "total"}, {"var": "discount"}]}`                |
+| `*`      | Arithmetic  | Multiplication - multiplies numeric values                          | `{"*": [{"var": "price"}, {"var": "quantity"}]}`                |
+| `/`      | Arithmetic  | Division - divides first value by second                            | `{"/": [{"var": "weight"}, {"var": "height"}]}`                 |
+| `%`      | Arithmetic  | Modulo - returns remainder of division                              | `{"%": [{"var": "number"}, 2]}`                                 |
+| `cat`    | String      | Concatenation - joins strings together                              | `{"cat": [{"var": "firstName"}, " ", {"var": "lastName"}]}`     |
 
-// Dynamic Form References (Autocomplete search against Host App's domain)
-Item(
-    linkId = "supplier_id",
-    type = ItemType.REFERENCE,
-    text = "Select Existing Supplier",
-    extension = buildJsonObject {
-        put("referenceType", JsonPrimitive("Supplier"))
-    }
-)
-```
+**Implementation:**
+
+- `JsonLogicEvaluator.kt` - Core evaluator engine
+- `VisibilityEngine.kt` - Skip logic using JsonLogic
+- `CalculatedValuesEngine.kt` - Computed fields using JsonLogic
+- `ValidationEngine.kt` - Custom validation rules using JsonLogic
 
 ### Reactive State Management
 
@@ -434,39 +267,50 @@ State updates propagate automatically:
 Answer Change → Recalculate Values → Update Visibility → Revalidate → Emit New State
 ```
 
-### Multi-language Support
+### Widget Types
 
-Decouple translations from questionnaire definitions:
+| ItemType      | Widget               | Data Type    | Features                                            |
+|---------------|----------------------|--------------|-----------------------------------------------------|
+| STRING        | TextInputWidget      | String       | Single-line text input                              |
+| TEXT          | TextInputWidget      | String       | Multi-line text area                                |
+| BOOLEAN       | BooleanWidget        | Boolean      | Switch/Checkbox toggle                              |
+| DECIMAL       | DecimalInputWidget   | Double       | Numeric keyboard with decimal support               |
+| INTEGER       | IntegerInputWidget   | Int          | Numeric keyboard for whole numbers                  |
+| DATE          | DatePickerWidget     | String (ISO) | Platform-native date selection                      |
+| TIME          | TimePickerWidget     | String (ISO) | Platform-native time selection                      |
+| DATETIME      | DateTimePickerWidget | String (ISO) | Combined date and time selection                    |
+| CHOICE        | ChoiceWidget         | String(s)    | Radio buttons, Dropdowns, or Chips                  |
+| OPEN_CHOICE   | OpenChoiceWidget     | String(s)    | Choice with "Other" free-text option                |
+| DISPLAY       | DisplayWidget        | N/A          | Static text or instructional content                |
+| GROUP         | GroupWidget          | N/A          | Logical grouping of items, supports repetition      |
+| QUANTITY      | QuantityWidget       | Object       | Numeric value with associated unit                  |
+| REFERENCE     | ReferenceWidget      | Object       | Searchable reference to external entities           |
+| BARCODE       | BarcodeScannerWidget | String       | Integrated camera barcode scanning (KScan)          |
+| PHOTO         | PhotoSelectorWidget  | File/Base64  | Image capture or gallery selection (FileKit)        |
+| ATTACHMENT    | AttachmentWidget     | File/Base64  | Generic file attachment support (FileKit)           |
+| LAYOUT_ROW    | RowLayoutWidget      | N/A          | Horizontal arrangement of child widgets             |
+| LAYOUT_COLUMN | ColumnLayoutWidget   | N/A          | Vertical arrangement of child widgets               |
+| LAYOUT_BOX    | BoxLayoutWidget      | N/A          | Stacked or layered arrangement of child widgets     |
 
-```kotlin
-val translationManager = TranslationManager(
-    loader = TranslationLoader(),
-    cache = TranslationCache()
-)
+## Running the Demo
 
-// Load translations on demand
-translationManager.loadTranslation("en", "https://example.com/translations/en.json")
+### Desktop
+
+```bash
+./gradlew :demo:run
 ```
+
+### Android
+
+```bash
+./gradlew :demo:installDebug
+```
+
+### iOS
+
+Open `iosApp/iosApp.xcodeproj` in Xcode and run.
 
 ## Development
-
-### Project Structure
-
-```txt
-lite-quest/
-├── library/          # Core KMP library
-│   ├── src/
-│   │   ├── commonMain/
-│   │   ├── commonTest/
-│   │   ├── androidMain/
-│   │   ├── desktopMain/
-│   │   ├── iosMain/
-│   │   └── wasmJsMain/
-│   └── build.gradle.kts
-├── demo/             # Compose Multiplatform demo app
-│   └── src/
-└── settings.gradle.kts
-```
 
 ### Running Tests
 
@@ -489,6 +333,19 @@ lite-quest/
 ./gradlew :demo:assembleDebug
 ```
 
+## Platform Support
+
+| Platform   | Status          | Min Version          |
+|------------|-----------------|----------------------|
+| Android    | ✅ Stable        | API 24 (Android 7.0) |
+| iOS        | ✅ Stable        | iOS 14.0+            |
+| Desktop    | ✅ Stable        | JVM 11+              |
+| Web (WASM) | ⚠️ Experimental | Modern browsers      |
+
+## Documentation
+
+- [LiteQuest Technical Specification v1.0.0](docs/spec/LITEQUEST_TECHNICAL_SPECIFICATION_V1_0_0.md) - Core engine architecture and JsonLogic evaluation
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -506,49 +363,6 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 - Use meaningful names
 - Keep functions small and focused
 - Write tests for new features
-
-## Platform Support
-
-| Platform   | Status          | Min Version          |
-|------------|-----------------|----------------------|
-| Android    | ✅ Stable        | API 24 (Android 7.0) |
-| iOS        | ✅ Stable        | iOS 14.0+            |
-| Desktop    | ✅ Stable        | JVM 11+              |
-| Web (WASM) | ⚠️ Experimental | Modern browsers      |
-
-## Dependencies
-
-- Kotlin 2.0.21+
-- kotlinx-serialization 1.7.3+
-- kotlinx-coroutines 1.9.0+
-- kotlinx-datetime 0.6.1+
-- ktor-client 3.0.1+
-
-See [gradle/libs.versions.toml](gradle/libs.versions.toml) for complete dependency list.
-
-## Documentation
-
-- [LiteQuest Technical Specification v1.0.0](docs/spec/LITEQUEST_TECHNICAL_SPECIFICATION_V1_0_0.md) - Core engine architecture and JsonLogic evaluation
-- [Demo App](demo) - Working examples for all platforms
-
-## Community
-
-- 💬 [Discussions](https://github.com/litequest/lite-quest/discussions) - Ask questions and share ideas
-- 🐛 [Issues](https://github.com/litequest/lite-quest/issues) - Report bugs and request features
-- 📧 [Mailing List](mailto:dev@litequest.io) - Development announcements
-
-## Roadmap
-
-### Version 1.1
-
-- Multi-language support with remote translation loading
-- Advanced validation rules with custom validators
-
-### Version 2.0
-
-- Visual form builder/editor
-- Form versioning and migration tools
-- Advanced conditional logic builder
 
 ## License
 

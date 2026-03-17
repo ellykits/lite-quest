@@ -25,6 +25,7 @@ import io.litequest.ui.layout.VerticalLayoutStrategy
 import io.litequest.ui.widget.DefaultWidgetFactory
 import io.litequest.ui.widget.WidgetFactory
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 
 @Composable
 fun FormRenderer(
@@ -65,6 +66,17 @@ fun FormRenderer(
   }
 
   flattenResponseItems(state.response.items)
+
+  state.calculatedValues.forEach { (linkId, value) ->
+    values[linkId] =
+      when (value) {
+        null -> null
+        is Number -> JsonPrimitive(value)
+        is Boolean -> JsonPrimitive(value)
+        is String -> JsonPrimitive(value)
+        else -> JsonPrimitive(value.toString())
+      }
+  }
 
   val errorMessages = state.validationErrors.associate { error -> error.linkId to error.message }
   val widgets = items.associate { item -> item.linkId to factory.createWidget(item) }

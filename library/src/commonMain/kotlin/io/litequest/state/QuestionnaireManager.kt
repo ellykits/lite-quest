@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 
 class QuestionnaireManager(
   private val questionnaire: Questionnaire,
@@ -120,7 +121,14 @@ class QuestionnaireManager(
   }
 
   fun getResponse(): QuestionnaireResponse {
-    return _state.value.response
+    val response = _state.value.response
+    val calculatedValues = _state.value.calculatedValues
+    if (calculatedValues.isEmpty()) {
+      return response
+    }
+
+    val itemsWithCalculated = mergeCalculatedValuesIntoItems(response.items, calculatedValues)
+    return response.copy(items = itemsWithCalculated)
   }
 
   fun setResponse(response: QuestionnaireResponse) {
@@ -319,6 +327,29 @@ class QuestionnaireManager(
             )
           )
         }
+      }
+    }
+  }
+
+  private fun mergeCalculatedValuesIntoItems(
+    items: List<ResponseItem>,
+    calculatedValues: Map<String, Any?>,
+  ): List<ResponseItem> {
+    return items.map { item ->
+      val calculatedValue = calculatedValues[item.linkId]
+      if (calculatedValue != null) {
+        val jsonValue =
+          when (calculatedValue) {
+            is Number -> JsonPrimitive(calculatedValue)
+            is Boolean -> JsonPrimitive(calculatedValue)
+            is String -> JsonPrimitive(calculatedValue)
+            else -> JsonPrimitive(calculatedValue.toString())
+          }
+        item.copy(answers = listOf(Answer(jsonValue)))
+      } else if (item.items.isNotEmpty()) {
+        item.copy(items = mergeCalculatedValuesIntoItems(item.items, calculatedValues))
+      } else {
+        item
       }
     }
   }

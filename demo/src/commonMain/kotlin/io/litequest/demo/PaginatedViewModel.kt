@@ -21,7 +21,6 @@ import io.litequest.engine.LiteQuestEvaluator
 import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.state.QuestionnaireManager
-import io.litequest.state.QuestionnaireState
 import io.litequest.ui.QuestionnaireType
 import io.litequest.ui.pagination.PaginatedQuestionnaire
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,7 +33,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import lite_quest.demo.generated.resources.Res
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -83,18 +81,8 @@ class PaginatedViewModel : ViewModel() {
       .flatMapLatest { MutableStateFlow(QuestionnaireType.Paginated(it)) }
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-  val state: StateFlow<QuestionnaireState?> =
-    manager
-      .filterNotNull()
-      .flatMapLatest { it.state }
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
   private val _submittedJson = MutableStateFlow<String?>(null)
   val submittedJson: StateFlow<String?> = _submittedJson.asStateFlow()
-
-  fun updateAnswer(linkId: String, value: JsonElement, text: String? = null) {
-    manager.value?.updateAnswer(linkId, value, text)
-  }
 
   fun submit() {
     manager.value?.let { manager ->

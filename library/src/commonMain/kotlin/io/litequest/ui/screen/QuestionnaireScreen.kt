@@ -78,16 +78,13 @@ import io.litequest.ui.pagination.PageNavigator
 import io.litequest.ui.pagination.PaginatedQuestionnaire
 import io.litequest.ui.renderer.FormRenderer
 import io.litequest.ui.summary.SummaryPage
-import kotlinx.serialization.json.JsonElement
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestionnaireScreen(
   type: QuestionnaireType,
-  state: QuestionnaireState,
-  onAnswerChange: (String, JsonElement, String?) -> Unit,
+  manager: io.litequest.state.QuestionnaireManager,
   onSubmit: () -> Unit,
-  manager: io.litequest.state.QuestionnaireManager? = null,
   modifier: Modifier = Modifier,
   mode: QuestionnaireMode = QuestionnaireMode.Edit,
   onModeChange: ((QuestionnaireMode) -> Unit)? = null,
@@ -96,13 +93,13 @@ fun QuestionnaireScreen(
   showDismissDialogOnClose: Boolean = true,
   customActions: (@Composable () -> Unit)? = null,
 ) {
+  val state by manager.state.collectAsState()
   when (type) {
     is QuestionnaireType.Single -> {
       SingleQuestionnaireScreen(
         questionnaire = type.questionnaire,
         state = state,
         mode = mode,
-        onAnswerChange = onAnswerChange,
         manager = manager,
         onSubmit = onSubmit,
         onModeChange = onModeChange,
@@ -117,7 +114,6 @@ fun QuestionnaireScreen(
       PaginatedQuestionnaireScreen(
         paginatedQuestionnaire = type.paginatedQuestionnaire,
         state = state,
-        onAnswerChange = onAnswerChange,
         manager = manager,
         onSubmit = onSubmit,
         onDismiss = onDismiss,
@@ -138,8 +134,7 @@ private fun SingleQuestionnaireScreen(
   questionnaire: Questionnaire,
   state: QuestionnaireState,
   mode: QuestionnaireMode,
-  onAnswerChange: (String, JsonElement, String?) -> Unit,
-  manager: io.litequest.state.QuestionnaireManager?,
+  manager: io.litequest.state.QuestionnaireManager,
   onSubmit: () -> Unit,
   onModeChange: ((QuestionnaireMode) -> Unit)?,
   onDismiss: (() -> Unit)?,
@@ -264,16 +259,12 @@ private fun SingleQuestionnaireScreen(
           FormRenderer(
             items = state.visibleItems,
             state = state,
-            onAnswerChange = onAnswerChange,
-            onRepetitionAdd = manager?.let { m -> { linkId -> m.addRepetition(linkId) } },
-            onRepetitionRemove =
-              manager?.let { m -> { linkId, index -> m.removeRepetition(linkId, index) } },
-            onRepetitionFieldChange =
-              manager?.let { m ->
-                { linkId, index, fieldLinkId, value, text ->
-                  m.updateInRepetition(linkId, index, fieldLinkId, value, text)
-                }
-              },
+            onAnswerChange = { linkId, value, text -> manager.updateAnswer(linkId, value, text) },
+            onRepetitionAdd = { linkId -> manager.addRepetition(linkId) },
+            onRepetitionRemove = { linkId, index -> manager.removeRepetition(linkId, index) },
+            onRepetitionFieldChange = { linkId, index, fieldLinkId, value, text ->
+              manager.updateInRepetition(linkId, index, fieldLinkId, value, text)
+            },
           )
         }
       }
@@ -294,16 +285,15 @@ private fun SingleQuestionnaireScreen(
 private fun PaginatedQuestionnaireScreen(
   paginatedQuestionnaire: PaginatedQuestionnaire,
   state: QuestionnaireState,
-  onAnswerChange: (String, JsonElement, String?) -> Unit,
-  manager: io.litequest.state.QuestionnaireManager?,
+  manager: io.litequest.state.QuestionnaireManager,
   onSubmit: () -> Unit,
   onDismiss: (() -> Unit)?,
   showCloseButton: Boolean,
   showDismissDialogOnClose: Boolean,
   customActions: (@Composable () -> Unit)?,
   modifier: Modifier,
-  mode: QuestionnaireMode = QuestionnaireMode.Edit,
-  onModeChange: ((QuestionnaireMode) -> Unit)? = null,
+  mode: QuestionnaireMode,
+  onModeChange: ((QuestionnaireMode) -> Unit)?,
 ) {
   val pageNavigator =
     remember(paginatedQuestionnaire) { PageNavigator(paginatedQuestionnaire.pages) }
@@ -436,7 +426,6 @@ private fun PaginatedQuestionnaireScreen(
             pageNavigator = pageNavigator,
             currentPage = pageIndex,
             state = state,
-            onAnswerChange = onAnswerChange,
             manager = manager,
             modifier = Modifier.fillMaxSize(),
           )
@@ -451,6 +440,45 @@ private fun PaginatedQuestionnaireScreen(
         )
       }
     }
+  }
+}
+
+@Composable
+private fun PagerView(
+  pageNavigator: PageNavigator,
+  currentPage: Int,
+  state: QuestionnaireState,
+  manager: io.litequest.state.QuestionnaireManager,
+  modifier: Modifier = Modifier,
+) {
+  val pagerState = rememberPagerState(initialPage = currentPage) { pageNavigator.pages.size }
+
+  LaunchedEffect(pagerState) {
+    snapshotFlow { pagerState.currentPage }.collect { page -> pageNavigator.goToPage(page) }
+  }
+
+  LaunchedEffect(currentPage) {
+    if (pagerState.currentPage != currentPage) {
+      pagerState.animateScrollToPage(currentPage)
+    }
+  }
+
+  HorizontalPager(state = pagerState, modifier = modifier) { pageIndex ->
+    val page = pageNavigator.pages[pageIndex]
+    val visiblePageItems =
+      state.visibleItems.filter { item ->
+        page.items.any { pageItem -> pageItem.linkId == item.linkId }
+      }
+    FormRenderer(
+      items = visiblePageItems,
+      state = state,
+      onAnswerChange = { linkId, value, text -> manager.updateAnswer(linkId, value, text) },
+      onRepetitionAdd = { linkId -> manager.addRepetition(linkId) },
+      onRepetitionRemove = { linkId, index -> manager.removeRepetition(linkId, index) },
+      onRepetitionFieldChange = { linkId, index, fieldLinkId, value, text ->
+        manager.updateInRepetition(linkId, index, fieldLinkId, value, text)
+      },
+    )
   }
 }
 
@@ -625,50 +653,6 @@ private fun PageIndicators(currentPage: Int, totalPages: Int, modifier: Modifier
         Spacer(Modifier.width(12.dp))
       }
     }
-  }
-}
-
-@Composable
-private fun PagerView(
-  pageNavigator: PageNavigator,
-  currentPage: Int,
-  state: QuestionnaireState,
-  onAnswerChange: (String, JsonElement, String?) -> Unit,
-  manager: io.litequest.state.QuestionnaireManager?,
-  modifier: Modifier = Modifier,
-) {
-  val pagerState = rememberPagerState(initialPage = currentPage) { pageNavigator.pages.size }
-
-  LaunchedEffect(pagerState) {
-    snapshotFlow { pagerState.currentPage }.collect { page -> pageNavigator.goToPage(page) }
-  }
-
-  LaunchedEffect(currentPage) {
-    if (pagerState.currentPage != currentPage) {
-      pagerState.animateScrollToPage(currentPage)
-    }
-  }
-
-  HorizontalPager(state = pagerState, modifier = modifier) { pageIndex ->
-    val page = pageNavigator.pages[pageIndex]
-    val visiblePageItems =
-      state.visibleItems.filter { item ->
-        page.items.any { pageItem -> pageItem.linkId == item.linkId }
-      }
-    FormRenderer(
-      items = visiblePageItems,
-      state = state,
-      onAnswerChange = onAnswerChange,
-      onRepetitionAdd = manager?.let { m -> { linkId -> m.addRepetition(linkId) } },
-      onRepetitionRemove =
-        manager?.let { m -> { linkId, index -> m.removeRepetition(linkId, index) } },
-      onRepetitionFieldChange =
-        manager?.let { m ->
-          { linkId, index, fieldLinkId, value, text ->
-            m.updateInRepetition(linkId, index, fieldLinkId, value, text)
-          }
-        },
-    )
   }
 }
 

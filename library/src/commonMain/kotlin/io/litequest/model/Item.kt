@@ -26,7 +26,7 @@ data class Item(
   val required: Boolean = false,
   val repeats: Boolean = false,
   val readOnly: Boolean = false,
-  val calculatedExpression: String? = null,
+  val calculatedExpression: JsonElement? = null,
   val visibleIf: JsonElement? = null,
   val enableWhen: List<EnableWhenCondition> = emptyList(),
   val answerOptions: List<AnswerOption> = emptyList(),

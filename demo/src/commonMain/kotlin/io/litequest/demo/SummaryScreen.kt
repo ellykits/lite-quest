@@ -53,9 +53,6 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
   val singlePageViewModel: SinglePageViewModel = viewModel { SinglePageViewModel() }
   val paginatedViewModel: PaginatedViewModel = viewModel { PaginatedViewModel() }
 
-  val vitalsState by singlePageViewModel.state.collectAsState()
-  val paginatedState by paginatedViewModel.state.collectAsState()
-
   LaunchedEffect(Unit) {
     singlePageViewModel.populateForSummary()
     paginatedViewModel.prepopulateForSummary()
@@ -116,16 +113,12 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
           val singleManager by singlePageViewModel.manager.collectAsState()
 
           questionnaire?.let { q ->
-            vitalsState?.let { s ->
+            singleManager?.let { m ->
               QuestionnaireScreen(
                 type = io.litequest.ui.QuestionnaireType.Single(q),
-                state = s,
+                manager = m,
                 mode = singleMode,
-                onAnswerChange = { linkId, value, text ->
-                  singlePageViewModel.updateAnswer(linkId, value, text)
-                },
                 onSubmit = { singlePageViewModel.submit() },
-                manager = singleManager,
                 onModeChange = { newMode -> singleMode = newMode },
                 showCloseButton = false,
                 modifier = Modifier.fillMaxSize(),
@@ -146,16 +139,12 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
           val paginatedManager by paginatedViewModel.manager.collectAsState()
 
           type?.let { t ->
-            paginatedState?.let { s ->
+            paginatedManager?.let { m ->
               QuestionnaireScreen(
                 type = t,
-                state = s,
+                manager = m,
                 mode = paginatedMode,
-                onAnswerChange = { linkId, value, text ->
-                  paginatedViewModel.updateAnswer(linkId, value, text)
-                },
                 onSubmit = { paginatedViewModel.submit() },
-                manager = paginatedManager,
                 onModeChange = { newMode -> paginatedMode = newMode },
                 showCloseButton = false,
                 modifier = Modifier.fillMaxSize(),

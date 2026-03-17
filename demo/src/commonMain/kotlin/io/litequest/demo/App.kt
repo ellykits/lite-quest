@@ -53,7 +53,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,7 +93,6 @@ fun App() {
 
       composable<Route.SingleFormMode> {
         val viewModel: SinglePageViewModel = viewModel { SinglePageViewModel() }
-        val state by viewModel.state.collectAsState()
         val submittedJson by viewModel.submittedJson.collectAsState()
         val manager by viewModel.manager.collectAsState()
         var mode by remember { mutableStateOf(QuestionnaireMode.Edit) }
@@ -102,16 +100,12 @@ fun App() {
         val questionnaire by viewModel.questionnaire.collectAsState(initial = null)
 
         questionnaire?.let { q ->
-          state?.let { s ->
+          manager?.let { m ->
             QuestionnaireScreen(
               type = io.litequest.ui.QuestionnaireType.Single(q),
-              state = s,
+              manager = m,
               mode = mode,
-              onAnswerChange = { linkId, value, text ->
-                viewModel.updateAnswer(linkId, value, text)
-              },
               onSubmit = { viewModel.submit() },
-              manager = manager,
               onModeChange = { newMode -> mode = newMode },
               onDismiss = { navController.popBackStack() },
             )
@@ -122,22 +116,17 @@ fun App() {
 
       composable<Route.PaginationMode> {
         val viewModel: PaginatedViewModel = viewModel { PaginatedViewModel() }
-        val state by viewModel.state.collectAsState()
         val submittedJson by viewModel.submittedJson.collectAsState()
         val manager by viewModel.manager.collectAsState()
 
         val type by viewModel.type.collectAsState(initial = null)
 
         type?.let { t ->
-          state?.let { s ->
+          manager?.let { m ->
             QuestionnaireScreen(
               type = t,
-              state = s,
-              onAnswerChange = { linkId, value, text ->
-                viewModel.updateAnswer(linkId, value, text)
-              },
+              manager = m,
               onSubmit = { viewModel.submit() },
-              manager = manager,
               onDismiss = { navController.popBackStack() },
             )
           }
@@ -154,7 +143,6 @@ fun App() {
 @Composable
 fun ModeSelectionScreen(onModeSelected: (String) -> Unit) {
   val snackbarHostState = remember { SnackbarHostState() }
-  val coroutineScope = rememberCoroutineScope()
   val modeOptions =
     listOf(
       ModeOption(

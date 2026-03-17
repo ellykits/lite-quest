@@ -15,10 +15,12 @@
 */
 package io.litequest.engine
 
+import io.litequest.model.CalculatedValue
 import io.litequest.model.Item
 import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.model.ValidationError
+import io.litequest.util.CalculatedExpressionCollector
 import io.litequest.util.DataContextBuilder
 import kotlinx.serialization.json.JsonElement
 
@@ -30,6 +32,11 @@ class LiteQuestEvaluator(
   private val visibilityEngine = VisibilityEngine(jsonLogicEvaluator)
   private val validationEngine = ValidationEngine(jsonLogicEvaluator)
   private val extractionEngine = ExtractionEngine()
+
+  private val allCalculatedValues: List<CalculatedValue> by lazy {
+    val itemExpressions = CalculatedExpressionCollector.collect(questionnaire.items)
+    questionnaire.calculatedValues + itemExpressions
+  }
 
   fun validateResponse(
     response: QuestionnaireResponse,
@@ -50,7 +57,7 @@ class LiteQuestEvaluator(
 
   fun calculateValues(response: QuestionnaireResponse): Map<String, Any?> {
     val dataContext = DataContextBuilder.build(response)
-    return calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
+    return calculatedValuesEngine.evaluate(allCalculatedValues, dataContext)
   }
 
   fun extractData(response: QuestionnaireResponse): JsonElement? {
@@ -68,8 +75,8 @@ class LiteQuestEvaluator(
 
   fun buildDataContext(response: QuestionnaireResponse): MutableMap<String, Any?> {
     val dataContext = DataContextBuilder.build(response)
-    if (questionnaire.calculatedValues.isNotEmpty()) {
-      calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
+    if (allCalculatedValues.isNotEmpty()) {
+      calculatedValuesEngine.evaluate(allCalculatedValues, dataContext)
     }
     return dataContext
   }

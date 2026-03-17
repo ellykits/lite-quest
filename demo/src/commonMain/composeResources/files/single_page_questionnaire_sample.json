@@ -96,7 +96,13 @@
           "text": "Full Name (Calculated)",
           "type": "STRING",
           "readOnly": true,
-          "calculatedExpression": "firstName + ' ' + lastName"
+          "calculatedExpression": {
+            "cat": [
+              {"var": "firstName"},
+              " ",
+              {"var": "lastName"}
+            ]
+          }
         },
         {
           "linkId": "demographicsRow",
@@ -188,7 +194,17 @@
           "text": "Calculated BMI",
           "type": "DECIMAL",
           "readOnly": true,
-          "calculatedExpression": "weight / (height * height)"
+          "calculatedExpression": {
+            "/": [
+              {"var": "weight"},
+              {
+                "*": [
+                  {"var": "height"},
+                  {"var": "height"}
+                ]
+              }
+            ]
+          }
         },
         {
           "linkId": "visitLog",
