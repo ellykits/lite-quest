@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.litequest.ui.QuestionnaireMode
+import io.litequest.ui.QuestionnaireType
 import io.litequest.ui.screen.QuestionnaireScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,7 +116,7 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
           questionnaire?.let { q ->
             singleManager?.let { m ->
               QuestionnaireScreen(
-                type = io.litequest.ui.QuestionnaireType.Single(q),
+                type = QuestionnaireType.Single(q),
                 manager = m,
                 mode = singleMode,
                 onSubmit = { singlePageViewModel.submit() },
@@ -141,7 +142,7 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
           questionnaire?.let { pq ->
             paginatedManager?.let { m ->
               QuestionnaireScreen(
-                type = io.litequest.ui.QuestionnaireType.Paginated(pq),
+                type = QuestionnaireType.Paginated(pq),
                 manager = m,
                 mode = paginatedMode,
                 onSubmit = { paginatedViewModel.submit() },

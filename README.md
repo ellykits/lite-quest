@@ -269,28 +269,28 @@ Answer Change → Recalculate Values → Update Visibility → Revalidate → Em
 
 ### Widget Types
 
-| ItemType      | Widget               | Data Type    | Features                                            |
-|---------------|----------------------|--------------|-----------------------------------------------------|
-| STRING        | TextInputWidget      | String       | Single-line text input                              |
-| TEXT          | TextInputWidget      | String       | Multi-line text area                                |
-| BOOLEAN       | BooleanWidget        | Boolean      | Switch/Checkbox toggle                              |
-| DECIMAL       | DecimalInputWidget   | Double       | Numeric keyboard with decimal support               |
-| INTEGER       | IntegerInputWidget   | Int          | Numeric keyboard for whole numbers                  |
-| DATE          | DatePickerWidget     | String (ISO) | Platform-native date selection                      |
-| TIME          | TimePickerWidget     | String (ISO) | Platform-native time selection                      |
-| DATETIME      | DateTimePickerWidget | String (ISO) | Combined date and time selection                    |
-| CHOICE        | ChoiceWidget         | String(s)    | Radio buttons, Dropdowns, or Chips                  |
-| OPEN_CHOICE   | OpenChoiceWidget     | String(s)    | Choice with "Other" free-text option                |
-| DISPLAY       | DisplayWidget        | N/A          | Static text or instructional content                |
-| GROUP         | GroupWidget          | N/A          | Logical grouping of items, supports repetition      |
-| QUANTITY      | QuantityWidget       | Object       | Numeric value with associated unit                  |
-| REFERENCE     | ReferenceWidget      | Object       | Searchable reference to external entities           |
-| BARCODE       | BarcodeScannerWidget | String       | Integrated camera barcode scanning (KScan)          |
-| PHOTO         | PhotoSelectorWidget  | File/Base64  | Image capture or gallery selection (FileKit)        |
-| ATTACHMENT    | AttachmentWidget     | File/Base64  | Generic file attachment support (FileKit)           |
-| LAYOUT_ROW    | RowLayoutWidget      | N/A          | Horizontal arrangement of child widgets             |
-| LAYOUT_COLUMN | ColumnLayoutWidget   | N/A          | Vertical arrangement of child widgets               |
-| LAYOUT_BOX    | BoxLayoutWidget      | N/A          | Stacked or layered arrangement of child widgets     |
+| ItemType      | Widget               | Data Type    | Features                                        |
+|---------------|----------------------|--------------|-------------------------------------------------|
+| STRING        | TextInputWidget      | String       | Single-line text input                          |
+| TEXT          | TextInputWidget      | String       | Multi-line text area                            |
+| BOOLEAN       | BooleanWidget        | Boolean      | Switch/Checkbox toggle                          |
+| DECIMAL       | DecimalInputWidget   | Double       | Numeric keyboard with decimal support           |
+| INTEGER       | IntegerInputWidget   | Int          | Numeric keyboard for whole numbers              |
+| DATE          | DatePickerWidget     | String (ISO) | Platform-native date selection                  |
+| TIME          | TimePickerWidget     | String (ISO) | Platform-native time selection                  |
+| DATETIME      | DateTimePickerWidget | String (ISO) | Combined date and time selection                |
+| CHOICE        | ChoiceWidget         | String(s)    | Radio buttons, Dropdowns, or Chips              |
+| OPEN_CHOICE   | OpenChoiceWidget     | String(s)    | Choice with "Other" free-text option            |
+| DISPLAY       | DisplayWidget        | N/A          | Static text or instructional content            |
+| GROUP         | GroupWidget          | N/A          | Logical grouping of items, supports repetition  |
+| QUANTITY      | QuantityWidget       | Object       | Numeric value with associated unit              |
+| REFERENCE     | ReferenceWidget      | Object       | Searchable reference to external entities       |
+| BARCODE       | BarcodeScannerWidget | String       | Integrated camera barcode scanning (KScan)      |
+| IMAGE         | ImageSelectorWidget  | File/Base64  | Image capture or gallery selection (FileKit)    |
+| ATTACHMENT    | AttachmentWidget     | File/Base64  | Generic file attachment support (FileKit)       |
+| LAYOUT_ROW    | RowLayoutWidget      | N/A          | Horizontal arrangement of child widgets         |
+| LAYOUT_COLUMN | ColumnLayoutWidget   | N/A          | Vertical arrangement of child widgets           |
+| LAYOUT_BOX    | BoxLayoutWidget      | N/A          | Stacked or layered arrangement of child widgets |
 
 ## Running the Demo
 

@@ -16,14 +16,45 @@
 package io.litequest.engine
 
 import io.litequest.model.CalculatedValue
+import io.litequest.util.DependencyExtractor
 
-class CalculatedValuesEngine(private val evaluator: JsonLogicEvaluator) {
+class CalculatedValuesEngine(
+  private val evaluator: JsonLogicEvaluator,
+  calculatedValues: List<CalculatedValue>,
+) {
+  private val dependencyGraph: Map<String, Set<String>> =
+    calculatedValues.associate { calcValue ->
+      calcValue.name to DependencyExtractor.extractDependencies(calcValue.expression)
+    }
+
+  private val calculatedValuesMap: Map<String, CalculatedValue> =
+    calculatedValues.associateBy { it.name }
+
   fun evaluate(
     calculatedValues: List<CalculatedValue>,
     dataContext: MutableMap<String, Any?>,
   ): Map<String, Any?> {
     val results = mutableMapOf<String, Any?>()
     calculatedValues.forEach { calcValue ->
+      val result = evaluator.evaluate(calcValue.expression, dataContext)
+      results[calcValue.name] = result
+      dataContext[calcValue.name] = result
+    }
+    return results
+  }
+
+  fun evaluateIncremental(
+    dataContext: MutableMap<String, Any?>,
+    changedFields: Set<String>,
+  ): Map<String, Any?> {
+    val affectedCalculations =
+      calculatedValuesMap.values.filter { calcValue ->
+        val dependencies = dependencyGraph[calcValue.name] ?: emptySet()
+        dependencies.any { it in changedFields }
+      }
+
+    val results = mutableMapOf<String, Any?>()
+    affectedCalculations.forEach { calcValue ->
       val result = evaluator.evaluate(calcValue.expression, dataContext)
       results[calcValue.name] = result
       dataContext[calcValue.name] = result

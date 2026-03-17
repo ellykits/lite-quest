@@ -99,11 +99,11 @@ fun App() {
         var mode by remember { mutableStateOf(QuestionnaireMode.Edit) }
         val questionnaire by viewModel.questionnaire.collectAsState(initial = null)
 
-        questionnaire?.let { q ->
-          manager?.let { m ->
+        questionnaire?.let { form ->
+          manager?.let { questionnaireManager ->
             QuestionnaireScreen(
-              type = QuestionnaireType.Single(q),
-              manager = m,
+              type = QuestionnaireType.Single(form),
+              manager = questionnaireManager,
               mode = mode,
               onSubmit = { viewModel.submit() },
               onModeChange = { newMode -> mode = newMode },

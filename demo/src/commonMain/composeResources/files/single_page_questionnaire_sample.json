@@ -240,7 +240,7 @@
         {
           "linkId": "headPhoto",
           "text": "Head of Household Photo",
-          "type": "PHOTO"
+          "type": "IMAGE"
         },
         {
           "linkId": "idDocument",

@@ -126,7 +126,7 @@ class QuestionnaireManagerTest {
     var parentGroup = response.items.find { it.linkId == "parentGroup" }
     assertTrue(parentGroup != null, "Parent group should exist when visible")
 
-    val nestedField1 = parentGroup?.items?.find { it.linkId == "nestedField1" }
+    val nestedField1 = parentGroup.items?.find { it.linkId == "nestedField1" }
     val nestedField2 = parentGroup?.items?.find { it.linkId == "nestedField2" }
     assertTrue(nestedField1?.answers?.isNotEmpty() == true, "nestedField1 should have answers")
     assertTrue(nestedField2?.answers?.isNotEmpty() == true, "nestedField2 should have answers")

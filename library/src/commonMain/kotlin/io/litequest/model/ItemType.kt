@@ -33,7 +33,7 @@ enum class ItemType {
   GROUP,
   QUANTITY,
   BARCODE,
-  PHOTO,
+  IMAGE,
   ATTACHMENT,
   LAYOUT_ROW,
   LAYOUT_COLUMN,

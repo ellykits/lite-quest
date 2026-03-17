@@ -23,7 +23,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
-class PhotoSelectorWidget(override val item: Item) : ItemWidget {
+class ImageSelectorWidget(override val item: Item) : ItemWidget {
   @Composable
   override fun Render(
     value: JsonElement?,
@@ -35,7 +35,7 @@ class PhotoSelectorWidget(override val item: Item) : ItemWidget {
       value = value?.jsonPrimitive?.content ?: "",
       onValueChange = { onValueChange(JsonPrimitive(it), null) },
       pickerType = FileKitType.Image,
-      buttonText = "Photo",
+      buttonText = "Image",
       showCameraOption = true,
       errorMessage = errorMessage,
     )

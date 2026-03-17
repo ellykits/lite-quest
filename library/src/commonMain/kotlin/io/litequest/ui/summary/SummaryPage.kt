@@ -375,7 +375,7 @@ private fun formatValueForDisplay(value: Any, type: ItemType, item: Item? = null
     ItemType.INTEGER -> value.toString()
     ItemType.STRING,
     ItemType.TEXT -> value.toString()
-    ItemType.PHOTO,
+    ItemType.IMAGE,
     ItemType.ATTACHMENT,
     ItemType.BARCODE -> value.toString()
     else -> value.toString()
@@ -403,7 +403,7 @@ private fun formatDateTime(dateTimeString: String, item: Item?): String {
 
 private fun getIconForType(type: ItemType): ImageVector? {
   return when (type) {
-    ItemType.PHOTO -> Lucide.Image
+    ItemType.IMAGE -> Lucide.Image
     ItemType.ATTACHMENT -> Lucide.FileText
     else -> null
   }

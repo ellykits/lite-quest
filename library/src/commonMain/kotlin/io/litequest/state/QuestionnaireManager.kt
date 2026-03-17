@@ -66,7 +66,7 @@ class QuestionnaireManager(
     val updatedResponse = currentResponse.copy(items = updatedItems)
 
     val items = questionnaire.items.filter { item -> item.linkId == linkId }
-    recomputeState(updatedResponse, items)
+    recomputeState(updatedResponse, items, changedFields = setOf(linkId))
   }
 
   fun addRepetition(groupLinkId: String) {
@@ -135,11 +135,23 @@ class QuestionnaireManager(
     recomputeState(response)
   }
 
-  private fun recomputeState(response: QuestionnaireResponse, items: List<Item>? = null) {
+  private fun recomputeState(
+    response: QuestionnaireResponse,
+    items: List<Item>? = null,
+    changedFields: Set<String>? = null,
+  ) {
     val visibleItems = evaluator.getVisibleItems(response)
     val visibleLinkIds = collectVisibleLinkIds(visibleItems)
     val cleanedResponse = clearHiddenItemAnswers(response, visibleLinkIds)
-    val calculatedValues = evaluator.calculateValues(cleanedResponse)
+    val calculatedValues =
+      if (changedFields != null) {
+        val currentCalculated = _state.value.calculatedValues
+        val incrementalResults =
+          evaluator.calculateValuesIncremental(cleanedResponse, changedFields, currentCalculated)
+        currentCalculated + incrementalResults
+      } else {
+        evaluator.calculateValues(cleanedResponse)
+      }
     val validationErrors = evaluator.validateResponse(cleanedResponse, items)
 
     _state.value =

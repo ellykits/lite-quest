@@ -31,7 +31,7 @@ import io.litequest.ui.widget.group.GroupWidget
 import io.litequest.ui.widget.group.RepeatingGroupWidget
 import io.litequest.ui.widget.media.AttachmentWidget
 import io.litequest.ui.widget.media.BarcodeScannerWidget
-import io.litequest.ui.widget.media.PhotoSelectorWidget
+import io.litequest.ui.widget.media.ImageSelectorWidget
 import io.litequest.ui.widget.numeric.DecimalInputWidget
 import io.litequest.ui.widget.numeric.IntegerInputWidget
 import io.litequest.ui.widget.numeric.QuantityWidget
@@ -53,7 +53,7 @@ class DefaultWidgetFactory : WidgetFactory {
       ItemType.DISPLAY -> DisplayWidget(item)
       ItemType.QUANTITY -> QuantityWidget(item)
       ItemType.BARCODE -> BarcodeScannerWidget(item)
-      ItemType.PHOTO -> PhotoSelectorWidget(item)
+      ItemType.IMAGE -> ImageSelectorWidget(item)
       ItemType.ATTACHMENT -> AttachmentWidget(item)
       ItemType.LAYOUT_ROW -> RowLayoutWidget(item)
       ItemType.LAYOUT_COLUMN -> ColumnLayoutWidget(item)

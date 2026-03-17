@@ -28,7 +28,6 @@ class LiteQuestEvaluator(
   private val questionnaire: Questionnaire,
   jsonLogicEvaluator: JsonLogicEvaluator = JsonLogicEvaluator(),
 ) {
-  private val calculatedValuesEngine = CalculatedValuesEngine(jsonLogicEvaluator)
   private val visibilityEngine = VisibilityEngine(jsonLogicEvaluator)
   private val validationEngine = ValidationEngine(jsonLogicEvaluator)
   private val extractionEngine = ExtractionEngine()
@@ -36,6 +35,10 @@ class LiteQuestEvaluator(
   private val allCalculatedValues: List<CalculatedValue> by lazy {
     val itemExpressions = CalculatedExpressionCollector.collect(questionnaire.items)
     questionnaire.calculatedValues + itemExpressions
+  }
+
+  private val calculatedValuesEngine: CalculatedValuesEngine by lazy {
+    CalculatedValuesEngine(jsonLogicEvaluator, allCalculatedValues)
   }
 
   fun validateResponse(
@@ -58,6 +61,16 @@ class LiteQuestEvaluator(
   fun calculateValues(response: QuestionnaireResponse): Map<String, Any?> {
     val dataContext = DataContextBuilder.build(response)
     return calculatedValuesEngine.evaluate(allCalculatedValues, dataContext)
+  }
+
+  fun calculateValuesIncremental(
+    response: QuestionnaireResponse,
+    changedFields: Set<String>,
+    currentCalculatedValues: Map<String, Any?>,
+  ): Map<String, Any?> {
+    val dataContext = DataContextBuilder.build(response)
+    dataContext.putAll(currentCalculatedValues)
+    return calculatedValuesEngine.evaluateIncremental(dataContext, changedFields)
   }
 
   fun extractData(response: QuestionnaireResponse): JsonElement? {
