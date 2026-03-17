@@ -15,6 +15,7 @@
 */
 package io.litequest.ui.widget.group
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -31,71 +33,26 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.litequest.model.Item
+import io.litequest.ui.renderer.LocalFormContext
 import io.litequest.ui.widget.ItemWidget
-import io.litequest.ui.widget.WidgetFactory
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
 
-class RepeatingGroupWidget(
-  override val item: Item,
-  private val widgetFactory: WidgetFactory,
-  private val onValueChange: (String, JsonElement) -> Unit,
-  private val values: Map<String, JsonElement?>,
-  private val errorMessages: Map<String, String>,
-) : ItemWidget {
-
-  private fun getGroupInstances(): List<Map<String, JsonElement?>> {
-    val groupValue = values[item.linkId] as? JsonArray
-    return groupValue?.map { jsonElement ->
-      if (jsonElement is JsonObject) {
-        jsonElement.mapValues { it.value }
-      } else {
-        emptyMap()
-      }
-    } ?: listOf(emptyMap())
-  }
-
-  private fun updateGroupValue(instanceIndex: Int, childLinkId: String, newValue: JsonElement) {
-    val instances = getGroupInstances().toMutableList()
-
-    while (instances.size <= instanceIndex) {
-      instances.add(emptyMap())
-    }
-
-    val currentInstance = instances[instanceIndex].toMutableMap()
-    currentInstance[childLinkId] = newValue
-    instances[instanceIndex] = currentInstance
-
-    val jsonArray = buildJsonArray {
-      instances.forEach { instance ->
-        add(buildJsonObject { instance.forEach { (key, value) -> put(key, value ?: JsonNull) } })
-      }
-    }
-
-    onValueChange(item.linkId, jsonArray)
-  }
+class RepeatingGroupWidget(override val item: Item) : ItemWidget {
 
   @Composable
   override fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
-    val instances = getGroupInstances()
-    var instanceCount by remember { mutableStateOf(instances.size.coerceAtLeast(1)) }
+    val context = LocalFormContext.current
+    val repetitions = context.repetitions[item.linkId] ?: emptyList()
 
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       if (item.text.isNotEmpty()) {
@@ -106,18 +63,12 @@ class RepeatingGroupWidget(
         )
       }
 
-      repeat(instanceCount) { index ->
-        val instanceValues = if (index < instances.size) instances[index] else emptyMap()
-
+      repetitions.forEachIndexed { index, repetitionValues ->
         Surface(
           modifier = Modifier.fillMaxWidth(),
           color = Color.Transparent,
           shape = MaterialTheme.shapes.large,
-          border =
-            androidx.compose.foundation.BorderStroke(
-              1.dp,
-              MaterialTheme.colorScheme.outlineVariant,
-            ),
+          border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
           shadowElevation = 0.dp,
           tonalElevation = 0.dp,
         ) {
@@ -153,50 +104,48 @@ class RepeatingGroupWidget(
                   color = MaterialTheme.colorScheme.onSurface,
                 )
               }
-              if (instanceCount > 1) {
+              if (repetitions.size > 1) {
                 OutlinedButton(
-                  onClick = {
-                    instanceCount--
-                    removeInstance(index)
-                  },
+                  onClick = { context.onRepetitionRemove?.invoke(item.linkId, index) },
                   modifier = Modifier.height(32.dp),
                   contentPadding = PaddingValues(horizontal = 12.dp),
                 ) {
-                  Text("Remove", style = MaterialTheme.typography.labelSmall)
+                  Text(
+                    "Remove",
+                    style = MaterialTheme.typography.labelSmall,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                  )
                 }
               }
             }
 
             item.items.forEach { childItem ->
-              val childWidget = widgetFactory.createWidget(childItem)
+              val childWidget = context.widgetFactory.createWidget(childItem)
               childWidget.Render(
-                value = instanceValues[childItem.linkId],
-                onValueChange = { newValue -> updateGroupValue(index, childItem.linkId, newValue) },
-                errorMessage = errorMessages["${item.linkId}[$index].${childItem.linkId}"],
+                value = repetitionValues[childItem.linkId],
+                onValueChange = { newValue, text ->
+                  context.onRepetitionFieldChange?.invoke(
+                    item.linkId,
+                    index,
+                    childItem.linkId,
+                    newValue,
+                    text,
+                  )
+                },
+                errorMessage = null,
               )
             }
           }
         }
       }
 
-      Button(onClick = { instanceCount++ }, modifier = Modifier.fillMaxWidth()) {
+      Button(
+        onClick = { context.onRepetitionAdd?.invoke(item.linkId) },
+        modifier = Modifier.wrapContentWidth().align(Alignment.CenterHorizontally),
+      ) {
         Text("+ Add ${item.text}")
       }
-    }
-  }
-
-  private fun removeInstance(indexToRemove: Int) {
-    val instances = getGroupInstances().toMutableList()
-    if (indexToRemove < instances.size) {
-      instances.removeAt(indexToRemove)
-
-      val jsonArray = buildJsonArray {
-        instances.forEach { instance ->
-          add(buildJsonObject { instance.forEach { (key, value) -> put(key, value ?: JsonNull) } })
-        }
-      }
-
-      onValueChange(item.linkId, jsonArray)
     }
   }
 }

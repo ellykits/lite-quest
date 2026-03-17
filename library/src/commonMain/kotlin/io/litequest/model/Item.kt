@@ -22,11 +22,15 @@ import kotlinx.serialization.json.JsonElement
 data class Item(
   val linkId: String,
   val type: ItemType,
-  val text: String,
+  val text: String = "",
   val required: Boolean = false,
   val repeats: Boolean = false,
+  val readOnly: Boolean = false,
+  val calculatedExpression: String? = null,
   val visibleIf: JsonElement? = null,
+  val enableWhen: List<EnableWhenCondition> = emptyList(),
   val answerOptions: List<AnswerOption> = emptyList(),
   val validations: List<ValidationRule> = emptyList(),
   val items: List<Item> = emptyList(),
+  val extension: Map<String, JsonElement> = emptyMap(),
 )

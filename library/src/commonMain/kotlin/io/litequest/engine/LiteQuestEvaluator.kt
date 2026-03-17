@@ -20,6 +20,7 @@ import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.model.ValidationError
 import io.litequest.util.DataContextBuilder
+import kotlinx.serialization.json.JsonElement
 
 class LiteQuestEvaluator(
   private val questionnaire: Questionnaire,
@@ -52,7 +53,7 @@ class LiteQuestEvaluator(
     return calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
   }
 
-  fun extractData(response: QuestionnaireResponse): kotlinx.serialization.json.JsonElement? {
+  fun extractData(response: QuestionnaireResponse): JsonElement? {
     val template = questionnaire.extractionTemplate ?: return null
     val dataContext = buildDataContext(response)
     val calculatedValues = calculateValues(response)
@@ -67,7 +68,9 @@ class LiteQuestEvaluator(
 
   fun buildDataContext(response: QuestionnaireResponse): MutableMap<String, Any?> {
     val dataContext = DataContextBuilder.build(response)
-    calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
+    if (questionnaire.calculatedValues.isNotEmpty()) {
+      calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
+    }
     return dataContext
   }
 }

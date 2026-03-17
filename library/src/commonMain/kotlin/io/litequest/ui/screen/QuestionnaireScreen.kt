@@ -17,7 +17,6 @@ package io.litequest.ui.screen
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +31,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -56,18 +58,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import io.litequest.model.Questionnaire
 import io.litequest.state.QuestionnaireState
 import io.litequest.ui.QuestionnaireMode
 import io.litequest.ui.QuestionnaireType
@@ -82,13 +85,14 @@ import kotlinx.serialization.json.JsonElement
 fun QuestionnaireScreen(
   type: QuestionnaireType,
   state: QuestionnaireState,
-  onAnswerChange: (String, JsonElement) -> Unit,
+  onAnswerChange: (String, JsonElement, String?) -> Unit,
   onSubmit: () -> Unit,
+  manager: io.litequest.state.QuestionnaireManager? = null,
   modifier: Modifier = Modifier,
   mode: QuestionnaireMode = QuestionnaireMode.Edit,
   onModeChange: ((QuestionnaireMode) -> Unit)? = null,
   onDismiss: (() -> Unit)? = null,
-  showCloseButton: Boolean = true,
+  showCloseButton: Boolean = false,
   showDismissDialogOnClose: Boolean = true,
   customActions: (@Composable () -> Unit)? = null,
 ) {
@@ -99,6 +103,7 @@ fun QuestionnaireScreen(
         state = state,
         mode = mode,
         onAnswerChange = onAnswerChange,
+        manager = manager,
         onSubmit = onSubmit,
         onModeChange = onModeChange,
         onDismiss = onDismiss,
@@ -113,6 +118,7 @@ fun QuestionnaireScreen(
         paginatedQuestionnaire = type.paginatedQuestionnaire,
         state = state,
         onAnswerChange = onAnswerChange,
+        manager = manager,
         onSubmit = onSubmit,
         onDismiss = onDismiss,
         showCloseButton = showCloseButton,
@@ -129,10 +135,11 @@ fun QuestionnaireScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SingleQuestionnaireScreen(
-  questionnaire: io.litequest.model.Questionnaire,
+  questionnaire: Questionnaire,
   state: QuestionnaireState,
   mode: QuestionnaireMode,
-  onAnswerChange: (String, JsonElement) -> Unit,
+  onAnswerChange: (String, JsonElement, String?) -> Unit,
+  manager: io.litequest.state.QuestionnaireManager?,
   onSubmit: () -> Unit,
   onModeChange: ((QuestionnaireMode) -> Unit)?,
   onDismiss: (() -> Unit)?,
@@ -239,8 +246,7 @@ private fun SingleQuestionnaireScreen(
             tonalElevation = 6.dp,
             modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
             color = MaterialTheme.colorScheme.surfaceContainer,
-            shape =
-              androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
           ) {
             customActions()
           }
@@ -255,13 +261,27 @@ private fun SingleQuestionnaireScreen(
     when (mode) {
       QuestionnaireMode.Edit -> {
         Box(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp)) {
-          FormRenderer(items = state.visibleItems, state = state, onAnswerChange = onAnswerChange)
+          FormRenderer(
+            items = state.visibleItems,
+            state = state,
+            onAnswerChange = onAnswerChange,
+            onRepetitionAdd = manager?.let { m -> { linkId -> m.addRepetition(linkId) } },
+            onRepetitionRemove =
+              manager?.let { m -> { linkId, index -> m.removeRepetition(linkId, index) } },
+            onRepetitionFieldChange =
+              manager?.let { m ->
+                { linkId, index, fieldLinkId, value, text ->
+                  m.updateInRepetition(linkId, index, fieldLinkId, value, text)
+                }
+              },
+          )
         }
       }
       QuestionnaireMode.Summary -> {
         SummaryPage(
           state = state,
           paginatedQuestionnaire = null,
+          onSubmit = onSubmit,
           modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp),
         )
       }
@@ -274,7 +294,8 @@ private fun SingleQuestionnaireScreen(
 private fun PaginatedQuestionnaireScreen(
   paginatedQuestionnaire: PaginatedQuestionnaire,
   state: QuestionnaireState,
-  onAnswerChange: (String, JsonElement) -> Unit,
+  onAnswerChange: (String, JsonElement, String?) -> Unit,
+  manager: io.litequest.state.QuestionnaireManager?,
   onSubmit: () -> Unit,
   onDismiss: (() -> Unit)?,
   showCloseButton: Boolean,
@@ -378,8 +399,7 @@ private fun PaginatedQuestionnaireScreen(
             tonalElevation = 6.dp,
             modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
             color = MaterialTheme.colorScheme.surfaceContainer,
-            shape =
-              androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
           ) {
             customActions()
           }
@@ -412,12 +432,12 @@ private fun PaginatedQuestionnaireScreen(
             modifier = Modifier.padding(vertical = 20.dp),
           )
 
-          SwipeablePager(
+          PagerView(
             pageNavigator = pageNavigator,
             currentPage = pageIndex,
-            totalPages = totalPages,
             state = state,
             onAnswerChange = onAnswerChange,
+            manager = manager,
             modifier = Modifier.fillMaxSize(),
           )
         }
@@ -426,6 +446,7 @@ private fun PaginatedQuestionnaireScreen(
         SummaryPage(
           state = state,
           paginatedQuestionnaire = paginatedQuestionnaire,
+          onSubmit = onSubmit,
           modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp),
         )
       }
@@ -444,7 +465,7 @@ private fun DefaultSingleFormActions(
     tonalElevation = 6.dp,
     modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
   ) {
     Row(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
@@ -518,7 +539,7 @@ private fun DefaultPaginatedFormActions(
     tonalElevation = 6.dp,
     modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
   ) {
     Row(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
@@ -608,45 +629,46 @@ private fun PageIndicators(currentPage: Int, totalPages: Int, modifier: Modifier
 }
 
 @Composable
-private fun SwipeablePager(
+private fun PagerView(
   pageNavigator: PageNavigator,
   currentPage: Int,
-  totalPages: Int,
   state: QuestionnaireState,
-  onAnswerChange: (String, JsonElement) -> Unit,
+  onAnswerChange: (String, JsonElement, String?) -> Unit,
+  manager: io.litequest.state.QuestionnaireManager?,
   modifier: Modifier = Modifier,
 ) {
-  var offsetX by remember { mutableFloatStateOf(0f) }
+  val pagerState = rememberPagerState(initialPage = currentPage) { pageNavigator.pages.size }
 
-  Box(
-    modifier =
-      modifier.pointerInput(currentPage) {
-        detectDragGestures(
-          onDragEnd = {
-            val threshold = size.width * 0.3f
-            when {
-              offsetX > threshold && currentPage > 0 -> {
-                pageNavigator.goPrevious()
-              }
-              offsetX < -threshold && currentPage < totalPages - 1 -> {
-                pageNavigator.goNext()
-              }
-            }
-            offsetX = 0f
-          }
-        ) { _, dragAmount ->
-          val newOffset = offsetX + dragAmount.x
-          offsetX =
-            when {
-              currentPage == 0 && newOffset > 0 -> newOffset * 0.3f
-              currentPage == totalPages - 1 && newOffset < 0 -> newOffset * 0.3f
-              else -> newOffset
-            }
-        }
+  LaunchedEffect(pagerState) {
+    snapshotFlow { pagerState.currentPage }.collect { page -> pageNavigator.goToPage(page) }
+  }
+
+  LaunchedEffect(currentPage) {
+    if (pagerState.currentPage != currentPage) {
+      pagerState.animateScrollToPage(currentPage)
+    }
+  }
+
+  HorizontalPager(state = pagerState, modifier = modifier) { pageIndex ->
+    val page = pageNavigator.pages[pageIndex]
+    val visiblePageItems =
+      state.visibleItems.filter { item ->
+        page.items.any { pageItem -> pageItem.linkId == item.linkId }
       }
-  ) {
-    val page = pageNavigator.pages[currentPage]
-    FormRenderer(items = page.items, state = state, onAnswerChange = onAnswerChange)
+    FormRenderer(
+      items = visiblePageItems,
+      state = state,
+      onAnswerChange = onAnswerChange,
+      onRepetitionAdd = manager?.let { m -> { linkId -> m.addRepetition(linkId) } },
+      onRepetitionRemove =
+        manager?.let { m -> { linkId, index -> m.removeRepetition(linkId, index) } },
+      onRepetitionFieldChange =
+        manager?.let { m ->
+          { linkId, index, fieldLinkId, value, text ->
+            m.updateInRepetition(linkId, index, fieldLinkId, value, text)
+          }
+        },
+    )
   }
 }
 

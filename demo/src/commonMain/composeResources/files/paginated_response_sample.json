@@ -1,0 +1,214 @@
+{
+  "id": "paginated-response",
+  "questionnaireId": "household-registration-paginated",
+  "authored": "2026-03-17T15:30:00Z",
+  "items": [
+    {
+      "linkId": "introText",
+      "answers": []
+    },
+    {
+      "linkId": "consentGiven",
+      "text": "Do you consent to the registration?",
+      "answers": [
+        {
+          "value": true
+        }
+      ]
+    },
+    {
+      "linkId": "householdId",
+      "text": "Scan Household Card",
+      "answers": []
+    },
+    {
+      "linkId": "structureDetails",
+      "text": "Building Characteristics",
+      "answers": [
+        {
+          "value": "Single story stone house with iron sheet roofing. Connected to grid power."
+        }
+      ]
+    },
+    {
+      "linkId": "roomsCount",
+      "text": "Number of Sleeping Rooms",
+      "answers": [
+        {
+          "value": 3
+        }
+      ]
+    },
+    {
+      "linkId": "waterUsage",
+      "text": "Monthly Water Usage",
+      "answers": [
+        {
+          "value": {
+            "value": 1500.0,
+            "unit": "L"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "firstName",
+      "text": "First Name",
+      "answers": [
+        {
+          "value": "John"
+        }
+      ]
+    },
+    {
+      "linkId": "lastName",
+      "text": "Last Name",
+      "answers": [
+        {
+          "value": "Kibaki"
+        }
+      ]
+    },
+    {
+      "linkId": "fullNameDisplay",
+      "text": "Full Name (Calculated)",
+      "answers": [
+        {
+          "value": "John Kibaki"
+        }
+      ]
+    },
+    {
+      "linkId": "dob",
+      "text": "Date of Birth",
+      "answers": [
+        {
+          "value": "1985-05-12"
+        }
+      ]
+    },
+    {
+      "linkId": "gender",
+      "text": "Gender",
+      "answers": [
+        {
+          "value": "m"
+        }
+      ]
+    },
+    {
+      "linkId": "occupation",
+      "text": "Primary Occupation",
+      "answers": [
+        {
+          "value": "farmer"
+        }
+      ]
+    },
+    {
+      "linkId": "height",
+      "text": "Height (m)",
+      "answers": [
+        {
+          "value": 1.78
+        }
+      ]
+    },
+    {
+      "linkId": "weight",
+      "text": "Weight (kg)",
+      "answers": [
+        {
+          "value": 75.5
+        }
+      ]
+    },
+    {
+      "linkId": "bmiDisplay",
+      "text": "Calculated BMI",
+      "answers": [
+        {
+          "value": 23.82
+        }
+      ]
+    },
+    {
+      "linkId": "visitTime",
+      "text": "Registration Date & Time",
+      "answers": [
+        {
+          "value": "2026-03-17T10:15:00Z"
+        }
+      ]
+    },
+    {
+      "linkId": "followUpTime",
+      "text": "Preferred Follow-up",
+      "answers": [
+        {
+          "value": "09:00:00"
+        }
+      ]
+    },
+    {
+      "linkId": "headPhoto",
+      "text": "Head of Household Photo",
+      "answers": []
+    },
+    {
+      "linkId": "idDocument",
+      "text": "National ID Attachment",
+      "answers": []
+    },
+    {
+      "linkId": "membersSection",
+      "text": "Household Members",
+      "answers": [
+        {
+          "items": [
+            {
+              "linkId": "memberName",
+              "text": "Member Name",
+              "answers": [
+                {
+                  "value": "Mary Kibaki"
+                }
+              ]
+            },
+            {
+              "linkId": "relationship",
+              "text": "Relationship",
+              "answers": [
+                {
+                  "value": "spouse"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "items": [
+            {
+              "linkId": "memberName",
+              "text": "Member Name",
+              "answers": [
+                {
+                  "value": "Peter Kibaki"
+                }
+              ]
+            },
+            {
+              "linkId": "relationship",
+              "text": "Relationship",
+              "answers": [
+                {
+                  "value": "child"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

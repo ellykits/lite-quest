@@ -22,9 +22,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,61 +37,58 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.litequest.model.Item
+import io.litequest.ui.renderer.LocalFormContext
 import io.litequest.ui.widget.ItemWidget
-import io.litequest.ui.widget.WidgetFactory
 import kotlinx.serialization.json.JsonElement
 
-class GroupWidget(
-  override val item: Item,
-  private val widgetFactory: WidgetFactory,
-  private val onValueChange: (String, JsonElement) -> Unit,
-  private val values: Map<String, JsonElement?>,
-  private val errorMessages: Map<String, String>,
-) : ItemWidget {
+class GroupWidget(override val item: Item) : ItemWidget {
   @Composable
   override fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
+    val context = LocalFormContext.current
     var expanded by remember { mutableStateOf(true) }
 
-    Card(
-      modifier = Modifier.fillMaxWidth(),
-      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    OutlinedCard(
+      modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+      shape = MaterialTheme.shapes.medium,
     ) {
       Column {
-        Row(
-          modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }.padding(16.dp),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Text(
-            text = item.text,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-          )
-          Text(
-            text = if (expanded) "▼" else "▶",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
+        if (item.text.isNotEmpty()) {
+          Row(
+            modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }.padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Text(
+              text = item.text,
+              style = MaterialTheme.typography.titleSmall,
+              color = MaterialTheme.colorScheme.onSurface,
+              modifier = Modifier.weight(1f),
+            )
+            Icon(
+              imageVector = Icons.Default.KeyboardArrowDown,
+              contentDescription = if (expanded) "Collapse" else "Expand",
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
         }
 
         AnimatedVisibility(visible = expanded) {
           Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
           ) {
             item.items.forEach { childItem ->
-              val childWidget = widgetFactory.createWidget(childItem)
+              val childWidget = context.widgetFactory.createWidget(childItem)
               childWidget.Render(
-                value = values[childItem.linkId],
-                onValueChange = { newValue ->
-                  this@GroupWidget.onValueChange(childItem.linkId, newValue)
+                value = context.values[childItem.linkId],
+                onValueChange = { newValue, text ->
+                  context.onValueChange(childItem.linkId, newValue, text)
                 },
-                errorMessage = errorMessages[childItem.linkId],
+                errorMessage = context.errorMessages[childItem.linkId],
               )
             }
           }

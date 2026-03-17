@@ -1,0 +1,277 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "household-registration",
+  "title": "Household & Head Registration",
+  "version": "1.0.0",
+  "items": [
+    {
+      "linkId": "consentSection",
+      "text": "Registration Consent",
+      "type": "GROUP",
+      "items": [
+        {
+          "linkId": "welcomeBox",
+          "type": "LAYOUT_BOX",
+          "items": [
+            {
+              "linkId": "introText",
+              "text": "Welcome to the Community Health Registration. Please ensure all details are accurate for the Household Head and members.",
+              "type": "DISPLAY"
+            }
+          ]
+        },
+        {
+          "linkId": "consentGiven",
+          "text": "Do you consent to the registration?",
+          "type": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "linkId": "householdInfo",
+      "text": "Household Identification",
+      "type": "GROUP",
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "householdId",
+          "text": "Scan Household Card",
+          "type": "BARCODE"
+        },
+        {
+          "linkId": "structureDetails",
+          "text": "Building Characteristics",
+          "type": "TEXT"
+        },
+        {
+          "linkId": "roomsCount",
+          "text": "Number of Sleeping Rooms",
+          "type": "INTEGER"
+        },
+        {
+          "linkId": "waterUsage",
+          "text": "Monthly Water Usage (Liters)",
+          "type": "QUANTITY"
+        }
+      ]
+    },
+    {
+      "linkId": "headOfHousehold",
+      "text": "Head of Household Details",
+      "type": "GROUP",
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "nameRow",
+          "type": "LAYOUT_ROW",
+          "items": [
+            {
+              "linkId": "firstName",
+              "text": "First Name",
+              "type": "STRING"
+            },
+            {
+              "linkId": "lastName",
+              "text": "Last Name",
+              "type": "STRING"
+            }
+          ]
+        },
+        {
+          "linkId": "fullNameDisplay",
+          "text": "Full Name (Calculated)",
+          "type": "STRING",
+          "readOnly": true,
+          "calculatedExpression": "firstName + ' ' + lastName"
+        },
+        {
+          "linkId": "demographicsRow",
+          "type": "LAYOUT_ROW",
+          "items": [
+            {
+              "linkId": "dob",
+              "text": "Date of Birth",
+              "type": "DATE"
+            },
+            {
+              "linkId": "gender",
+              "text": "Gender",
+              "type": "CHOICE",
+              "answerOptions": [
+                {
+                  "code": "m",
+                  "display": "Male"
+                },
+                {
+                  "code": "f",
+                  "display": "Female"
+                },
+                {
+                  "code": "o",
+                  "display": "Other"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "occupation",
+          "text": "Primary Occupation",
+          "type": "OPEN_CHOICE",
+          "answerOptions": [
+            {
+              "code": "farmer",
+              "display": "Farmer"
+            },
+            {
+              "code": "trader",
+              "display": "Trader"
+            },
+            {
+              "code": "teacher",
+              "display": "Teacher"
+            },
+            {
+              "code": "none",
+              "display": "None of the above",
+              "exclusive": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "linkId": "healthMetrics",
+      "text": "Health Metrics (Head)",
+      "type": "GROUP",
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "vitalsCol",
+          "type": "LAYOUT_COLUMN",
+          "items": [
+            {
+              "linkId": "height",
+              "text": "Height (m)",
+              "type": "DECIMAL"
+            },
+            {
+              "linkId": "weight",
+              "text": "Weight (kg)",
+              "type": "DECIMAL"
+            }
+          ]
+        },
+        {
+          "linkId": "bmiDisplay",
+          "text": "Calculated BMI",
+          "type": "DECIMAL",
+          "readOnly": true,
+          "calculatedExpression": "weight / (height * height)"
+        },
+        {
+          "linkId": "visitLog",
+          "type": "LAYOUT_ROW",
+          "items": [
+            {
+              "linkId": "visitTime",
+              "text": "Registration Timestamp",
+              "type": "DATETIME"
+            },
+            {
+              "linkId": "followUpTime",
+              "text": "Preferred Follow-up",
+              "type": "TIME"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "linkId": "mediaSection",
+      "text": "Documentation & Media",
+      "type": "GROUP",
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "headPhoto",
+          "text": "Head of Household Photo",
+          "type": "PHOTO"
+        },
+        {
+          "linkId": "idDocument",
+          "text": "National ID Scan (Attachment)",
+          "type": "ATTACHMENT"
+        }
+      ]
+    },
+    {
+      "linkId": "membersSection",
+      "text": "Household Members",
+      "type": "GROUP",
+      "repeats": true,
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "memberName",
+          "text": "Member Name",
+          "type": "STRING"
+        },
+        {
+          "linkId": "relationship",
+          "text": "Relationship to Head",
+          "type": "CHOICE",
+          "answerOptions": [
+            {
+              "code": "spouse",
+              "display": "Spouse"
+            },
+            {
+              "code": "child",
+              "display": "Child"
+            },
+            {
+              "code": "other",
+              "display": "Relative"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

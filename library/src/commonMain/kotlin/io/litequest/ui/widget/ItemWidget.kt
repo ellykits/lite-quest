@@ -25,7 +25,7 @@ interface ItemWidget {
   @Composable
   fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String? = null,
   )
 }

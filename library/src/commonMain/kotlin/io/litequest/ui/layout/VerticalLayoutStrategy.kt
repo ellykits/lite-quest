@@ -35,7 +35,7 @@ class VerticalLayoutStrategy : LayoutStrategy {
   override fun Layout(
     items: List<Item>,
     widgets: Map<String, ItemWidget>,
-    onValueChange: (String, JsonElement) -> Unit,
+    onValueChange: (String, JsonElement, String?) -> Unit,
     values: Map<String, JsonElement?>,
     errorMessages: Map<String, String>,
   ) {
@@ -48,7 +48,7 @@ class VerticalLayoutStrategy : LayoutStrategy {
         widgets[item.linkId]?.let { widget ->
           widget.Render(
             value = values[item.linkId],
-            onValueChange = { value -> onValueChange(item.linkId, value) },
+            onValueChange = { value, text -> onValueChange(item.linkId, value, text) },
             errorMessage = errorMessages[item.linkId],
           )
         }

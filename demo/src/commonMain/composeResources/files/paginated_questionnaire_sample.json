@@ -1,0 +1,284 @@
+{
+  "resourceType": "PaginatedQuestionnaire",
+  "id": "household-registration-paginated",
+  "title": "Household & Head Registration",
+  "version": "1.0.0",
+  "pages": [
+    {
+      "id": "page1",
+      "title": "Consent",
+      "description": "Information and agreement.",
+      "order": 1,
+      "items": [
+        {
+          "linkId": "welcomeBox",
+          "type": "LAYOUT_BOX",
+          "items": [
+            {
+              "linkId": "introText",
+              "text": "Welcome to the Community Health Registration. Please ensure all details are accurate.",
+              "type": "DISPLAY"
+            }
+          ]
+        },
+        {
+          "linkId": "consentGiven",
+          "text": "Do you consent to the registration?",
+          "type": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "page2",
+      "title": "Household",
+      "description": "Infrastructure and location.",
+      "order": 2,
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "householdId",
+          "text": "Scan Household Card",
+          "type": "BARCODE"
+        },
+        {
+          "linkId": "structureDetails",
+          "text": "Building Characteristics",
+          "type": "TEXT"
+        },
+        {
+          "linkId": "roomsCount",
+          "text": "Number of Sleeping Rooms",
+          "type": "INTEGER"
+        },
+        {
+          "linkId": "waterUsage",
+          "text": "Monthly Water Usage",
+          "type": "QUANTITY",
+          "extension": {
+            "unit": "L"
+          }
+        }
+      ]
+    },
+    {
+      "id": "page3",
+      "title": "Head of Household",
+      "description": "Personal details and identifiers.",
+      "order": 3,
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "nameRow",
+          "type": "LAYOUT_ROW",
+          "items": [
+            {
+              "linkId": "firstName",
+              "text": "First Name",
+              "type": "STRING"
+            },
+            {
+              "linkId": "lastName",
+              "text": "Last Name",
+              "type": "STRING"
+            }
+          ]
+        },
+        {
+          "linkId": "fullNameDisplay",
+          "text": "Full Name (Calculated)",
+          "type": "STRING",
+          "readOnly": true,
+          "calculatedExpression": "firstName + ' ' + lastName"
+        },
+        {
+          "linkId": "demographicsRow",
+          "type": "LAYOUT_ROW",
+          "items": [
+            {
+              "linkId": "dob",
+              "text": "Date of Birth",
+              "type": "DATE",
+              "extension": {
+                "displayFormat": "dd/MM/yyyy",
+                "outputFormat": "yyyy-MM-dd"
+              }
+            },
+            {
+              "linkId": "gender",
+              "text": "Gender",
+              "type": "CHOICE",
+              "answerOptions": [
+                {
+                  "code": "m",
+                  "display": "Male"
+                },
+                {
+                  "code": "f",
+                  "display": "Female"
+                },
+                {
+                  "code": "o",
+                  "display": "Other"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "occupation",
+          "text": "Primary Occupation",
+          "type": "OPEN_CHOICE",
+          "answerOptions": [
+            {
+              "code": "farmer",
+              "display": "Farmer"
+            },
+            {
+              "code": "trader",
+              "display": "Trader"
+            },
+            {
+              "code": "teacher",
+              "display": "Teacher"
+            },
+            {
+              "code": "unemployed",
+              "display": "Currently Unemployed",
+              "exclusive": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page4",
+      "title": "Health & Media",
+      "description": "Vitals and documentation.",
+      "order": 4,
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "vitalsCol",
+          "type": "LAYOUT_COLUMN",
+          "items": [
+            {
+              "linkId": "height",
+              "text": "Height (m)",
+              "type": "DECIMAL"
+            },
+            {
+              "linkId": "weight",
+              "text": "Weight (kg)",
+              "type": "DECIMAL"
+            }
+          ]
+        },
+        {
+          "linkId": "bmiDisplay",
+          "text": "Calculated BMI",
+          "type": "DECIMAL",
+          "readOnly": true,
+          "calculatedExpression": "weight / (height * height)"
+        },
+        {
+          "linkId": "visitLog",
+          "type": "LAYOUT_ROW",
+          "items": [
+            {
+              "linkId": "visitTime",
+              "text": "Registration Date & Time",
+              "type": "DATETIME",
+              "extension": {
+                "displayFormat": "dd/MM/yyyy HH:mm",
+                "outputFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+              }
+            },
+            {
+              "linkId": "followUpTime",
+              "text": "Preferred Follow-up",
+              "type": "TIME",
+              "extension": {
+                "use24Hour": true
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "headPhoto",
+          "text": "Head of Household Photo",
+          "type": "PHOTO"
+        },
+        {
+          "linkId": "idDocument",
+          "text": "National ID Attachment",
+          "type": "ATTACHMENT"
+        }
+      ]
+    },
+    {
+      "id": "page5",
+      "title": "Members",
+      "description": "Secondary household members.",
+      "order": 5,
+      "visibleIf": {
+        "==": {
+          "0": {
+            "var": "consentSection.consentGiven"
+          },
+          "1": true
+        }
+      },
+      "items": [
+        {
+          "linkId": "membersSection",
+          "text": "Household Members",
+          "type": "GROUP",
+          "repeats": true,
+          "items": [
+            {
+              "linkId": "memberName",
+              "text": "Member Name",
+              "type": "STRING"
+            },
+            {
+              "linkId": "relationship",
+              "text": "Relationship",
+              "type": "CHOICE",
+              "answerOptions": [
+                {
+                  "code": "spouse",
+                  "display": "Spouse"
+                },
+                {
+                  "code": "child",
+                  "display": "Child"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

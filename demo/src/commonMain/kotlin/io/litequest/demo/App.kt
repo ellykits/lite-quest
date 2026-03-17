@@ -37,8 +37,6 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,6 +58,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -72,7 +74,6 @@ import io.litequest.demo.theme.DarkColorScheme
 import io.litequest.demo.theme.LightColorScheme
 import io.litequest.ui.QuestionnaireMode
 import io.litequest.ui.screen.QuestionnaireScreen
-import kotlinx.coroutines.launch
 
 @Composable
 fun App() {
@@ -92,20 +93,30 @@ fun App() {
       }
 
       composable<Route.SingleFormMode> {
-        val viewModel: VitalsViewModel = viewModel { VitalsViewModel() }
+        val viewModel: SinglePageViewModel = viewModel { SinglePageViewModel() }
         val state by viewModel.state.collectAsState()
         val submittedJson by viewModel.submittedJson.collectAsState()
+        val manager by viewModel.manager.collectAsState()
         var mode by remember { mutableStateOf(QuestionnaireMode.Edit) }
 
-        QuestionnaireScreen(
-          type = viewModel.type,
-          state = state,
-          mode = mode,
-          onAnswerChange = { linkId, value -> viewModel.updateAnswer(linkId, value) },
-          onSubmit = { viewModel.submit() },
-          onModeChange = { newMode -> mode = newMode },
-          onDismiss = { navController.popBackStack() },
-        )
+        val questionnaire by viewModel.questionnaire.collectAsState(initial = null)
+
+        questionnaire?.let { q ->
+          state?.let { s ->
+            QuestionnaireScreen(
+              type = io.litequest.ui.QuestionnaireType.Single(q),
+              state = s,
+              mode = mode,
+              onAnswerChange = { linkId, value, text ->
+                viewModel.updateAnswer(linkId, value, text)
+              },
+              onSubmit = { viewModel.submit() },
+              manager = manager,
+              onModeChange = { newMode -> mode = newMode },
+              onDismiss = { navController.popBackStack() },
+            )
+          }
+        }
         SubmissionHandler(submittedJson = submittedJson, onDismiss = { viewModel.resetForm() })
       }
 
@@ -113,14 +124,24 @@ fun App() {
         val viewModel: PaginatedViewModel = viewModel { PaginatedViewModel() }
         val state by viewModel.state.collectAsState()
         val submittedJson by viewModel.submittedJson.collectAsState()
+        val manager by viewModel.manager.collectAsState()
 
-        QuestionnaireScreen(
-          type = viewModel.type,
-          state = state,
-          onAnswerChange = { linkId, value -> viewModel.updateAnswer(linkId, value) },
-          onSubmit = { viewModel.submit() },
-          onDismiss = { navController.popBackStack() },
-        )
+        val type by viewModel.type.collectAsState(initial = null)
+
+        type?.let { t ->
+          state?.let { s ->
+            QuestionnaireScreen(
+              type = t,
+              state = s,
+              onAnswerChange = { linkId, value, text ->
+                viewModel.updateAnswer(linkId, value, text)
+              },
+              onSubmit = { viewModel.submit() },
+              manager = manager,
+              onDismiss = { navController.popBackStack() },
+            )
+          }
+        }
         SubmissionHandler(submittedJson = submittedJson, onDismiss = { viewModel.resetForm() })
       }
 
@@ -141,7 +162,7 @@ fun ModeSelectionScreen(onModeSelected: (String) -> Unit) {
         title = "Single Page Form",
         description = "Fill out form with Edit/Review modes",
         icon = Icons.Default.Edit,
-        isPrimary = true,
+        isPrimary = false,
       ),
       ModeOption(
         id = "pagination",
@@ -154,18 +175,6 @@ fun ModeSelectionScreen(onModeSelected: (String) -> Unit) {
         title = "View Summary Examples",
         description = "Compare single and multi-page summaries",
         icon = Icons.Default.CheckCircle,
-      ),
-      ModeOption(
-        id = "components",
-        title = "View Components",
-        description = "Explore individual form components",
-        icon = Icons.Default.Settings,
-      ),
-      ModeOption(
-        id = "showcase",
-        title = "Showcase Form Behaviours",
-        description = "Demonstrate advanced form features",
-        icon = Icons.Default.PlayArrow,
       ),
     )
 
@@ -181,7 +190,7 @@ fun ModeSelectionScreen(onModeSelected: (String) -> Unit) {
         text = "Select Form Mode",
         style = MaterialTheme.typography.headlineMedium,
         color = MaterialTheme.colorScheme.onSurface,
-        textAlign = androidx.compose.ui.text.style.TextAlign.Start,
+        textAlign = TextAlign.Start,
         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
       )
 
@@ -189,7 +198,7 @@ fun ModeSelectionScreen(onModeSelected: (String) -> Unit) {
         text = "Choose how you'd like to interact with the questionnaire form",
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = androidx.compose.ui.text.style.TextAlign.Start,
+        textAlign = TextAlign.Start,
         modifier = Modifier.fillMaxWidth(),
       )
 
@@ -203,15 +212,7 @@ fun ModeSelectionScreen(onModeSelected: (String) -> Unit) {
             description = option.description,
             icon = option.icon,
             isPrimary = option.isPrimary,
-            onClick = {
-              when (option.id) {
-                "components",
-                "showcase" -> {
-                  coroutineScope.launch { snackbarHostState.showSnackbar("Coming Soon! 🚀") }
-                }
-                else -> onModeSelected(option.id)
-              }
-            },
+            onClick = { onModeSelected(option.id) },
           )
         }
       }
@@ -223,7 +224,7 @@ fun ModeSelectionScreen(onModeSelected: (String) -> Unit) {
 fun ModeCard(
   title: String,
   description: String,
-  icon: androidx.compose.ui.graphics.vector.ImageVector,
+  icon: ImageVector,
   isPrimary: Boolean = false,
   onClick: () -> Unit,
 ) {
@@ -281,7 +282,7 @@ fun ModeCard(
               MaterialTheme.colorScheme.onSurfaceVariant
             },
           maxLines = 1,
-          overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+          overflow = TextOverflow.Ellipsis,
         )
       }
     }
@@ -392,7 +393,7 @@ fun SubmissionResultDialog(
                   text = jsonResponse,
                   style = MaterialTheme.typography.bodySmall,
                   color = MaterialTheme.colorScheme.onSurface,
-                  fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                  fontFamily = FontFamily.Monospace,
                   modifier = Modifier.padding(12.dp),
                   lineHeight = MaterialTheme.typography.bodySmall.lineHeight,
                 )

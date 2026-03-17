@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
@@ -49,14 +50,14 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
   var selectedTab by remember { mutableIntStateOf(0) }
   val tabs = listOf("Single Page", "Multi-Page")
 
-  val vitalsViewModel: VitalsViewModel = viewModel { VitalsViewModel() }
+  val singlePageViewModel: SinglePageViewModel = viewModel { SinglePageViewModel() }
   val paginatedViewModel: PaginatedViewModel = viewModel { PaginatedViewModel() }
 
-  val vitalsState by vitalsViewModel.state.collectAsState()
+  val vitalsState by singlePageViewModel.state.collectAsState()
   val paginatedState by paginatedViewModel.state.collectAsState()
 
   LaunchedEffect(Unit) {
-    vitalsViewModel.prepopulateForSummary()
+    singlePageViewModel.populateForSummary()
     paginatedViewModel.prepopulateForSummary()
   }
 
@@ -74,7 +75,7 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
           IconButton(
             onClick = onDismiss,
             colors =
-              androidx.compose.material3.IconButtonDefaults.iconButtonColors(
+              IconButtonDefaults.iconButtonColors(
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
               ),
           ) {
@@ -109,38 +110,58 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
       when (selectedTab) {
         0 -> {
           var singleMode by remember { mutableStateOf(QuestionnaireMode.Summary) }
-          val vitalsSubmittedJson by vitalsViewModel.submittedJson.collectAsState()
+          val questionnaire by singlePageViewModel.questionnaire.collectAsState(initial = null)
+          val vitalsSubmittedJson by
+            singlePageViewModel.submittedJson.collectAsState(initial = null)
+          val singleManager by singlePageViewModel.manager.collectAsState()
 
-          QuestionnaireScreen(
-            type = vitalsViewModel.type,
-            state = vitalsState,
-            mode = singleMode,
-            onAnswerChange = { linkId, value -> vitalsViewModel.updateAnswer(linkId, value) },
-            onSubmit = { vitalsViewModel.submit() },
-            onModeChange = { newMode -> singleMode = newMode },
-            showCloseButton = false,
-            modifier = Modifier.fillMaxSize(),
-          )
+          questionnaire?.let { q ->
+            vitalsState?.let { s ->
+              QuestionnaireScreen(
+                type = io.litequest.ui.QuestionnaireType.Single(q),
+                state = s,
+                mode = singleMode,
+                onAnswerChange = { linkId, value, text ->
+                  singlePageViewModel.updateAnswer(linkId, value, text)
+                },
+                onSubmit = { singlePageViewModel.submit() },
+                manager = singleManager,
+                onModeChange = { newMode -> singleMode = newMode },
+                showCloseButton = false,
+                modifier = Modifier.fillMaxSize(),
+              )
+            }
+          }
 
           SubmissionHandler(
             submittedJson = vitalsSubmittedJson,
-            onDismiss = { vitalsViewModel.resetForm() },
+            onDismiss = { singlePageViewModel.resetForm() },
           )
         }
         1 -> {
           var paginatedMode by remember { mutableStateOf(QuestionnaireMode.Summary) }
-          val paginatedSubmittedJson by paginatedViewModel.submittedJson.collectAsState()
+          val type by paginatedViewModel.type.collectAsState(initial = null)
+          val paginatedSubmittedJson by
+            paginatedViewModel.submittedJson.collectAsState(initial = null)
+          val paginatedManager by paginatedViewModel.manager.collectAsState()
 
-          QuestionnaireScreen(
-            type = paginatedViewModel.type,
-            state = paginatedState,
-            mode = paginatedMode,
-            onAnswerChange = { linkId, value -> paginatedViewModel.updateAnswer(linkId, value) },
-            onSubmit = { paginatedViewModel.submit() },
-            onModeChange = { newMode -> paginatedMode = newMode },
-            showCloseButton = false,
-            modifier = Modifier.fillMaxSize(),
-          )
+          type?.let { t ->
+            paginatedState?.let { s ->
+              QuestionnaireScreen(
+                type = t,
+                state = s,
+                mode = paginatedMode,
+                onAnswerChange = { linkId, value, text ->
+                  paginatedViewModel.updateAnswer(linkId, value, text)
+                },
+                onSubmit = { paginatedViewModel.submit() },
+                manager = paginatedManager,
+                onModeChange = { newMode -> paginatedMode = newMode },
+                showCloseButton = false,
+                modifier = Modifier.fillMaxSize(),
+              )
+            }
+          }
 
           SubmissionHandler(
             submittedJson = paginatedSubmittedJson,

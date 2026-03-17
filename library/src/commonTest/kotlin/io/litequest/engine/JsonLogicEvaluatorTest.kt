@@ -359,4 +359,146 @@ class JsonLogicEvaluatorTest {
     val result = evaluator.evaluate(expression, data) as Double
     assertEquals(24.845679012345678, result, 0.0001)
   }
+
+  @Test
+  fun testDotNotationSingleLevel() {
+    val data = mapOf("consentSection" to mapOf("consentGiven" to true))
+    val expression = buildJsonObject { put("var", "consentSection.consentGiven") }
+
+    val result = evaluator.evaluate(expression, data)
+    assertEquals(true, result)
+  }
+
+  @Test
+  fun testDotNotationMultipleLevels() {
+    val data =
+      mapOf(
+        "patient" to
+          mapOf(
+            "demographics" to mapOf("name" to mapOf("firstName" to "John", "lastName" to "Doe"))
+          )
+      )
+    val expression = buildJsonObject { put("var", "patient.demographics.name.firstName") }
+
+    val result = evaluator.evaluate(expression, data)
+    assertEquals("John", result)
+  }
+
+  @Test
+  fun testDotNotationWithEqualsOperator() {
+    val data = mapOf("consentSection" to mapOf("consentGiven" to true))
+    val expression = buildJsonObject {
+      put(
+        "==",
+        buildJsonObject {
+          put("0", buildJsonObject { put("var", "consentSection.consentGiven") })
+          put("1", true)
+        },
+      )
+    }
+
+    val result = evaluator.evaluate(expression, data)
+    assertTrue(result as Boolean)
+  }
+
+  @Test
+  fun testDotNotationWithNonExistentPath() {
+    val data = mapOf("consentSection" to mapOf("consentGiven" to true))
+    val expression = buildJsonObject { put("var", "consentSection.nonExistent") }
+
+    val result = evaluator.evaluate(expression, data)
+    assertNull(result)
+  }
+
+  @Test
+  fun testDotNotationWithNonExistentParent() {
+    val data = mapOf("consentSection" to mapOf("consentGiven" to true))
+    val expression = buildJsonObject { put("var", "nonExistent.consentGiven") }
+
+    val result = evaluator.evaluate(expression, data)
+    assertNull(result)
+  }
+
+  @Test
+  fun testDotNotationWithExistsOperator() {
+    val data = mapOf("consentSection" to mapOf("consentGiven" to true))
+    val expression = buildJsonObject { put("!!", "consentSection.consentGiven") }
+
+    val result = evaluator.evaluate(expression, data)
+    assertTrue(result as Boolean)
+  }
+
+  @Test
+  fun testDotNotationWithExistsOperatorNonExistent() {
+    val data = mapOf("consentSection" to mapOf("consentGiven" to true))
+    val expression = buildJsonObject { put("!!", "consentSection.nonExistent") }
+
+    val result = evaluator.evaluate(expression, data)
+    assertEquals(false, result)
+  }
+
+  @Test
+  fun testDotNotationWithComplexCondition() {
+    val data = mapOf("household" to mapOf("head" to mapOf("age" to 35, "employed" to true)))
+    val expression = buildJsonObject {
+      put(
+        "and",
+        buildJsonObject {
+          put(
+            "0",
+            buildJsonObject {
+              put(
+                ">",
+                buildJsonObject {
+                  put("0", buildJsonObject { put("var", "household.head.age") })
+                  put("1", 18)
+                },
+              )
+            },
+          )
+          put("1", buildJsonObject { put("var", "household.head.employed") })
+        },
+      )
+    }
+
+    val result = evaluator.evaluate(expression, data)
+    assertTrue(result as Boolean)
+  }
+
+  @Test
+  fun testDotNotationDeepNestingWithEquals() {
+    val data = mapOf("patient" to mapOf("demographics" to mapOf("age" to 25)))
+
+    val varResult =
+      evaluator.evaluate(buildJsonObject { put("var", "patient.demographics.age") }, data)
+    assertEquals(25, varResult)
+
+    val simpleExpression = buildJsonObject {
+      put(
+        "==",
+        buildJsonObject {
+          put("0", 25)
+          put("1", 25)
+        },
+      )
+    }
+    val simpleResult = evaluator.evaluate(simpleExpression, data)
+    assertTrue(simpleResult as Boolean, "Simple comparison should work")
+
+    val expression = buildJsonObject {
+      put(
+        "==",
+        buildJsonObject {
+          put("0", buildJsonObject { put("var", "patient.demographics.age") })
+          put("1", 25)
+        },
+      )
+    }
+
+    val result = evaluator.evaluate(expression, data)
+    assertTrue(
+      result as? Boolean ?: false,
+      "Expected true but got: $result, varResult was: $varResult",
+    )
+  }
 }

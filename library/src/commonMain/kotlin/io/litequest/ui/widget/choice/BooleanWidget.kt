@@ -37,7 +37,7 @@ class BooleanWidget(override val item: Item) : ItemWidget {
   @Composable
   override fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
     val checked = value?.jsonPrimitive?.content == "true"
@@ -49,7 +49,12 @@ class BooleanWidget(override val item: Item) : ItemWidget {
     ) {
       Text(text = item.text, modifier = Modifier.weight(1f))
       Spacer(modifier = Modifier.width(8.dp))
-      Switch(checked = checked, onCheckedChange = { onValueChange(JsonPrimitive(it)) })
+      Switch(
+        checked = checked,
+        onCheckedChange = { newValue ->
+          onValueChange(JsonPrimitive(newValue), if (newValue) "Yes" else "No")
+        },
+      )
     }
   }
 }

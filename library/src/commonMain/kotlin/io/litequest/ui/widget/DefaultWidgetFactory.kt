@@ -18,38 +18,53 @@ package io.litequest.ui.widget
 import io.litequest.model.Item
 import io.litequest.model.ItemType
 import io.litequest.ui.widget.choice.BooleanWidget
+import io.litequest.ui.widget.choice.ChoiceWidget
+import io.litequest.ui.widget.choice.OpenChoiceWidget
+import io.litequest.ui.widget.container.BoxLayoutWidget
+import io.litequest.ui.widget.container.ColumnLayoutWidget
+import io.litequest.ui.widget.container.RowLayoutWidget
+import io.litequest.ui.widget.datetime.DatePickerWidget
+import io.litequest.ui.widget.datetime.DateTimePickerWidget
+import io.litequest.ui.widget.datetime.TimePickerWidget
 import io.litequest.ui.widget.display.DisplayWidget
+import io.litequest.ui.widget.group.GroupWidget
+import io.litequest.ui.widget.group.RepeatingGroupWidget
+import io.litequest.ui.widget.media.AttachmentWidget
+import io.litequest.ui.widget.media.BarcodeScannerWidget
+import io.litequest.ui.widget.media.PhotoSelectorWidget
 import io.litequest.ui.widget.numeric.DecimalInputWidget
 import io.litequest.ui.widget.numeric.IntegerInputWidget
+import io.litequest.ui.widget.numeric.QuantityWidget
 import io.litequest.ui.widget.text.TextInputWidget
 
 class DefaultWidgetFactory : WidgetFactory {
-  private val registry = mutableMapOf<ItemType, (Item) -> ItemWidget>()
-
-  init {
-    registerDefaultWidgets()
-  }
-
   override fun createWidget(item: Item): ItemWidget {
-    val creator =
-      registry[item.type]
-        ?: throw IllegalArgumentException("No widget registered for ItemType: ${item.type}")
-    return creator(item)
-  }
-
-  override fun supports(itemType: ItemType): Boolean {
-    return registry.containsKey(itemType)
-  }
-
-  fun registerWidget(type: ItemType, creator: (Item) -> ItemWidget) {
-    registry[type] = creator
-  }
-
-  private fun registerDefaultWidgets() {
-    registerWidget(ItemType.TEXT) { TextInputWidget(it) }
-    registerWidget(ItemType.DECIMAL) { DecimalInputWidget(it) }
-    registerWidget(ItemType.INTEGER) { IntegerInputWidget(it) }
-    registerWidget(ItemType.BOOLEAN) { BooleanWidget(it) }
-    registerWidget(ItemType.DISPLAY) { DisplayWidget(it) }
+    return when (item.type) {
+      ItemType.STRING,
+      ItemType.TEXT -> TextInputWidget(item)
+      ItemType.BOOLEAN -> BooleanWidget(item)
+      ItemType.DECIMAL -> DecimalInputWidget(item)
+      ItemType.INTEGER -> IntegerInputWidget(item)
+      ItemType.DATE -> DatePickerWidget(item)
+      ItemType.TIME -> TimePickerWidget(item)
+      ItemType.DATETIME -> DateTimePickerWidget(item)
+      ItemType.CHOICE -> ChoiceWidget(item)
+      ItemType.OPEN_CHOICE -> OpenChoiceWidget(item)
+      ItemType.DISPLAY -> DisplayWidget(item)
+      ItemType.QUANTITY -> QuantityWidget(item)
+      ItemType.BARCODE -> BarcodeScannerWidget(item)
+      ItemType.PHOTO -> PhotoSelectorWidget(item)
+      ItemType.ATTACHMENT -> AttachmentWidget(item)
+      ItemType.LAYOUT_ROW -> RowLayoutWidget(item)
+      ItemType.LAYOUT_COLUMN -> ColumnLayoutWidget(item)
+      ItemType.LAYOUT_BOX -> BoxLayoutWidget(item)
+      ItemType.GROUP -> {
+        if (item.repeats) {
+          RepeatingGroupWidget(item)
+        } else {
+          GroupWidget(item)
+        }
+      }
+    }
   }
 }

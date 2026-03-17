@@ -25,7 +25,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -33,7 +32,7 @@ class IntegerInputWidget(override val item: Item) : ItemWidget {
   @Composable
   override fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
     val text = value?.jsonPrimitive?.content ?: ""
@@ -42,9 +41,9 @@ class IntegerInputWidget(override val item: Item) : ItemWidget {
       value = text,
       onValueChange = { newValue ->
         if (newValue.isEmpty()) {
-          onValueChange(JsonNull)
+          onValueChange(JsonPrimitive(""), item.text)
         } else {
-          newValue.toIntOrNull()?.let { onValueChange(JsonPrimitive(it)) }
+          newValue.toIntOrNull()?.let { onValueChange(JsonPrimitive(it), item.text) }
         }
       },
       label = { Text(item.text) },
@@ -53,6 +52,8 @@ class IntegerInputWidget(override val item: Item) : ItemWidget {
       modifier = Modifier.fillMaxWidth(),
       singleLine = true,
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+      enabled = !item.readOnly,
+      readOnly = item.readOnly,
     )
   }
 }

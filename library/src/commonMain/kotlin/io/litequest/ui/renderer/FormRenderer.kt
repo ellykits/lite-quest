@@ -16,53 +16,78 @@
 package io.litequest.ui.renderer
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import io.litequest.model.Item
-import io.litequest.model.ItemType
+import io.litequest.model.ResponseItem
 import io.litequest.state.QuestionnaireState
 import io.litequest.ui.layout.LayoutStrategy
 import io.litequest.ui.layout.VerticalLayoutStrategy
 import io.litequest.ui.widget.DefaultWidgetFactory
 import io.litequest.ui.widget.WidgetFactory
-import io.litequest.ui.widget.group.RepeatingGroupWidget
 import kotlinx.serialization.json.JsonElement
 
 @Composable
 fun FormRenderer(
   items: List<Item>,
   state: QuestionnaireState,
-  onAnswerChange: (String, JsonElement) -> Unit,
-  widgetFactory: WidgetFactory = DefaultWidgetFactory(),
+  onAnswerChange: (String, JsonElement, String?) -> Unit,
+  onRepetitionAdd: ((String) -> Unit)? = null,
+  onRepetitionRemove: ((String, Int) -> Unit)? = null,
+  onRepetitionFieldChange: ((String, Int, String, JsonElement, String?) -> Unit)? = null,
+  widgetFactory: WidgetFactory? = null,
   layoutStrategy: LayoutStrategy = VerticalLayoutStrategy(),
 ) {
-  val values =
-    state.response.items.associate { responseItem ->
-      responseItem.linkId to responseItem.answers.firstOrNull()?.value
+  val factory = widgetFactory ?: DefaultWidgetFactory()
+
+  val values = mutableMapOf<String, JsonElement?>()
+  val repetitions = mutableMapOf<String, List<Map<String, JsonElement?>>>()
+
+  fun flattenResponseItems(responseItems: List<ResponseItem>) {
+    responseItems.forEach { responseItem ->
+      if (responseItem.answers.isNotEmpty() && responseItem.answers.first().items.isNotEmpty()) {
+        val repetitionList =
+          responseItem.answers.map { answer ->
+            val repetitionValues = mutableMapOf<String, JsonElement?>()
+            answer.items.forEach { childItem ->
+              repetitionValues[childItem.linkId] = childItem.answers.firstOrNull()?.value
+            }
+            repetitionValues
+          }
+        repetitions[responseItem.linkId] = repetitionList
+      } else {
+        values[responseItem.linkId] = responseItem.answers.firstOrNull()?.value
+      }
+
+      if (responseItem.items.isNotEmpty()) {
+        flattenResponseItems(responseItem.items)
+      }
     }
+  }
+
+  flattenResponseItems(state.response.items)
 
   val errorMessages = state.validationErrors.associate { error -> error.linkId to error.message }
+  val widgets = items.associate { item -> item.linkId to factory.createWidget(item) }
 
-  val widgets =
-    items.associate { item ->
-      item.linkId to
-        when {
-          item.type == ItemType.GROUP && item.repeats -> {
-            RepeatingGroupWidget(
-              item = item,
-              widgetFactory = widgetFactory,
-              onValueChange = onAnswerChange,
-              values = values,
-              errorMessages = errorMessages,
-            )
-          }
-          else -> widgetFactory.createWidget(item)
-        }
-    }
-
-  layoutStrategy.Layout(
-    items = items,
-    widgets = widgets,
-    onValueChange = onAnswerChange,
-    values = values,
-    errorMessages = errorMessages,
-  )
+  CompositionLocalProvider(
+    LocalFormContext provides
+      FormContext(
+        values = values,
+        onValueChange = onAnswerChange,
+        errorMessages = errorMessages,
+        widgetFactory = factory,
+        repetitions = repetitions,
+        onRepetitionAdd = onRepetitionAdd,
+        onRepetitionRemove = onRepetitionRemove,
+        onRepetitionFieldChange = onRepetitionFieldChange,
+      )
+  ) {
+    layoutStrategy.Layout(
+      items = items,
+      widgets = widgets,
+      onValueChange = onAnswerChange,
+      values = values,
+      errorMessages = errorMessages,
+    )
+  }
 }

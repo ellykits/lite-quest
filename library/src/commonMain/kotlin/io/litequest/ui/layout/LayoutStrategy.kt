@@ -24,7 +24,7 @@ interface LayoutStrategy {
   fun Layout(
     items: List<Item>,
     widgets: Map<String, ItemWidget>,
-    onValueChange: (String, kotlinx.serialization.json.JsonElement) -> Unit,
+    onValueChange: (String, kotlinx.serialization.json.JsonElement, String?) -> Unit,
     values: Map<String, kotlinx.serialization.json.JsonElement?>,
     errorMessages: Map<String, String>,
   )

@@ -20,32 +20,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import io.litequest.model.Item
+import io.litequest.ui.renderer.LocalFormContext
 import io.litequest.ui.widget.ItemWidget
-import io.litequest.ui.widget.WidgetFactory
 import kotlinx.serialization.json.JsonElement
 
-class BoxLayoutWidget(
-  override val item: Item,
-  private val widgetFactory: WidgetFactory,
-  private val onValueChange: (String, JsonElement) -> Unit,
-  private val values: Map<String, JsonElement?>,
-  private val errorMessages: Map<String, String>,
-) : ItemWidget {
+class BoxLayoutWidget(override val item: Item) : ItemWidget {
   @Composable
   override fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
+    val context = LocalFormContext.current
     Box(modifier = Modifier.fillMaxWidth()) {
       item.items.forEach { childItem ->
-        val childWidget = widgetFactory.createWidget(childItem)
+        val childWidget = context.widgetFactory.createWidget(childItem)
         childWidget.Render(
-          value = values[childItem.linkId],
-          onValueChange = { newValue ->
-            this@BoxLayoutWidget.onValueChange(childItem.linkId, newValue)
-          },
-          errorMessage = errorMessages[childItem.linkId],
+          value = context.values[childItem.linkId],
+          onValueChange = { value, text -> context.onValueChange(childItem.linkId, value, text) },
+          errorMessage = context.errorMessages[childItem.linkId],
         )
       }
     }

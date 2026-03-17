@@ -4,7 +4,6 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
@@ -22,7 +21,7 @@ kotlin {
 
   jvm("desktop")
 
-  wasmJs {
+  /*  wasmJs {
     browser {
       val rootDirPath = project.rootDir.path
       val projectDirPath = project.projectDir.path
@@ -39,9 +38,9 @@ kotlin {
           }
       }
     }
-    outputModuleName = "liteQuest"
+    //    outputModuleName = "liteQuest"
     binaries.executable()
-  }
+  }*/
 
   listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
     iosTarget.binaries.framework {
@@ -53,7 +52,7 @@ kotlin {
   sourceSets {
     val desktopMain by getting
 
-    val wasmJsMain by getting
+    //    val wasmJsMain by getting
 
     androidMain.dependencies {
       implementation(compose.preview)
@@ -61,12 +60,12 @@ kotlin {
     }
 
     commonMain.dependencies {
-      implementation(compose.runtime)
-      implementation(compose.foundation)
-      implementation(compose.material3)
-      implementation(compose.ui)
-      implementation(compose.components.resources)
-      implementation(compose.components.uiToolingPreview)
+      implementation(libs.runtime)
+      implementation(libs.foundation)
+      implementation(libs.material3)
+      implementation(libs.ui)
+      implementation(libs.components.resources)
+      implementation(libs.ui.tooling.preview)
       implementation(libs.androidx.lifecycle.viewmodel.compose)
       implementation(libs.androidx.lifecycle.runtime.compose)
       implementation(libs.androidx.navigation.compose)
