@@ -72,6 +72,7 @@ import io.litequest.demo.navigation.Route
 import io.litequest.demo.theme.DarkColorScheme
 import io.litequest.demo.theme.LightColorScheme
 import io.litequest.ui.QuestionnaireMode
+import io.litequest.ui.QuestionnaireType
 import io.litequest.ui.screen.QuestionnaireScreen
 
 @Composable
@@ -96,13 +97,12 @@ fun App() {
         val submittedJson by viewModel.submittedJson.collectAsState()
         val manager by viewModel.manager.collectAsState()
         var mode by remember { mutableStateOf(QuestionnaireMode.Edit) }
-
         val questionnaire by viewModel.questionnaire.collectAsState(initial = null)
 
         questionnaire?.let { q ->
           manager?.let { m ->
             QuestionnaireScreen(
-              type = io.litequest.ui.QuestionnaireType.Single(q),
+              type = QuestionnaireType.Single(q),
               manager = m,
               mode = mode,
               onSubmit = { viewModel.submit() },
@@ -118,13 +118,12 @@ fun App() {
         val viewModel: PaginatedViewModel = viewModel { PaginatedViewModel() }
         val submittedJson by viewModel.submittedJson.collectAsState()
         val manager by viewModel.manager.collectAsState()
+        val questionnaire by viewModel.questionnaire.collectAsState(initial = null)
 
-        val type by viewModel.type.collectAsState(initial = null)
-
-        type?.let { t ->
+        questionnaire?.let { pq ->
           manager?.let { m ->
             QuestionnaireScreen(
-              type = t,
+              type = QuestionnaireType.Paginated(pq),
               manager = m,
               onSubmit = { viewModel.submit() },
               onDismiss = { navController.popBackStack() },

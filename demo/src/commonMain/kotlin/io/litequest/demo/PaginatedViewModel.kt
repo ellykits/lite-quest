@@ -21,7 +21,6 @@ import io.litequest.engine.LiteQuestEvaluator
 import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.state.QuestionnaireManager
-import io.litequest.ui.QuestionnaireType
 import io.litequest.ui.pagination.PaginatedQuestionnaire
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +36,8 @@ import lite_quest.demo.generated.resources.Res
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PaginatedViewModel : ViewModel() {
-  private val paginatedQuestionnaire = MutableStateFlow<PaginatedQuestionnaire?>(null)
+  private val _questionnaire = MutableStateFlow<PaginatedQuestionnaire?>(null)
+  val questionnaire: StateFlow<PaginatedQuestionnaire?> = _questionnaire.asStateFlow()
 
   private val json = Json {
     prettyPrint = true
@@ -53,32 +53,21 @@ class PaginatedViewModel : ViewModel() {
       try {
         val bytes = Res.readBytes("files/paginated_questionnaire_sample.json")
         val jsonString = bytes.decodeToString()
-        paginatedQuestionnaire.value = json.decodeFromString<PaginatedQuestionnaire>(jsonString)
+        _questionnaire.value = json.decodeFromString<PaginatedQuestionnaire>(jsonString)
       } catch (e: Exception) {
         println("Error loading paginated questionnaire: ${e.message}")
       }
     }
   }
 
-  private val questionnaireFlow: StateFlow<Questionnaire?> =
-    paginatedQuestionnaire
-      .filterNotNull()
-      .flatMapLatest { paginated -> MutableStateFlow(convertToQuestionnaire(paginated)) }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
   val manager: StateFlow<QuestionnaireManager?> =
-    questionnaireFlow
+    _questionnaire
       .filterNotNull()
-      .flatMapLatest { q ->
+      .flatMapLatest { paginated ->
+        val q = convertToQuestionnaire(paginated)
         val evaluator = LiteQuestEvaluator(q)
         MutableStateFlow(QuestionnaireManager(q, evaluator))
       }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-  val type: StateFlow<QuestionnaireType?> =
-    paginatedQuestionnaire
-      .filterNotNull()
-      .flatMapLatest { MutableStateFlow(QuestionnaireType.Paginated(it)) }
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   private val _submittedJson = MutableStateFlow<String?>(null)

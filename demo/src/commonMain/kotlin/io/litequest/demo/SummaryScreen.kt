@@ -133,15 +133,15 @@ fun SummaryScreen(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
         }
         1 -> {
           var paginatedMode by remember { mutableStateOf(QuestionnaireMode.Summary) }
-          val type by paginatedViewModel.type.collectAsState(initial = null)
+          val questionnaire by paginatedViewModel.questionnaire.collectAsState(initial = null)
           val paginatedSubmittedJson by
             paginatedViewModel.submittedJson.collectAsState(initial = null)
           val paginatedManager by paginatedViewModel.manager.collectAsState()
 
-          type?.let { t ->
+          questionnaire?.let { pq ->
             paginatedManager?.let { m ->
               QuestionnaireScreen(
-                type = t,
+                type = io.litequest.ui.QuestionnaireType.Paginated(pq),
                 manager = m,
                 mode = paginatedMode,
                 onSubmit = { paginatedViewModel.submit() },
