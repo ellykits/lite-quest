@@ -21,9 +21,23 @@ import io.github.vinceglb.filekit.readBytes
 import java.io.File
 import java.util.UUID
 
+private var androidContext: android.content.Context? = null
+
+fun setAndroidContext(context: android.content.Context) {
+  androidContext = context.applicationContext
+}
+
 actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
-  val appFilesDir = File(System.getProperty("user.home"), ".litequest/attachments")
-  appFilesDir.mkdirs()
+  val context =
+    androidContext
+      ?: throw IllegalStateException(
+        "Android context not initialized. Call setAndroidContext() in your Application or MainActivity."
+      )
+
+  val appFilesDir = File(context.filesDir, "attachments")
+  if (!appFilesDir.exists()) {
+    appFilesDir.mkdirs()
+  }
 
   val fileName = "${UUID.randomUUID()}_${file.name}"
   val destFile = File(appFilesDir, fileName)
