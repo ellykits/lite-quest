@@ -145,7 +145,7 @@ private fun SingleQuestionnaireScreen(
 ) {
   var showDismissDialog by remember { mutableStateOf(false) }
 
-  if (showDismissDialog && onDismiss != null) {
+  if (showDismissDialog && onDismiss != null && mode == QuestionnaireMode.Edit) {
     DismissDialog(
       showDialog = true,
       onDismissRequest = { showDismissDialog = false },
@@ -167,6 +167,7 @@ private fun SingleQuestionnaireScreen(
                 when (mode) {
                   QuestionnaireMode.Edit -> questionnaire.title
                   QuestionnaireMode.Summary -> "Summary"
+                  QuestionnaireMode.ReadOnly -> "Read Only"
                 },
               style = MaterialTheme.typography.headlineMedium,
               color = MaterialTheme.colorScheme.onSurface,
@@ -211,7 +212,7 @@ private fun SingleQuestionnaireScreen(
           if (showCloseButton && onDismiss != null) {
             IconButton(
               onClick = {
-                if (showDismissDialogOnClose) {
+                if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
                   showDismissDialog = true
                 } else {
                   onDismiss()
@@ -268,6 +269,7 @@ private fun SingleQuestionnaireScreen(
           )
         }
       }
+      QuestionnaireMode.ReadOnly,
       QuestionnaireMode.Summary -> {
         SummaryPage(
           state = state,
@@ -301,7 +303,7 @@ private fun PaginatedQuestionnaireScreen(
   val pageIndex by pageNavigator.currentPageIndex.collectAsState()
   var showDismissDialog by remember { mutableStateOf(false) }
 
-  if (showDismissDialog && onDismiss != null) {
+  if (showDismissDialog && onDismiss != null && mode != QuestionnaireMode.Summary) {
     DismissDialog(
       showDialog = true,
       onDismissRequest = { showDismissDialog = false },
@@ -323,6 +325,7 @@ private fun PaginatedQuestionnaireScreen(
                 when (mode) {
                   QuestionnaireMode.Edit -> paginatedQuestionnaire.title
                   QuestionnaireMode.Summary -> "Summary"
+                  QuestionnaireMode.ReadOnly -> "Read Only"
                 },
               style = MaterialTheme.typography.headlineMedium,
               color = MaterialTheme.colorScheme.onSurface,
@@ -331,6 +334,7 @@ private fun PaginatedQuestionnaireScreen(
               text =
                 when (mode) {
                   QuestionnaireMode.Edit -> "Page ${pageIndex + 1} of $totalPages"
+                  QuestionnaireMode.ReadOnly,
                   QuestionnaireMode.Summary -> paginatedQuestionnaire.title
                 },
               style = MaterialTheme.typography.labelLarge,
@@ -339,27 +343,29 @@ private fun PaginatedQuestionnaireScreen(
           }
         },
         actions = {
-          if (mode == QuestionnaireMode.Summary && onModeChange != null) {
-            OutlinedButton(
-              onClick = { onModeChange(QuestionnaireMode.Edit) },
-              modifier = Modifier.height(36.dp),
-              shape = MaterialTheme.shapes.medium,
-              border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
-            ) {
-              Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit",
-                modifier = Modifier.size(18.dp),
-              )
-              Spacer(Modifier.width(6.dp))
-              Text("Edit", style = MaterialTheme.typography.labelLarge)
+          if (mode != QuestionnaireMode.Edit && onModeChange != null) {
+            if (mode == QuestionnaireMode.Summary) {
+              OutlinedButton(
+                onClick = { onModeChange(QuestionnaireMode.Edit) },
+                modifier = Modifier.height(36.dp),
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Edit,
+                  contentDescription = "Edit",
+                  modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("Edit", style = MaterialTheme.typography.labelLarge)
+              }
             }
             Spacer(Modifier.width(8.dp))
           }
           if (showCloseButton && onDismiss != null) {
             IconButton(
               onClick = {
-                if (showDismissDialogOnClose) {
+                if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
                   showDismissDialog = true
                 } else {
                   onDismiss()
@@ -431,6 +437,7 @@ private fun PaginatedQuestionnaireScreen(
           )
         }
       }
+      QuestionnaireMode.ReadOnly,
       QuestionnaireMode.Summary -> {
         SummaryPage(
           state = state,
@@ -532,21 +539,27 @@ private fun DefaultSingleFormActions(
             }
           }
         }
+        QuestionnaireMode.ReadOnly -> {
+          // No actions for ReadOnly mode
+        }
       }
 
-      Button(
-        onClick = onSubmit,
-        modifier = Modifier.height(40.dp),
-        shape = MaterialTheme.shapes.large,
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 8.dp),
-      ) {
-        Text(
-          "Submit",
-          style = MaterialTheme.typography.labelLarge,
-          modifier = Modifier.padding(horizontal = 8.dp),
-        )
-        Spacer(Modifier.width(8.dp))
-        Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = null)
+      if (mode != QuestionnaireMode.ReadOnly) {
+        Button(
+          onClick = onSubmit,
+          modifier = Modifier.height(40.dp),
+          shape = MaterialTheme.shapes.large,
+          elevation =
+            ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 8.dp),
+        ) {
+          Text(
+            "Submit",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 8.dp),
+          )
+          Spacer(Modifier.width(8.dp))
+          Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = null)
+        }
       }
     }
   }

@@ -42,7 +42,7 @@ class VerticalLayoutStrategy : LayoutStrategy {
     LazyColumn(
       modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars),
       contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
+      verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
       items(items) { item ->
         widgets[item.linkId]?.let { widget ->

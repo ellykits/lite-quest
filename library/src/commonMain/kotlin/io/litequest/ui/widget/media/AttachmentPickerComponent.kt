@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Trash2
@@ -57,50 +59,89 @@ import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
-import kotlinx.coroutines.launch as coroutineLaunch
+import io.litequest.model.Attachment
+import io.litequest.util.FileStorageHelper
+import io.litequest.util.JsonUtil
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 
-private const val MAX_FILE_SIZE = 50 * 1024 * 1024 // 50 MB
+private const val MAX_FILE_SIZE = 50 * 1024 * 1024
+private const val MAX_IMAGE_SIZE = 10 * 1024 * 1024
 
-/** Generic media picker that optionally includes a camera button for photo capture. */
 @Composable
-internal fun MediaPickerComponent(
+internal fun AttachmentPickerComponent(
   title: String,
-  value: String,
-  onValueChange: (String) -> Unit,
+  attachment: Attachment?,
+  onAttachmentChange: (Attachment?) -> Unit,
   pickerType: FileKitType,
   buttonText: String,
   showCameraOption: Boolean = false,
   errorMessage: String? = null,
 ) {
   var sizeError by remember { mutableStateOf<String?>(null) }
-  var imageBytes by remember { mutableStateOf<ByteArray?>(null) }
+  var imagePreviewBytes by remember(attachment?.url) { mutableStateOf<ByteArray?>(null) }
+  var isProcessing by remember { mutableStateOf(false) }
+  var processingFileName by remember { mutableStateOf<String?>(null) }
   val coroutineScope = rememberCoroutineScope()
 
   val imageExtensions = listOf("jpg", "jpeg", "png", "webp", "gif", "bmp")
 
-  LaunchedEffect(value) {
-    if (value.isEmpty()) {
-      imageBytes = null
+  LaunchedEffect(attachment?.url) {
+    if (attachment != null && imagePreviewBytes == null) {
+      val isImage = attachment.contentType.startsWith("image/")
+      if (isImage) {
+        try {
+          val file = PlatformFile(attachment.url)
+          imagePreviewBytes = file.readBytes()
+        } catch (e: Exception) {
+          imagePreviewBytes = null
+        }
+      }
     }
   }
 
   fun handleFileSelection(platformFile: PlatformFile) {
-    if (platformFile.size() > MAX_FILE_SIZE.toLong()) {
-      sizeError = "File size exceeds the 50MB limit"
-      imageBytes = null
+    val fileSize = platformFile.size()
+    val isImage = platformFile.extension.lowercase() in imageExtensions
+    val maxSize = if (isImage) MAX_IMAGE_SIZE else MAX_FILE_SIZE
+
+    if (fileSize > maxSize) {
+      val maxSizeMB = maxSize / (1024 * 1024)
+      sizeError =
+        if (isImage) {
+          "Image size exceeds ${maxSizeMB}MB limit"
+        } else {
+          "File size exceeds ${maxSizeMB}MB limit"
+        }
+      onAttachmentChange(null)
+      imagePreviewBytes = null
+      isProcessing = false
+      processingFileName = null
     } else {
       sizeError = null
-      onValueChange(platformFile.name)
-      if (platformFile.extension.lowercase() in imageExtensions) {
-        coroutineScope.coroutineLaunch {
-          try {
-            imageBytes = platformFile.readBytes()
-          } catch (e: Exception) {
-            imageBytes = null
+      isProcessing = true
+      processingFileName = platformFile.name
+
+      coroutineScope.launch {
+        try {
+          val newAttachment = FileStorageHelper.createAttachment(platformFile)
+          onAttachmentChange(newAttachment)
+
+          if (isImage) {
+            imagePreviewBytes = platformFile.readBytes()
+          } else {
+            imagePreviewBytes = null
           }
+          isProcessing = false
+          processingFileName = null
+        } catch (e: Exception) {
+          sizeError = "Failed to process file: ${e.message}"
+          onAttachmentChange(null)
+          imagePreviewBytes = null
+          isProcessing = false
+          processingFileName = null
         }
-      } else {
-        imageBytes = null
       }
     }
   }
@@ -119,22 +160,49 @@ internal fun MediaPickerComponent(
       Text(text = title, style = MaterialTheme.typography.titleMedium)
       Spacer(modifier = Modifier.height(8.dp))
 
-      if (value.isNotEmpty()) {
+      if (isProcessing && processingFileName != null) {
         Row(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.SpaceBetween,
           verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         ) {
-          Text(
-            text = "Selected: $value",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.weight(1f),
-          )
-          IconButton(onClick = { onValueChange("") }, modifier = Modifier.size(24.dp)) {
+          Column(modifier = Modifier.weight(1f)) {
+            Text(
+              text = "Processing: $processingFileName",
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.secondary,
+            )
+            Text(
+              text = "Saving file...",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+          CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+      } else if (attachment != null) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+          Column(modifier = Modifier.weight(1f)) {
+            Text(
+              text = attachment.title,
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+              text = formatFileSize(attachment.size),
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+          IconButton(onClick = { onAttachmentChange(null) }, modifier = Modifier.size(40.dp)) {
             Icon(
               imageVector = Lucide.Trash2,
-              contentDescription = "Remove selection",
+              contentDescription = "Remove attachment",
               tint = MaterialTheme.colorScheme.error,
               modifier = Modifier.size(18.dp),
             )
@@ -182,8 +250,13 @@ internal fun MediaPickerComponent(
         }
       } else {
         Button(onClick = { galleryLauncher.launch() }, modifier = Modifier.wrapContentWidth()) {
+          Icon(
+            imageVector = if (pickerType is FileKitType.Image) Lucide.Image else Lucide.FileText,
+            contentDescription = buttonText,
+            modifier = Modifier.size(18.dp),
+          )
           Text(
-            if (value.isEmpty()) buttonText else "Change $buttonText",
+            "  ${if (attachment == null) buttonText else "Change $buttonText"}",
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
@@ -200,15 +273,31 @@ internal fun MediaPickerComponent(
         )
       }
 
-      if (imageBytes != null) {
+      if (imagePreviewBytes != null) {
         Spacer(modifier = Modifier.height(16.dp))
         AsyncImage(
-          model = imageBytes,
+          model = imagePreviewBytes,
           contentDescription = "Selected image preview",
           modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(8.dp)),
           contentScale = ContentScale.Crop,
         )
       }
     }
+  }
+}
+
+internal fun encodeAttachment(attachment: Attachment?): JsonElement {
+  return if (attachment != null) {
+    JsonUtil.encode(Attachment.serializer(), attachment)
+  } else {
+    JsonNull
+  }
+}
+
+private fun formatFileSize(bytes: Long): String {
+  return when {
+    bytes < 1024 -> "$bytes B"
+    bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+    else -> "${bytes / (1024 * 1024)} MB"
   }
 }

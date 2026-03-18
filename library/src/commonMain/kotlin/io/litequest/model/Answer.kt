@@ -19,4 +19,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
-data class Answer(val value: JsonElement? = null, val items: List<ResponseItem> = emptyList())
+data class Answer(
+  val value: JsonElement? = null,
+  val items: List<ResponseItem> = emptyList(),
+  val attachment: Attachment? = null,
+)

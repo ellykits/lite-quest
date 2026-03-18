@@ -13,10 +13,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.litequest.ui
+package io.litequest.util
 
-enum class QuestionnaireMode {
-  Edit,
-  ReadOnly,
-  Summary,
+import io.github.vinceglb.filekit.PlatformFile
+
+actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
+  throw UnsupportedOperationException(
+    "File persistence is not supported on WASM. Files are only available during the current session."
+  )
 }

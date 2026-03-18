@@ -17,11 +17,11 @@ package io.litequest.ui.widget.media
 
 import androidx.compose.runtime.Composable
 import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.litequest.model.Attachment
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
+import io.litequest.util.JsonUtil
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonPrimitive
 
 class ImageSelectorWidget(override val item: Item) : ItemWidget {
   @Composable
@@ -30,10 +30,10 @@ class ImageSelectorWidget(override val item: Item) : ItemWidget {
     onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
-    MediaPickerComponent(
+    AttachmentPickerComponent(
       title = item.text,
-      value = value?.jsonPrimitive?.content ?: "",
-      onValueChange = { onValueChange(JsonPrimitive(it), null) },
+      attachment = JsonUtil.decodeOrNull(Attachment.serializer(), value),
+      onAttachmentChange = { attachment -> onValueChange(encodeAttachment(attachment), null) },
       pickerType = FileKitType.Image,
       buttonText = "Image",
       showCameraOption = true,

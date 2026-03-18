@@ -15,7 +15,7 @@
 */
 package io.litequest.ui.widget.group
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,9 +32,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import io.litequest.model.Item
 import io.litequest.ui.renderer.LocalFormContext
@@ -49,7 +51,13 @@ class GroupWidget(override val item: Item) : ItemWidget {
     errorMessage: String?,
   ) {
     val context = LocalFormContext.current
-    var expanded by remember { mutableStateOf(true) }
+    var expanded by rememberSaveable { mutableStateOf(true) }
+    val rotationAngle by animateFloatAsState(if (expanded) 180f else 0f)
+
+    val childWidgets =
+      remember(item.items) {
+        item.items.associateWith { childItem -> context.widgetFactory.createWidget(childItem) }
+      }
 
     OutlinedCard(
       modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -58,7 +66,10 @@ class GroupWidget(override val item: Item) : ItemWidget {
       Column {
         if (item.text.isNotEmpty()) {
           Row(
-            modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }.padding(16.dp),
+            modifier =
+              Modifier.fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(vertical = 20.dp, horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
           ) {
@@ -72,17 +83,17 @@ class GroupWidget(override val item: Item) : ItemWidget {
               imageVector = Icons.Default.KeyboardArrowDown,
               contentDescription = if (expanded) "Collapse" else "Expand",
               tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              modifier = Modifier.rotate(rotationAngle),
             )
           }
         }
 
-        AnimatedVisibility(visible = expanded) {
+        if (expanded) {
           Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
           ) {
-            item.items.forEach { childItem ->
-              val childWidget = context.widgetFactory.createWidget(childItem)
+            childWidgets.forEach { (childItem, childWidget) ->
               childWidget.Render(
                 value = context.values[childItem.linkId],
                 onValueChange = { newValue, text ->

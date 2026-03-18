@@ -13,10 +13,21 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.litequest.ui
+package io.litequest.util
 
-enum class QuestionnaireMode {
-  Edit,
-  ReadOnly,
-  Summary,
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.readBytes
+import java.io.File
+import java.util.UUID
+
+actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
+  val appFilesDir = File(System.getProperty("user.home"), ".litequest/attachments")
+  appFilesDir.mkdirs()
+
+  val fileName = "${UUID.randomUUID()}_${file.name}"
+  val destFile = File(appFilesDir, fileName)
+  destFile.writeBytes(file.readBytes())
+
+  return PlatformFile(destFile.absolutePath)
 }

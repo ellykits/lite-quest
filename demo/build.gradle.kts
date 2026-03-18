@@ -70,6 +70,7 @@ kotlin {
       implementation(libs.androidx.lifecycle.runtime.compose)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.material.icons.core)
+      implementation(libs.lucide)
       implementation(project(":library"))
     }
 

@@ -376,9 +376,32 @@ private fun formatValueForDisplay(value: Any, type: ItemType, item: Item? = null
     ItemType.STRING,
     ItemType.TEXT -> value.toString()
     ItemType.IMAGE,
-    ItemType.ATTACHMENT,
+    ItemType.ATTACHMENT -> formatAttachment(value)
     ItemType.BARCODE -> value.toString()
     else -> value.toString()
+  }
+}
+
+private fun formatAttachment(value: Any): String {
+  return when (value) {
+    is Map<*, *> -> {
+      val title = value["title"]?.toString() ?: "Attachment"
+      val size = value["size"]?.toString()?.toLongOrNull()
+      if (size != null) {
+        "$title (${formatFileSize(size)})"
+      } else {
+        title
+      }
+    }
+    else -> value.toString()
+  }
+}
+
+private fun formatFileSize(bytes: Long): String {
+  return when {
+    bytes < 1024 -> "$bytes B"
+    bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+    else -> "${bytes / (1024 * 1024)} MB"
   }
 }
 

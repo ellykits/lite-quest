@@ -19,11 +19,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface Route {
-  @Serializable data object ModeSelection : Route
+  @Serializable data object Home : Route
 
-  @Serializable data object SingleFormMode : Route
+  @Serializable data object SinglePageForm : Route
 
-  @Serializable data object PaginationMode : Route
+  @Serializable data object SinglePageSummary : Route
 
-  @Serializable data object Summary : Route
+  @Serializable data object SinglePageReadOnly : Route
+
+  @Serializable data object PaginatedForm : Route
+
+  @Serializable data object PaginatedSummary : Route
+
+  @Serializable data object PaginatedReadOnly : Route
 }

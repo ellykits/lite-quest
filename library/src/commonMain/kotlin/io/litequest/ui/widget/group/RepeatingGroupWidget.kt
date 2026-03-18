@@ -54,7 +54,7 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
     val context = LocalFormContext.current
     val repetitions = context.repetitions[item.linkId] ?: emptyList()
 
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
       if (item.text.isNotEmpty()) {
         Text(
           text = item.text,

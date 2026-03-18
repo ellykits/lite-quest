@@ -13,14 +13,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.litequest.demo
+package io.litequest.model
 
-import androidx.compose.ui.graphics.vector.ImageVector
+import kotlinx.serialization.Serializable
 
-data class ModeOption(
-  val id: String,
-  val title: String,
-  val description: String,
-  val icon: ImageVector,
-  val isPrimary: Boolean = false,
-)
+@Serializable
+data class Attachment(val contentType: String, val size: Long, val title: String, val url: String)
