@@ -10,6 +10,7 @@ plugins {
   alias(libs.plugins.composeMultiplatform)
   alias(libs.plugins.composeCompiler)
   alias(libs.plugins.maven.publish)
+  signing
 }
 
 group = "io.github.ellykits.litequest"
@@ -102,11 +103,20 @@ android {
   }
 }
 
+signing {
+  // This checks if any task in the current execution is a MavenLocal task
+  val isMavenLocal = gradle.taskGraph.allTasks.any {
+    it.name.contains("MavenLocal", ignoreCase = true)
+  }
+  isRequired = !isMavenLocal
+}
+
+
 // Prepare for publishing
 mavenPublishing {
   publishToMavenCentral()
 
-  signAllPublications()
+//  signAllPublications()
 
   coordinates(group.toString(), "litequest-library", version.toString())
 
