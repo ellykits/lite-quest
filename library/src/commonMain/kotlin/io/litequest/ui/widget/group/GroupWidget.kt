@@ -55,7 +55,7 @@ class GroupWidget(override val item: Item) : ItemWidget {
     val rotationAngle by animateFloatAsState(if (expanded) 180f else 0f)
 
     val childWidgets =
-      remember(item.items) {
+      remember(item.items, context.widgetFactory) {
         item.items.associateWith { childItem -> context.widgetFactory.createWidget(childItem) }
       }
 

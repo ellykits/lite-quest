@@ -33,6 +33,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,6 +56,11 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
     val context = LocalFormContext.current
     val repetitions = context.repetitions[item.linkId] ?: emptyList()
 
+    val childWidgets =
+      remember(item.items, context.widgetFactory) {
+        item.items.associateWith { childItem -> context.widgetFactory.createWidget(childItem) }
+      }
+
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
       if (item.text.isNotEmpty()) {
         Text(
@@ -64,77 +71,80 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
       }
 
       repetitions.forEachIndexed { index, repetitionValues ->
-        Surface(
-          modifier = Modifier.fillMaxWidth(),
-          color = Color.Transparent,
-          shape = MaterialTheme.shapes.large,
-          border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-          shadowElevation = 0.dp,
-          tonalElevation = 0.dp,
-        ) {
-          Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        key("${item.linkId}_rep$index") {
+          Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.Transparent,
+            shape = MaterialTheme.shapes.large,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shadowElevation = 0.dp,
+            tonalElevation = 0.dp,
           ) {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically,
+            Column(
+              modifier = Modifier.padding(20.dp),
+              verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
               Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
               ) {
-                Surface(
-                  modifier = Modifier.size(24.dp),
-                  shape = CircleShape,
-                  color = MaterialTheme.colorScheme.primary,
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                  Box(contentAlignment = Alignment.Center) {
+                  Surface(
+                    modifier = Modifier.size(24.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                  ) {
+                    Box(contentAlignment = Alignment.Center) {
+                      Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                      )
+                    }
+                  }
+                  Text(
+                    text = item.text,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                  )
+                }
+                if (repetitions.size > 1) {
+                  OutlinedButton(
+                    onClick = { context.onRepetitionRemove?.invoke(item.linkId, index) },
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                  ) {
                     Text(
-                      text = "${index + 1}",
+                      "Remove",
                       style = MaterialTheme.typography.labelSmall,
-                      color = MaterialTheme.colorScheme.onPrimary,
+                      overflow = TextOverflow.Ellipsis,
+                      maxLines = 1,
                     )
                   }
                 }
-                Text(
-                  text = item.text,
-                  style = MaterialTheme.typography.titleMedium,
-                  color = MaterialTheme.colorScheme.onSurface,
-                )
               }
-              if (repetitions.size > 1) {
-                OutlinedButton(
-                  onClick = { context.onRepetitionRemove?.invoke(item.linkId, index) },
-                  modifier = Modifier.height(32.dp),
-                  contentPadding = PaddingValues(horizontal = 12.dp),
-                ) {
-                  Text(
-                    "Remove",
-                    style = MaterialTheme.typography.labelSmall,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
+
+              childWidgets.forEach { (childItem, childWidget) ->
+                key("${item.linkId}_$index.${childItem.linkId}") {
+                  childWidget.Render(
+                    value = repetitionValues[childItem.linkId],
+                    onValueChange = { newValue, text ->
+                      context.onRepetitionFieldChange?.invoke(
+                        item.linkId,
+                        index,
+                        childItem.linkId,
+                        newValue,
+                        text,
+                      )
+                    },
+                    errorMessage = null,
                   )
                 }
               }
-            }
-
-            item.items.forEach { childItem ->
-              val childWidget = context.widgetFactory.createWidget(childItem)
-              childWidget.Render(
-                value = repetitionValues[childItem.linkId],
-                onValueChange = { newValue, text ->
-                  context.onRepetitionFieldChange?.invoke(
-                    item.linkId,
-                    index,
-                    childItem.linkId,
-                    newValue,
-                    text,
-                  )
-                },
-                errorMessage = null,
-              )
             }
           }
         }
