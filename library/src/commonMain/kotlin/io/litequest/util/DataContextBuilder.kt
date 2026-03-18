@@ -68,12 +68,11 @@ object DataContextBuilder {
     }
   }
 
-  private fun processJsonArray(jsonArray: JsonArray): List<Map<String, Any?>> {
-    return jsonArray.mapNotNull { element ->
-      if (element is JsonObject) {
-        processJsonObject(element)
-      } else {
-        null
+  private fun processJsonArray(jsonArray: JsonArray): List<Any?> {
+    return jsonArray.map { element ->
+      when (element) {
+        is JsonObject -> processJsonObject(element)
+        else -> element.toAnyOrNull()
       }
     }
   }

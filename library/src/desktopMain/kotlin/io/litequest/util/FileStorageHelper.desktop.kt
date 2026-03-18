@@ -31,3 +31,12 @@ actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
 
   return PlatformFile(destFile.absolutePath)
 }
+
+actual suspend fun deleteFromAppStorage(filePath: String): Boolean {
+  return try {
+    val file = File(filePath)
+    file.delete()
+  } catch (e: Exception) {
+    false
+  }
+}

@@ -29,6 +29,8 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 
 expect suspend fun copyToAppStorage(file: PlatformFile): PlatformFile
 
+expect suspend fun deleteFromAppStorage(filePath: String): Boolean
+
 object FileStorageHelper {
 
   suspend fun createAttachment(file: PlatformFile, contentType: String? = null): Attachment {
@@ -40,6 +42,10 @@ object FileStorageHelper {
       title = storedFile.name,
       url = storedFile.path,
     )
+  }
+
+  suspend fun deleteAttachment(attachment: Attachment): Boolean {
+    return deleteFromAppStorage(attachment.url)
   }
 
   @OptIn(ExperimentalEncodingApi::class)

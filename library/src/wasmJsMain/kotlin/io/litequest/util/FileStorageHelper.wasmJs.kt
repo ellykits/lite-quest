@@ -22,3 +22,7 @@ actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
     "File persistence is not supported on WASM. Files are only available during the current session."
   )
 }
+
+actual suspend fun deleteFromAppStorage(filePath: String): Boolean {
+  return false
+}

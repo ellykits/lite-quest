@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -104,18 +103,6 @@ fun SummaryPage(
         }
       }
     }
-
-    if (onSubmit != null) {
-      item {
-        Button(
-          onClick = onSubmit,
-          modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-          enabled = state.isValid,
-        ) {
-          Text("Submit")
-        }
-      }
-    }
   }
 }
 
@@ -133,13 +120,13 @@ private fun PaginatedPageCard(
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     colors =
       CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-    shape = MaterialTheme.shapes.extraLarge,
+    shape = MaterialTheme.shapes.medium,
   ) {
     Column(modifier = Modifier.fillMaxWidth()) {
       Box(
         modifier =
           Modifier.fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primaryContainer)
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(0.2f))
             .padding(horizontal = 20.dp, vertical = 16.dp)
       ) {
         Row(
@@ -149,7 +136,10 @@ private fun PaginatedPageCard(
           Box(
             modifier =
               Modifier.size(40.dp)
-                .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape),
+                .background(
+                  color = MaterialTheme.colorScheme.primary.copy(0.5f),
+                  shape = CircleShape,
+                ),
             contentAlignment = Alignment.Center,
           ) {
             Text(
@@ -178,7 +168,11 @@ private fun PaginatedPageCard(
         verticalArrangement = Arrangement.spacedBy(16.dp),
       ) {
         items.forEach { item ->
-          if (visibleItems.any { it.linkId == item.linkId }) {
+          val hasAnswer = flatAnswers.containsKey(item.linkId) && flatAnswers[item.linkId] != null
+          val isVisible = visibleItems.any { it.linkId == item.linkId }
+          val isVisibleOrHasAnswer = isVisible || hasAnswer
+
+          if (isVisibleOrHasAnswer) {
             SummaryItem(item = item, flatAnswers = flatAnswers)
           }
         }
@@ -210,7 +204,7 @@ private fun SummaryItem(item: Item, flatAnswers: Map<String, Any?>, level: Int =
     }
     ItemType.DISPLAY -> {}
     else -> {
-      if (value != null) {
+      if (value != null && !isEmptyValue(value)) {
         val displayValue = getChoiceDisplayValue(value, item)
         SummaryFieldItem(label = item.text, value = displayValue, type = item.type, item = item)
       }
@@ -429,5 +423,16 @@ private fun getIconForType(type: ItemType): ImageVector? {
     ItemType.IMAGE -> Lucide.Image
     ItemType.ATTACHMENT -> Lucide.FileText
     else -> null
+  }
+}
+
+private fun isEmptyValue(value: Any?): Boolean {
+  return when (value) {
+    null -> true
+    is String -> value.isBlank()
+    is List<*> -> value.isEmpty()
+    is Map<*, *> -> value.isEmpty()
+    is Array<*> -> value.isEmpty()
+    else -> false
   }
 }

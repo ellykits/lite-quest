@@ -18,14 +18,19 @@ package io.litequest.util
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
+import platform.Foundation.NSData
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUUID
 import platform.Foundation.NSUserDomainMask
+import platform.Foundation.create
 import platform.Foundation.writeToFile
 
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
   val fileManager = NSFileManager.defaultManager
   val documentsPath =
@@ -40,8 +45,19 @@ actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
   val destPath = destUrl.path!!
 
   val bytes = file.readBytes()
-  platform.Foundation.NSData.create(bytes = bytes, length = bytes.size.toULong())
-    ?.writeToFile(destPath, true)
+  bytes.usePinned { pinned ->
+    NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
+      .writeToFile(destPath, true)
+  }
 
   return PlatformFile(destPath)
+}
+
+@OptIn(ExperimentalForeignApi::class)
+actual suspend fun deleteFromAppStorage(filePath: String): Boolean {
+  return runCatching {
+      val fileManager = NSFileManager.defaultManager
+      fileManager.removeItemAtPath(filePath, null)
+    }
+    .getOrElse { false }
 }

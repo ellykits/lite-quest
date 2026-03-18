@@ -45,10 +45,10 @@ fun PaginatedSummaryScreen(
   LaunchedEffect(Unit) { viewModel.prepopulateForSummary() }
 
   questionnaire?.let { pq ->
-    manager?.let { m ->
+    manager?.let { questionnaireManager ->
       QuestionnaireScreen(
         type = QuestionnaireType.Paginated(pq),
-        manager = m,
+        manager = questionnaireManager,
         mode = mode,
         onSubmit = { viewModel.submit() },
         onModeChange = { newMode -> mode = newMode },

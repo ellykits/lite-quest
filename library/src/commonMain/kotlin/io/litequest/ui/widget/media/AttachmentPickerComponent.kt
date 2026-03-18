@@ -80,15 +80,17 @@ internal fun AttachmentPickerComponent(
   errorMessage: String? = null,
 ) {
   var sizeError by remember { mutableStateOf<String?>(null) }
-  var imagePreviewBytes by remember(attachment?.url) { mutableStateOf<ByteArray?>(null) }
+  var imagePreviewBytes by remember { mutableStateOf<ByteArray?>(null) }
   var isProcessing by remember { mutableStateOf(false) }
   var processingFileName by remember { mutableStateOf<String?>(null) }
   val coroutineScope = rememberCoroutineScope()
 
   val imageExtensions = listOf("jpg", "jpeg", "png", "webp", "gif", "bmp")
 
-  LaunchedEffect(attachment?.url) {
-    if (attachment != null && imagePreviewBytes == null) {
+  LaunchedEffect(attachment) {
+    if (attachment == null) {
+      imagePreviewBytes = null
+    } else if (imagePreviewBytes == null) {
       val isImage = attachment.contentType.startsWith("image/")
       if (isImage) {
         try {
@@ -125,14 +127,12 @@ internal fun AttachmentPickerComponent(
 
       coroutineScope.launch {
         try {
+          val capturedBytes = if (isImage) platformFile.readBytes() else null
+          imagePreviewBytes = capturedBytes
+
           val newAttachment = FileStorageHelper.createAttachment(platformFile)
           onAttachmentChange(newAttachment)
 
-          if (isImage) {
-            imagePreviewBytes = platformFile.readBytes()
-          } else {
-            imagePreviewBytes = null
-          }
           isProcessing = false
           processingFileName = null
         } catch (e: Exception) {
@@ -199,7 +199,17 @@ internal fun AttachmentPickerComponent(
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
-          IconButton(onClick = { onAttachmentChange(null) }, modifier = Modifier.size(40.dp)) {
+          IconButton(
+            onClick = {
+              coroutineScope.launch {
+                if (attachment != null) {
+                  FileStorageHelper.deleteAttachment(attachment)
+                }
+                onAttachmentChange(null)
+              }
+            },
+            modifier = Modifier.size(40.dp),
+          ) {
             Icon(
               imageVector = Lucide.Trash2,
               contentDescription = "Remove attachment",

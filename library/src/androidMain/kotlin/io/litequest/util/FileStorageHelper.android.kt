@@ -19,24 +19,23 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.UUID
 
-private var androidContext: android.content.Context? = null
+private var androidContext: WeakReference<android.content.Context?> = WeakReference(null)
 
 fun setAndroidContext(context: android.content.Context) {
-  androidContext = context.applicationContext
+  androidContext = WeakReference(context.applicationContext)
 }
 
 actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
-  val context =
-    androidContext
-      ?: throw IllegalStateException(
-        "Android context not initialized. Call setAndroidContext() in your Application or MainActivity."
-      )
+  val context = androidContext.get()
 
-  val appFilesDir = File(context.filesDir, "attachments")
-  if (!appFilesDir.exists()) {
-    appFilesDir.mkdirs()
+  val appFilesDir = context?.let { File(it.filesDir, "attachments") }
+  appFilesDir?.exists()?.let {
+    if (!it) {
+      appFilesDir.mkdirs()
+    }
   }
 
   val fileName = "${UUID.randomUUID()}_${file.name}"
@@ -44,4 +43,13 @@ actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
   destFile.writeBytes(file.readBytes())
 
   return PlatformFile(destFile.absolutePath)
+}
+
+actual suspend fun deleteFromAppStorage(filePath: String): Boolean {
+  return try {
+    val file = File(filePath)
+    file.delete()
+  } catch (e: Exception) {
+    false
+  }
 }

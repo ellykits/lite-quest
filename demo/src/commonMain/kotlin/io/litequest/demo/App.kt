@@ -96,16 +96,19 @@ fun App() {
         val viewModel: PaginatedViewModel = viewModel { PaginatedViewModel() }
         val submittedJson by viewModel.submittedJson.collectAsState()
         val manager by viewModel.manager.collectAsState()
+        var mode by remember { mutableStateOf(QuestionnaireMode.Edit) }
         val questionnaire by viewModel.questionnaire.collectAsState(initial = null)
 
         questionnaire?.let { pq ->
-          manager?.let { m ->
+          manager?.let { questionnaireManager ->
             QuestionnaireScreen(
               type = QuestionnaireType.Paginated(pq),
-              manager = m,
+              manager = questionnaireManager,
               onSubmit = { viewModel.submit() },
               onDismiss = { navController.popBackStack() },
               showCloseButton = true,
+              mode = mode,
+              onModeChange = { newMode -> mode = newMode },
             )
           }
         }
