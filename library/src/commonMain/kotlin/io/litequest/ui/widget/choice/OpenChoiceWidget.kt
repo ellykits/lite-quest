@@ -16,7 +16,6 @@
 package io.litequest.ui.widget.choice
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,7 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.litequest.model.AnswerOption
 import io.litequest.model.Item
@@ -105,21 +103,14 @@ class OpenChoiceWidget(override val item: Item) : ItemWidget {
         val isChecked = selectedCodes.contains(option.code)
         val bgColor =
           if (isChecked) {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
           } else {
-            Color.Transparent
-          }
-        val borderColor =
-          if (isChecked) {
-            MaterialTheme.colorScheme.primary
-          } else {
-            MaterialTheme.colorScheme.outlineVariant
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
           }
 
         Row(
           modifier =
             Modifier.fillMaxWidth()
-              .border(width = 1.dp, color = borderColor, shape = MaterialTheme.shapes.small)
               .background(color = bgColor, shape = MaterialTheme.shapes.small)
               .clickable { onToggle(option.code) }
               .padding(horizontal = 12.dp, vertical = 4.dp),
@@ -131,9 +122,9 @@ class OpenChoiceWidget(override val item: Item) : ItemWidget {
             style = MaterialTheme.typography.bodyLarge,
             color =
               if (isChecked) {
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.onPrimaryContainer
               } else {
-                MaterialTheme.colorScheme.onSurface
+                MaterialTheme.colorScheme.onSurfaceVariant
               },
             modifier = Modifier.padding(start = 4.dp),
           )

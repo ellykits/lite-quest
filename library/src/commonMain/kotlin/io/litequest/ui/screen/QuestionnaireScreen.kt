@@ -15,7 +15,6 @@
 */
 package io.litequest.ui.screen
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,10 +45,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -164,66 +161,49 @@ private fun SingleQuestionnaireScreen(
     topBar = {
       TopAppBar(
         title = {
-          Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(vertical = 16.dp),
-          ) {
-            Text(
-              text =
-                when (mode) {
-                  QuestionnaireMode.Edit -> questionnaire.title
-                  QuestionnaireMode.Summary -> "Summary"
-                  QuestionnaireMode.ReadOnly -> "Read Only"
-                },
-              style = MaterialTheme.typography.headlineSmall,
-              color = MaterialTheme.colorScheme.onSurface,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-            if (mode == QuestionnaireMode.Summary) {
-              Text(
-                text = questionnaire.title,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-              )
-            } else {
-              questionnaire.version
-                ?.takeIf { it.isNotEmpty() }
-                ?.let { version ->
-                  Text(
-                    text = "Version $version",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                  )
-                }
-            }
-          }
+          Text(
+            text =
+              when (mode) {
+                QuestionnaireMode.Edit -> questionnaire.title
+                QuestionnaireMode.Summary -> questionnaire.title
+                QuestionnaireMode.ReadOnly -> questionnaire.title
+              },
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
         },
         actions = {
-          if (showCloseButton && onDismiss != null) {
-            IconButton(
-              onClick = {
-                if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
-                  showDismissDialog = true
-                } else {
-                  onDismiss()
+          Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            if (onModeChange != null) {
+              ReviewEditButton(mode = mode, onModeChange = onModeChange, showReview = showReview)
+            }
+            if (showCloseButton && onDismiss != null) {
+              IconButton(
+                onClick = {
+                  if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
+                    showDismissDialog = true
+                  } else {
+                    onDismiss()
+                  }
                 }
-              },
-              colors =
-                IconButtonDefaults.iconButtonColors(
-                  contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-            ) {
-              Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Close,
+                  contentDescription = "Close",
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
             }
           }
         },
         colors =
           TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
           ),
       )
     },
@@ -240,12 +220,7 @@ private fun SingleQuestionnaireScreen(
             customActions()
           }
         } else {
-          DefaultFormActions(
-            onSubmit = onSubmit,
-            mode = mode,
-            onModeChange = onModeChange,
-            showReview = showReview,
-          )
+          DefaultFormActions(onSubmit = onSubmit, mode = mode)
         }
       }
     },
@@ -317,59 +292,53 @@ private fun PaginatedQuestionnaireScreen(
     topBar = {
       TopAppBar(
         title = {
-          Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(vertical = 16.dp),
-          ) {
+          Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-              text =
-                when (mode) {
-                  QuestionnaireMode.Edit -> paginatedQuestionnaire.title
-                  QuestionnaireMode.Summary -> "Summary"
-                  QuestionnaireMode.ReadOnly -> "Read Only"
-                },
-              style = MaterialTheme.typography.headlineSmall,
+              text = paginatedQuestionnaire.title,
+              style = MaterialTheme.typography.titleLarge,
               color = MaterialTheme.colorScheme.onSurface,
               maxLines = 1,
               overflow = TextOverflow.Ellipsis,
             )
-            Text(
-              text =
-                when (mode) {
-                  QuestionnaireMode.Edit -> "Page ${pageIndex + 1} of $totalPages"
-                  QuestionnaireMode.ReadOnly,
-                  QuestionnaireMode.Summary -> paginatedQuestionnaire.title
-                },
-              style = MaterialTheme.typography.labelMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
+            if (mode == QuestionnaireMode.Edit) {
+              Text(
+                text = "Page ${pageIndex + 1} of $totalPages",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
           }
         },
         actions = {
-          if (showCloseButton && onDismiss != null) {
-            IconButton(
-              onClick = {
-                if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
-                  showDismissDialog = true
-                } else {
-                  onDismiss()
+          Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            if (onModeChange != null) {
+              ReviewEditButton(mode = mode, onModeChange = onModeChange, showReview = showReview)
+            }
+            if (showCloseButton && onDismiss != null) {
+              IconButton(
+                onClick = {
+                  if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
+                    showDismissDialog = true
+                  } else {
+                    onDismiss()
+                  }
                 }
-              },
-              colors =
-                IconButtonDefaults.iconButtonColors(
-                  contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-            ) {
-              Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Close,
+                  contentDescription = "Close",
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
             }
           }
         },
         colors =
           TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
           ),
       )
     },
@@ -389,8 +358,6 @@ private fun PaginatedQuestionnaireScreen(
           DefaultFormActions(
             onSubmit = onSubmit,
             mode = mode,
-            onModeChange = onModeChange,
-            showReview = showReview,
             pageNavigator = pageNavigator,
             totalPages = totalPages,
           )
@@ -414,7 +381,7 @@ private fun PaginatedQuestionnaireScreen(
           PageIndicators(
             currentPage = pageIndex,
             totalPages = totalPages,
-            modifier = Modifier.padding(vertical = 20.dp),
+            modifier = Modifier.padding(vertical = 16.dp),
           )
 
           PagerView(
@@ -482,8 +449,6 @@ private fun PagerView(
 private fun DefaultFormActions(
   onSubmit: () -> Unit,
   mode: QuestionnaireMode,
-  onModeChange: ((QuestionnaireMode) -> Unit)?,
-  showReview: Boolean = true,
   pageNavigator: PageNavigator? = null,
   totalPages: Int? = null,
 ) {
@@ -499,7 +464,7 @@ private fun DefaultFormActions(
       horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      if (pageNavigator != null && !isFirstPage) {
+      if (mode == QuestionnaireMode.Edit && pageNavigator != null && !isFirstPage) {
         Button(
           onClick = { pageNavigator.goPrevious() },
           modifier = Modifier.height(36.dp),
@@ -512,30 +477,6 @@ private fun DefaultFormActions(
           )
           Spacer(Modifier.width(6.dp))
           Text("Previous", style = MaterialTheme.typography.labelLarge)
-        }
-      }
-
-      if (mode == QuestionnaireMode.Edit && showReview && onModeChange != null) {
-        if (pageNavigator == null || isLastPage) {
-          OutlinedButton(
-            onClick = { onModeChange(QuestionnaireMode.Summary) },
-            modifier = Modifier.height(36.dp),
-            shape = MaterialTheme.shapes.large,
-            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
-          ) {
-            Text("Review", style = MaterialTheme.typography.labelLarge)
-          }
-        }
-      }
-
-      if (mode == QuestionnaireMode.Summary && onModeChange != null) {
-        OutlinedButton(
-          onClick = { onModeChange(QuestionnaireMode.Edit) },
-          modifier = Modifier.height(36.dp),
-          shape = MaterialTheme.shapes.large,
-          border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
-        ) {
-          Text("Edit", style = MaterialTheme.typography.labelLarge)
         }
       }
 
@@ -573,6 +514,32 @@ private fun DefaultFormActions(
           )
         }
       }
+    }
+  }
+}
+
+@Composable
+private fun ReviewEditButton(
+  mode: QuestionnaireMode,
+  onModeChange: (QuestionnaireMode) -> Unit,
+  showReview: Boolean,
+) {
+  if (showReview && mode != QuestionnaireMode.ReadOnly) {
+    TextButton(
+      onClick = {
+        when (mode) {
+          QuestionnaireMode.Edit -> onModeChange(QuestionnaireMode.Summary)
+          QuestionnaireMode.Summary -> onModeChange(QuestionnaireMode.Edit)
+          QuestionnaireMode.ReadOnly -> {}
+        }
+      },
+      shape = MaterialTheme.shapes.small,
+    ) {
+      Text(
+        text = if (mode == QuestionnaireMode.Summary) "Edit" else "Review",
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+      )
     }
   }
 }

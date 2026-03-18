@@ -16,7 +16,6 @@
 package io.litequest.ui.widget.choice
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.litequest.model.AnswerOption
 import io.litequest.model.Item
@@ -143,21 +141,14 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
         val isChecked = selectedCodes.contains(option.code)
         val bgColor =
           if (isChecked) {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            MaterialTheme.colorScheme.primaryContainer.copy(0.25f)
           } else {
-            Color.Transparent
-          }
-        val borderColor =
-          if (isChecked) {
-            MaterialTheme.colorScheme.primary
-          } else {
-            MaterialTheme.colorScheme.outlineVariant
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
           }
 
         Row(
           modifier =
             Modifier.fillMaxWidth()
-              .border(width = 1.dp, color = borderColor, shape = MaterialTheme.shapes.small)
               .background(color = bgColor, shape = MaterialTheme.shapes.small)
               .clickable { onToggle(option.code) }
               .padding(horizontal = 4.dp, vertical = 4.dp),
@@ -169,9 +160,9 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
             style = MaterialTheme.typography.bodyLarge,
             color =
               if (isChecked) {
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.onPrimaryContainer
               } else {
-                MaterialTheme.colorScheme.onSurface
+                MaterialTheme.colorScheme.onSurfaceVariant
               },
             modifier = Modifier.padding(start = 4.dp),
           )
@@ -192,21 +183,14 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
         val isSelected = option.code == selectedCode
         val bgColor =
           if (isSelected) {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            MaterialTheme.colorScheme.primaryContainer.copy(0.3f)
           } else {
-            Color.Transparent
-          }
-        val borderColor =
-          if (isSelected) {
-            MaterialTheme.colorScheme.primary
-          } else {
-            MaterialTheme.colorScheme.outlineVariant
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
           }
 
         Row(
           modifier =
             Modifier.fillMaxWidth()
-              .border(width = 1.dp, color = borderColor, shape = MaterialTheme.shapes.small)
               .background(color = bgColor, shape = MaterialTheme.shapes.small)
               .clickable(enabled = enabled) { onSelected(option.code) }
               .padding(horizontal = 12.dp, vertical = 4.dp),
@@ -222,9 +206,9 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
             style = MaterialTheme.typography.bodyLarge,
             color =
               if (isSelected) {
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.onPrimaryContainer
               } else {
-                MaterialTheme.colorScheme.onSurface
+                MaterialTheme.colorScheme.onSurfaceVariant
               },
             modifier = Modifier.padding(start = 4.dp),
           )
