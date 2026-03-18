@@ -1,5 +1,4 @@
 {
-  "resourceType": "Questionnaire",
   "id": "household-registration",
   "title": "Household & Head Registration",
   "version": "1.0.0",
