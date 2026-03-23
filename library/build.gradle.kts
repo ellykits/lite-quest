@@ -114,7 +114,7 @@ signing {
 mavenPublishing {
   publishToMavenCentral()
 
-  //  signAllPublications()
+  signAllPublications()
 
   coordinates(group.toString(), "litequest-library", version.toString())
 
