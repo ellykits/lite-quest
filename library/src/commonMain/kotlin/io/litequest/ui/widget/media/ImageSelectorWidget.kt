@@ -16,6 +16,7 @@
 package io.litequest.ui.widget.media
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.litequest.model.Attachment
 import io.litequest.model.Item
@@ -32,7 +33,7 @@ class ImageSelectorWidget(override val item: Item) : ItemWidget {
   ) {
     AttachmentPickerComponent(
       title = item.text,
-      attachment = JsonUtil.decodeOrNull(Attachment.serializer(), value),
+      attachment = remember(value) { JsonUtil.decodeOrNull(Attachment.serializer(), value) },
       onAttachmentChange = { attachment -> onValueChange(encodeAttachment(attachment), null) },
       pickerType = FileKitType.Image,
       buttonText = "Image",

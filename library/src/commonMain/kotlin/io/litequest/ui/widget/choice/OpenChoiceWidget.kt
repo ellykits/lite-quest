@@ -26,6 +26,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -46,14 +47,16 @@ class OpenChoiceWidget(override val item: Item) : ItemWidget {
     errorMessage: String?,
   ) {
     val selectedCodes: Set<String> =
-      runCatching {
-          when {
-            value == null -> emptySet()
-            value is JsonArray -> value.map { it.jsonPrimitive.content }.toSet()
-            else -> setOf(value.jsonPrimitive.content)
+      remember(value) {
+        runCatching {
+            when {
+              value == null -> emptySet()
+              value is JsonArray -> value.map { it.jsonPrimitive.content }.toSet()
+              else -> setOf(value.jsonPrimitive.content)
+            }
           }
-        }
-        .getOrDefault(emptySet())
+          .getOrDefault(emptySet())
+      }
 
     Column(modifier = Modifier.fillMaxWidth()) {
       Text(
@@ -100,34 +103,36 @@ class OpenChoiceWidget(override val item: Item) : ItemWidget {
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       options.forEach { option ->
-        val isChecked = selectedCodes.contains(option.code)
-        val bgColor =
-          if (isChecked) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-          } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
-          }
+        androidx.compose.runtime.key(option.code) {
+          val isChecked = selectedCodes.contains(option.code)
+          val bgColor =
+            if (isChecked) {
+              MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            } else {
+              MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+            }
 
-        Row(
-          modifier =
-            Modifier.fillMaxWidth()
-              .background(color = bgColor, shape = MaterialTheme.shapes.small)
-              .clickable { onToggle(option.code) }
-              .padding(horizontal = 12.dp, vertical = 4.dp),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Checkbox(checked = isChecked, onCheckedChange = { onToggle(option.code) })
-          Text(
-            text = option.display,
-            style = MaterialTheme.typography.bodyLarge,
-            color =
-              if (isChecked) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-              } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-              },
-            modifier = Modifier.padding(start = 4.dp),
-          )
+          Row(
+            modifier =
+              Modifier.fillMaxWidth()
+                .background(color = bgColor, shape = MaterialTheme.shapes.small)
+                .clickable { onToggle(option.code) }
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Checkbox(checked = isChecked, onCheckedChange = { onToggle(option.code) })
+            Text(
+              text = option.display,
+              style = MaterialTheme.typography.bodyLarge,
+              color =
+                if (isChecked) {
+                  MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                  MaterialTheme.colorScheme.onSurfaceVariant
+                },
+              modifier = Modifier.padding(start = 4.dp),
+            )
+          }
         }
       }
     }

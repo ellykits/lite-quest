@@ -15,10 +15,12 @@
 */
 package io.litequest.ui.renderer
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import io.litequest.ui.widget.WidgetFactory
 import kotlinx.serialization.json.JsonElement
 
+@Stable
 data class FormContext(
   val values: Map<String, JsonElement?>,
   val onValueChange: (String, JsonElement, String?) -> Unit,

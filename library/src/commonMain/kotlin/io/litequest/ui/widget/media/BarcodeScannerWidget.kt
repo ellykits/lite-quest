@@ -45,7 +45,7 @@ class BarcodeScannerWidget(override val item: Item) : ItemWidget {
     errorMessage: String?,
   ) {
     var showScanner by remember { mutableStateOf(false) }
-    val barcode = value?.jsonPrimitive?.content ?: ""
+    val barcode = remember(value) { value?.jsonPrimitive?.content ?: "" }
 
     Box(modifier = Modifier.fillMaxWidth()) {
       OutlinedTextField(

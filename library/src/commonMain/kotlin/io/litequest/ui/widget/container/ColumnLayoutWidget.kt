@@ -37,9 +37,12 @@ class ColumnLayoutWidget(override val item: Item) : ItemWidget {
   ) {
     val context = LocalFormContext.current
 
+    val widgetCache = remember(context.widgetFactory) { mutableMapOf<String, ItemWidget>() }
     val childWidgets =
-      remember(item.items, context.widgetFactory) {
-        item.items.associateWith { childItem -> context.widgetFactory.createWidget(childItem) }
+      remember(item.items, widgetCache) {
+        item.items.associateWith { childItem ->
+          widgetCache.getOrPut(childItem.linkId) { context.widgetFactory.createWidget(childItem) }
+        }
       }
 
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {

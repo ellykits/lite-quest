@@ -58,8 +58,10 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
   ) {
     if (item.repeats) {
       val selectedCodes =
-        runCatching { value?.jsonArray?.map { it.jsonPrimitive.content }?.toSet() ?: emptySet() }
-          .getOrDefault(emptySet())
+        remember(value) {
+          runCatching { value?.jsonArray?.map { it.jsonPrimitive.content }?.toSet() ?: emptySet() }
+            .getOrDefault(emptySet())
+        }
 
       Column(modifier = Modifier.fillMaxWidth()) {
         WidgetLabel(item.text, errorMessage != null)
@@ -75,7 +77,7 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
         ErrorLabel(errorMessage)
       }
     } else {
-      val selectedCode = value?.jsonPrimitive?.content ?: ""
+      val selectedCode = remember(value) { value?.jsonPrimitive?.content ?: "" }
 
       Column(modifier = Modifier.fillMaxWidth()) {
         WidgetLabel(item.text, errorMessage != null)
@@ -138,34 +140,36 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       options.forEach { option ->
-        val isChecked = selectedCodes.contains(option.code)
-        val bgColor =
-          if (isChecked) {
-            MaterialTheme.colorScheme.primaryContainer.copy(0.25f)
-          } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
-          }
+        androidx.compose.runtime.key(option.code) {
+          val isChecked = selectedCodes.contains(option.code)
+          val bgColor =
+            if (isChecked) {
+              MaterialTheme.colorScheme.primaryContainer.copy(0.25f)
+            } else {
+              MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
+            }
 
-        Row(
-          modifier =
-            Modifier.fillMaxWidth()
-              .background(color = bgColor, shape = MaterialTheme.shapes.small)
-              .clickable { onToggle(option.code) }
-              .padding(horizontal = 4.dp, vertical = 4.dp),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Checkbox(checked = isChecked, onCheckedChange = { onToggle(option.code) })
-          Text(
-            text = option.display,
-            style = MaterialTheme.typography.bodyLarge,
-            color =
-              if (isChecked) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-              } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-              },
-            modifier = Modifier.padding(start = 4.dp),
-          )
+          Row(
+            modifier =
+              Modifier.fillMaxWidth()
+                .background(color = bgColor, shape = MaterialTheme.shapes.small)
+                .clickable { onToggle(option.code) }
+                .padding(horizontal = 4.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Checkbox(checked = isChecked, onCheckedChange = { onToggle(option.code) })
+            Text(
+              text = option.display,
+              style = MaterialTheme.typography.bodyLarge,
+              color =
+                if (isChecked) {
+                  MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                  MaterialTheme.colorScheme.onSurfaceVariant
+                },
+              modifier = Modifier.padding(start = 4.dp),
+            )
+          }
         }
       }
     }
@@ -180,38 +184,40 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       options.forEach { option ->
-        val isSelected = option.code == selectedCode
-        val bgColor =
-          if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(0.3f)
-          } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
-          }
+        androidx.compose.runtime.key(option.code) {
+          val isSelected = option.code == selectedCode
+          val bgColor =
+            if (isSelected) {
+              MaterialTheme.colorScheme.primaryContainer.copy(0.3f)
+            } else {
+              MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+            }
 
-        Row(
-          modifier =
-            Modifier.fillMaxWidth()
-              .background(color = bgColor, shape = MaterialTheme.shapes.small)
-              .clickable(enabled = enabled) { onSelected(option.code) }
-              .padding(horizontal = 12.dp, vertical = 4.dp),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          RadioButton(
-            selected = isSelected,
-            onClick = { onSelected(option.code) },
-            enabled = enabled,
-          )
-          Text(
-            text = option.display,
-            style = MaterialTheme.typography.bodyLarge,
-            color =
-              if (isSelected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-              } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-              },
-            modifier = Modifier.padding(start = 4.dp),
-          )
+          Row(
+            modifier =
+              Modifier.fillMaxWidth()
+                .background(color = bgColor, shape = MaterialTheme.shapes.small)
+                .clickable(enabled = enabled) { onSelected(option.code) }
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            RadioButton(
+              selected = isSelected,
+              onClick = { onSelected(option.code) },
+              enabled = enabled,
+            )
+            Text(
+              text = option.display,
+              style = MaterialTheme.typography.bodyLarge,
+              color =
+                if (isSelected) {
+                  MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                  MaterialTheme.colorScheme.onSurfaceVariant
+                },
+              modifier = Modifier.padding(start = 4.dp),
+            )
+          }
         }
       }
     }
@@ -227,7 +233,8 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
     readOnly: Boolean = false,
   ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedOption = options.find { it.code == selectedCode }
+    val selectedOption =
+      remember(options, selectedCode) { options.find { it.code == selectedCode } }
 
     ExposedDropdownMenuBox(
       expanded = expanded && !readOnly,

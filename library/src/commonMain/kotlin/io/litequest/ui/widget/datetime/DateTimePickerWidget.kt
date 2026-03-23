@@ -63,12 +63,16 @@ class DateTimePickerWidget(override val item: Item) : ItemWidget {
     val outputPattern =
       item.extension["outputFormat"]?.jsonPrimitive?.content ?: "yyyy-MM-dd'T'HH:mm:ss"
 
-    val displayFormat = LocalDateTime.Format { byUnicodePattern(displayPattern) }
-    val outputFormat = LocalDateTime.Format { byUnicodePattern(outputPattern) }
+    val displayFormat =
+      remember(displayPattern) { LocalDateTime.Format { byUnicodePattern(displayPattern) } }
+    val outputFormat =
+      remember(outputPattern) { LocalDateTime.Format { byUnicodePattern(outputPattern) } }
 
     val currentDateTime =
-      dateTimeString.parseLocalDateTime()
-        ?: kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+      remember(dateTimeString) {
+        dateTimeString.parseLocalDateTime()
+          ?: kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+      }
 
     val datePickerState =
       rememberDatePickerState(
@@ -82,9 +86,11 @@ class DateTimePickerWidget(override val item: Item) : ItemWidget {
       )
 
     val displayValue =
-      dateTimeString
-        .takeIf { it.isNotEmpty() }
-        ?.let { dateTimeString.parseLocalDateTime()?.let { displayFormat.format(it) } } ?: ""
+      remember(dateTimeString, displayFormat) {
+        dateTimeString
+          .takeIf { it.isNotEmpty() }
+          ?.let { dateTimeString.parseLocalDateTime()?.let { displayFormat.format(it) } } ?: ""
+      }
 
     DateTimeTrigger(
       label = item.text,

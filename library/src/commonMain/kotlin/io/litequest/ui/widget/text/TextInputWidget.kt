@@ -19,6 +19,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
@@ -33,13 +38,19 @@ class TextInputWidget(override val item: Item) : ItemWidget {
     onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
-    val text = value?.jsonPrimitive?.content ?: ""
-
+    var localText by remember(value) { mutableStateOf(value?.jsonPrimitive?.content ?: "") }
     val isMultiline = item.type == io.litequest.model.ItemType.TEXT
 
+    LaunchedEffect(localText) {
+      if (localText != (value?.jsonPrimitive?.content ?: "")) {
+        kotlinx.coroutines.delay(300)
+        onValueChange(JsonPrimitive(localText), item.text)
+      }
+    }
+
     OutlinedTextField(
-      value = text,
-      onValueChange = { onValueChange(JsonPrimitive(it), item.text) },
+      value = localText,
+      onValueChange = { localText = it },
       label = { Text(item.text) },
       isError = errorMessage != null,
       supportingText = errorMessage?.let { { Text(it) } },

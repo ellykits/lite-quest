@@ -24,6 +24,7 @@ import io.litequest.state.QuestionnaireState
 import io.litequest.ui.layout.LayoutStrategy
 import io.litequest.ui.layout.VerticalLayoutStrategy
 import io.litequest.ui.widget.DefaultWidgetFactory
+import io.litequest.ui.widget.ItemWidget
 import io.litequest.ui.widget.WidgetFactory
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -37,39 +38,28 @@ fun FormRenderer(
   onRepetitionRemove: ((String, Int) -> Unit)? = null,
   onRepetitionFieldChange: ((String, Int, String, JsonElement, String?) -> Unit)? = null,
   widgetFactory: WidgetFactory? = null,
-  layoutStrategy: LayoutStrategy = VerticalLayoutStrategy(),
+  layoutStrategy: LayoutStrategy = VerticalLayoutStrategy,
 ) {
   val factory = remember(widgetFactory) { widgetFactory ?: DefaultWidgetFactory() }
 
+  // Widget instances are cached by linkId and survive across visibleItems list changes.
+  // GroupWidget, ChoiceWidget etc. hold Item definition (never changes) so reuse is safe.
+  val widgetCache = remember(factory) { mutableMapOf<String, ItemWidget>() }
+  val widgets =
+    remember(items, widgetCache) {
+      items.associateBy(
+        keySelector = { it.linkId },
+        valueTransform = { widgetCache.getOrPut(it.linkId) { factory.createWidget(it) } },
+      )
+    }
+
+  // Flatten response items + calculated values into a single values map.
+  // Wrapped in remember so this only runs on actual state changes, not during scroll.
   val processedState =
     remember(state.response.items, state.calculatedValues) {
       val values = mutableMapOf<String, JsonElement?>()
       val repetitions = mutableMapOf<String, List<Map<String, JsonElement?>>>()
-
-      fun flatten(responseItems: List<ResponseItem>) {
-        responseItems.forEach { responseItem ->
-          if (
-            responseItem.answers.isNotEmpty() && responseItem.answers.first().items.isNotEmpty()
-          ) {
-            val repetitionList =
-              responseItem.answers.map { answer ->
-                val repetitionValues = mutableMapOf<String, JsonElement?>()
-                flattenForRepetition(answer.items, repetitionValues)
-                repetitionValues
-              }
-            repetitions[responseItem.linkId] = repetitionList
-          } else {
-            values[responseItem.linkId] = responseItem.answers.firstOrNull()?.value
-          }
-
-          if (responseItem.items.isNotEmpty()) {
-            flatten(responseItem.items)
-          }
-        }
-      }
-
-      flatten(state.response.items)
-
+      flatten(state.response.items, values, repetitions)
       state.calculatedValues.forEach { (linkId, value) ->
         values[linkId] =
           when (value) {
@@ -85,19 +75,22 @@ fun FormRenderer(
 
   val values = processedState.first
   val repetitions = processedState.second
-
   val errorMessages =
     remember(state.validationErrors) {
-      state.validationErrors.associate { error -> error.linkId to error.message }
+      state.validationErrors.associate { it.linkId to it.message }
     }
 
-  val widgets =
-    remember(items, factory) {
-      items.associate { item -> item.linkId to factory.createWidget(item) }
-    }
-
-  CompositionLocalProvider(
-    LocalFormContext provides
+  val formContext =
+    remember(
+      values,
+      errorMessages,
+      factory,
+      repetitions,
+      onAnswerChange,
+      onRepetitionAdd,
+      onRepetitionRemove,
+      onRepetitionFieldChange,
+    ) {
       FormContext(
         values = values,
         onValueChange = onAnswerChange,
@@ -108,7 +101,9 @@ fun FormRenderer(
         onRepetitionRemove = onRepetitionRemove,
         onRepetitionFieldChange = onRepetitionFieldChange,
       )
-  ) {
+    }
+
+  CompositionLocalProvider(LocalFormContext provides formContext) {
     layoutStrategy.Layout(
       items = items,
       widgets = widgets,
@@ -116,6 +111,29 @@ fun FormRenderer(
       values = values,
       errorMessages = errorMessages,
     )
+  }
+}
+
+private fun flatten(
+  responseItems: List<ResponseItem>,
+  values: MutableMap<String, JsonElement?>,
+  repetitions: MutableMap<String, List<Map<String, JsonElement?>>>,
+) {
+  responseItems.forEach { responseItem ->
+    if (responseItem.answers.isNotEmpty() && responseItem.answers.first().items.isNotEmpty()) {
+      val repetitionList =
+        responseItem.answers.map { answer ->
+          val repetitionValues = mutableMapOf<String, JsonElement?>()
+          flattenForRepetition(answer.items, repetitionValues)
+          repetitionValues
+        }
+      repetitions[responseItem.linkId] = repetitionList
+    } else {
+      values[responseItem.linkId] = responseItem.answers.firstOrNull()?.value
+    }
+    if (responseItem.items.isNotEmpty()) {
+      flatten(responseItem.items, values, repetitions)
+    }
   }
 }
 

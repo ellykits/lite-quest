@@ -30,7 +30,7 @@ import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonElement
 
-class VerticalLayoutStrategy : LayoutStrategy {
+object VerticalLayoutStrategy : LayoutStrategy {
   @Composable
   override fun Layout(
     items: List<Item>,
@@ -44,7 +44,7 @@ class VerticalLayoutStrategy : LayoutStrategy {
       contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
       verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-      items(items = items, key = { it.linkId }) { item ->
+      items(items = items, key = { it.linkId }, contentType = { it.type }) { item ->
         widgets[item.linkId]?.let { widget ->
           widget.Render(
             value = values[item.linkId],

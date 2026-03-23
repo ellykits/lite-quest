@@ -20,6 +20,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import io.litequest.model.Item
@@ -36,21 +41,32 @@ class QuantityWidget(override val item: Item) : ItemWidget {
     onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
-    val text =
-      when (value) {
-        is JsonPrimitive -> value.content
-        is JsonObject -> value["value"]?.jsonPrimitive?.content ?: ""
-        else -> ""
+    var localText by
+      remember(value) {
+        mutableStateOf(
+          when (value) {
+            is JsonPrimitive -> value.content
+            is JsonObject -> value["value"]?.jsonPrimitive?.content ?: ""
+            else -> ""
+          }
+        )
       }
-    val unit = item.extension["unit"]?.jsonPrimitive?.content ?: ""
+    val unit = remember(item.extension) { item.extension["unit"]?.jsonPrimitive?.content ?: "" }
 
-    OutlinedTextField(
-      value = text,
-      onValueChange = { newValue ->
-        if (newValue.isEmpty()) {
+    LaunchedEffect(localText) {
+      if (
+        localText !=
+          when (value) {
+            is JsonPrimitive -> value.content
+            is JsonObject -> value["value"]?.jsonPrimitive?.content ?: ""
+            else -> ""
+          }
+      ) {
+        kotlinx.coroutines.delay(300)
+        if (localText.isEmpty()) {
           onValueChange(JsonPrimitive(""), item.text)
         } else {
-          newValue.toDoubleOrNull()?.let {
+          localText.toDoubleOrNull()?.let {
             val json =
               kotlinx.serialization.json.buildJsonObject {
                 put("value", JsonPrimitive(it))
@@ -59,7 +75,12 @@ class QuantityWidget(override val item: Item) : ItemWidget {
             onValueChange(json, item.text)
           }
         }
-      },
+      }
+    }
+
+    OutlinedTextField(
+      value = localText,
+      onValueChange = { localText = it },
       label = { Text("${item.text} ($unit)") },
       isError = errorMessage != null,
       supportingText = errorMessage?.let { { Text(it) } },
