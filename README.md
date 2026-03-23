@@ -18,7 +18,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.ellykits.litequest:litequest-library:1.0.0-alpha03")
+                implementation("io.github.ellykits.litequest:litequest-library:1.0.0-alpha04")
             }
         }
     }
@@ -181,10 +181,24 @@ class RatingWidget(override val item: Item) : ItemWidget {
     }
 }
 
-// Register custom widget
+// 2. Register custom widget in the factory
 val factory = DefaultWidgetFactory().apply {
-    registerWidget(ItemType.RATING) { RatingWidget(it) }
+    registerWidget(ItemType("RATING")) { RatingWidget(it) }
 }
+
+// 3. Pass factory to QuestionnaireManager
+val manager = QuestionnaireManager(
+    questionnaire = questionnaire,
+    evaluator = evaluator,
+    widgetFactory = factory
+)
+
+// 4. Use in QuestionnaireScreen
+QuestionnaireScreen(
+    type = QuestionnaireType.Single(questionnaire),
+    manager = manager,
+    onSubmit = { /* handle submit */ }
+)
 ```
 
 ### Custom JsonLogic Evaluator

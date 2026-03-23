@@ -23,7 +23,6 @@ import io.litequest.model.ResponseItem
 import io.litequest.state.QuestionnaireState
 import io.litequest.ui.layout.LayoutStrategy
 import io.litequest.ui.layout.VerticalLayoutStrategy
-import io.litequest.ui.widget.DefaultWidgetFactory
 import io.litequest.ui.widget.ItemWidget
 import io.litequest.ui.widget.WidgetFactory
 import kotlinx.serialization.json.JsonElement
@@ -37,19 +36,17 @@ fun FormRenderer(
   onRepetitionAdd: ((String) -> Unit)? = null,
   onRepetitionRemove: ((String, Int) -> Unit)? = null,
   onRepetitionFieldChange: ((String, Int, String, JsonElement, String?) -> Unit)? = null,
-  widgetFactory: WidgetFactory? = null,
+  widgetFactory: WidgetFactory,
   layoutStrategy: LayoutStrategy = VerticalLayoutStrategy,
 ) {
-  val factory = remember(widgetFactory) { widgetFactory ?: DefaultWidgetFactory() }
-
   // Widget instances are cached by linkId and survive across visibleItems list changes.
   // GroupWidget, ChoiceWidget etc. hold Item definition (never changes) so reuse is safe.
-  val widgetCache = remember(factory) { mutableMapOf<String, ItemWidget>() }
+  val widgetCache = remember(widgetFactory) { mutableMapOf<String, ItemWidget>() }
   val widgets =
     remember(items, widgetCache) {
       items.associateBy(
         keySelector = { it.linkId },
-        valueTransform = { widgetCache.getOrPut(it.linkId) { factory.createWidget(it) } },
+        valueTransform = { widgetCache.getOrPut(it.linkId) { widgetFactory.createWidget(it) } },
       )
     }
 
@@ -84,7 +81,7 @@ fun FormRenderer(
     remember(
       values,
       errorMessages,
-      factory,
+      widgetFactory,
       repetitions,
       onAnswerChange,
       onRepetitionAdd,
@@ -95,7 +92,7 @@ fun FormRenderer(
         values = values,
         onValueChange = onAnswerChange,
         errorMessages = errorMessages,
-        widgetFactory = factory,
+        widgetFactory = widgetFactory,
         repetitions = repetitions,
         onRepetitionAdd = onRepetitionAdd,
         onRepetitionRemove = onRepetitionRemove,

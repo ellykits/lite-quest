@@ -239,6 +239,21 @@
           ]
         }
       ]
+    },
+    {
+      "linkId": "ratingSection",
+      "text": "App Experience",
+      "items": [
+        {
+          "linkId": "appRating",
+          "text": "How would you rate your experience with this form?",
+          "answers": [
+            {
+              "value": 5
+            }
+          ]
+        }
+      ]
     }
   ]
 }
