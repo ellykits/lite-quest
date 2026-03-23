@@ -94,13 +94,15 @@ class GroupWidget(override val item: Item) : ItemWidget {
             verticalArrangement = Arrangement.spacedBy(12.dp),
           ) {
             childWidgets.forEach { (childItem, childWidget) ->
-              childWidget.Render(
-                value = context.values[childItem.linkId],
-                onValueChange = { newValue, text ->
-                  context.onValueChange(childItem.linkId, newValue, text)
-                },
-                errorMessage = context.errorMessages[childItem.linkId],
-              )
+              androidx.compose.runtime.key(childItem.linkId) {
+                childWidget.Render(
+                  value = context.values[childItem.linkId],
+                  onValueChange = { newValue, text ->
+                    context.onValueChange(childItem.linkId, newValue, text)
+                  },
+                  errorMessage = context.errorMessages[childItem.linkId],
+                )
+              }
             }
           }
         }

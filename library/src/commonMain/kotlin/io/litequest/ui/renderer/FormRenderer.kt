@@ -17,6 +17,7 @@ package io.litequest.ui.renderer
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import io.litequest.model.Item
 import io.litequest.model.ResponseItem
 import io.litequest.state.QuestionnaireState
@@ -38,48 +39,62 @@ fun FormRenderer(
   widgetFactory: WidgetFactory? = null,
   layoutStrategy: LayoutStrategy = VerticalLayoutStrategy(),
 ) {
-  val factory = widgetFactory ?: DefaultWidgetFactory()
+  val factory = remember(widgetFactory) { widgetFactory ?: DefaultWidgetFactory() }
 
-  val values = mutableMapOf<String, JsonElement?>()
-  val repetitions = mutableMapOf<String, List<Map<String, JsonElement?>>>()
+  val processedState =
+    remember(state.response.items, state.calculatedValues) {
+      val values = mutableMapOf<String, JsonElement?>()
+      val repetitions = mutableMapOf<String, List<Map<String, JsonElement?>>>()
 
-  fun flattenResponseItems(responseItems: List<ResponseItem>) {
-    responseItems.forEach { responseItem ->
-      if (responseItem.answers.isNotEmpty() && responseItem.answers.first().items.isNotEmpty()) {
-        val repetitionList =
-          responseItem.answers.map { answer ->
-            val repetitionValues = mutableMapOf<String, JsonElement?>()
-            answer.items.forEach { childItem ->
-              repetitionValues[childItem.linkId] = childItem.answers.firstOrNull()?.value
-            }
-            repetitionValues
+      fun flatten(responseItems: List<ResponseItem>) {
+        responseItems.forEach { responseItem ->
+          if (
+            responseItem.answers.isNotEmpty() && responseItem.answers.first().items.isNotEmpty()
+          ) {
+            val repetitionList =
+              responseItem.answers.map { answer ->
+                val repetitionValues = mutableMapOf<String, JsonElement?>()
+                flattenForRepetition(answer.items, repetitionValues)
+                repetitionValues
+              }
+            repetitions[responseItem.linkId] = repetitionList
+          } else {
+            values[responseItem.linkId] = responseItem.answers.firstOrNull()?.value
           }
-        repetitions[responseItem.linkId] = repetitionList
-      } else {
-        values[responseItem.linkId] = responseItem.answers.firstOrNull()?.value
+
+          if (responseItem.items.isNotEmpty()) {
+            flatten(responseItem.items)
+          }
+        }
       }
 
-      if (responseItem.items.isNotEmpty()) {
-        flattenResponseItems(responseItem.items)
+      flatten(state.response.items)
+
+      state.calculatedValues.forEach { (linkId, value) ->
+        values[linkId] =
+          when (value) {
+            null -> null
+            is Number -> JsonPrimitive(value)
+            is Boolean -> JsonPrimitive(value)
+            is String -> JsonPrimitive(value)
+            else -> JsonPrimitive(value.toString())
+          }
       }
+      values to repetitions
     }
-  }
 
-  flattenResponseItems(state.response.items)
+  val values = processedState.first
+  val repetitions = processedState.second
 
-  state.calculatedValues.forEach { (linkId, value) ->
-    values[linkId] =
-      when (value) {
-        null -> null
-        is Number -> JsonPrimitive(value)
-        is Boolean -> JsonPrimitive(value)
-        is String -> JsonPrimitive(value)
-        else -> JsonPrimitive(value.toString())
-      }
-  }
+  val errorMessages =
+    remember(state.validationErrors) {
+      state.validationErrors.associate { error -> error.linkId to error.message }
+    }
 
-  val errorMessages = state.validationErrors.associate { error -> error.linkId to error.message }
-  val widgets = items.associate { item -> item.linkId to factory.createWidget(item) }
+  val widgets =
+    remember(items, factory) {
+      items.associate { item -> item.linkId to factory.createWidget(item) }
+    }
 
   CompositionLocalProvider(
     LocalFormContext provides
@@ -101,5 +116,17 @@ fun FormRenderer(
       values = values,
       errorMessages = errorMessages,
     )
+  }
+}
+
+private fun flattenForRepetition(
+  responseItems: List<ResponseItem>,
+  values: MutableMap<String, JsonElement?>,
+) {
+  responseItems.forEach { responseItem ->
+    values[responseItem.linkId] = responseItem.answers.firstOrNull()?.value
+    if (responseItem.items.isNotEmpty()) {
+      flattenForRepetition(responseItem.items, values)
+    }
   }
 }

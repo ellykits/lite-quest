@@ -46,15 +46,16 @@ class QuestionnaireManager(
     val emptyResponse = createEmptyResponse()
     val initialVisibleItems = evaluator.getVisibleItems(emptyResponse)
     val initialCalculatedValues = evaluator.calculateValues(emptyResponse)
+    val initialValidationErrors = evaluator.validateResponse(emptyResponse)
     _state =
       MutableStateFlow(
         QuestionnaireState(
           questionnaire = questionnaire,
           response = emptyResponse,
           visibleItems = initialVisibleItems,
-          validationErrors = emptyList(),
+          validationErrors = initialValidationErrors,
           calculatedValues = initialCalculatedValues,
-          isValid = false,
+          isValid = initialValidationErrors.isEmpty(),
         )
       )
     state = _state.asStateFlow()
@@ -65,8 +66,7 @@ class QuestionnaireManager(
     val updatedItems = updateResponseItem(currentResponse.items, linkId, value, text)
     val updatedResponse = currentResponse.copy(items = updatedItems)
 
-    val items = questionnaire.items.filter { item -> item.linkId == linkId }
-    recomputeState(updatedResponse, items, changedFields = setOf(linkId))
+    recomputeState(updatedResponse, changedFields = setOf(linkId))
   }
 
   fun addRepetition(groupLinkId: String) {
@@ -140,23 +140,24 @@ class QuestionnaireManager(
     items: List<Item>? = null,
     changedFields: Set<String>? = null,
   ) {
-    val visibleItems = evaluator.getVisibleItems(response)
+    // 1. Calculate values first
+    val calculatedValues =
+      if (changedFields != null) {
+        val currentCalculated = _state.value.calculatedValues
+        val incrementalResults =
+          evaluator.calculateValuesIncremental(response, changedFields, currentCalculated)
+        currentCalculated + incrementalResults
+      } else {
+        evaluator.calculateValues(response)
+      }
+
+    // 2. Determine visibility using these values
+    val visibleItems = evaluator.getVisibleItems(response, calculatedValues)
     val visibleLinkIds = collectVisibleLinkIds(visibleItems)
     val cleanedResponse = clearHiddenItemAnswers(response, visibleLinkIds)
 
-    val previousVisibleLinkIds = collectVisibleLinkIds(_state.value.visibleItems)
-    val visibilityChanged = visibleLinkIds != previousVisibleLinkIds
-
-    val calculatedValues =
-      if (changedFields != null && !visibilityChanged) {
-        val currentCalculated = _state.value.calculatedValues
-        val incrementalResults =
-          evaluator.calculateValuesIncremental(cleanedResponse, changedFields, currentCalculated)
-        currentCalculated + incrementalResults
-      } else {
-        evaluator.calculateValues(cleanedResponse)
-      }
-    val validationErrors = evaluator.validateResponse(cleanedResponse, items)
+    // 3. Validate using these values
+    val validationErrors = evaluator.validateResponse(cleanedResponse, items, calculatedValues)
 
     _state.value =
       QuestionnaireState(
@@ -193,14 +194,34 @@ class QuestionnaireManager(
     visibleLinkIds: Set<String>,
   ): List<ResponseItem> {
     return items.map { item ->
+      val cleanedAnswers =
+        item.answers.map { answer ->
+          if (answer.items.isNotEmpty()) {
+            answer.copy(items = clearAnswersFromHidden(answer.items, visibleLinkIds))
+          } else {
+            answer
+          }
+        }
+
       if (visibleLinkIds.contains(item.linkId)) {
         if (item.items.isNotEmpty()) {
-          item.copy(items = clearAnswersFromHidden(item.items, visibleLinkIds))
+          item.copy(
+            answers = cleanedAnswers,
+            items = clearAnswersFromHidden(item.items, visibleLinkIds),
+          )
         } else {
-          item
+          item.copy(answers = cleanedAnswers)
         }
       } else {
-        item.copy(answers = emptyList(), items = emptyList())
+        item.copy(
+          answers = emptyList(),
+          items =
+            if (item.items.isNotEmpty()) {
+              clearAnswersFromHidden(item.items, visibleLinkIds)
+            } else {
+              emptyList()
+            },
+        )
       }
     }
   }

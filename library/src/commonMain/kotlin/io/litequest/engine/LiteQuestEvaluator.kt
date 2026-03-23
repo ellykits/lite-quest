@@ -44,8 +44,9 @@ class LiteQuestEvaluator(
   fun validateResponse(
     response: QuestionnaireResponse,
     items: List<Item>? = null,
+    calculatedValues: Map<String, Any?>? = null,
   ): List<ValidationError> {
-    val dataContext = buildDataContext(response)
+    val dataContext = buildDataContext(response, calculatedValues)
     return validationEngine.validateResponse(
       items = items ?: questionnaire.items,
       responseItems = response.items,
@@ -53,14 +54,20 @@ class LiteQuestEvaluator(
     )
   }
 
-  fun getVisibleItems(response: QuestionnaireResponse): List<Item> {
-    val dataContext = buildDataContext(response)
+  fun getVisibleItems(
+    response: QuestionnaireResponse,
+    calculatedValues: Map<String, Any?>? = null,
+  ): List<Item> {
+    val dataContext = buildDataContext(response, calculatedValues)
     return visibilityEngine.getVisibleItems(questionnaire.items, dataContext)
   }
 
-  fun calculateValues(response: QuestionnaireResponse): Map<String, Any?> {
-    val dataContext = DataContextBuilder.build(response)
-    return calculatedValuesEngine.evaluate(allCalculatedValues, dataContext)
+  fun calculateValues(
+    response: QuestionnaireResponse,
+    dataContext: MutableMap<String, Any?>? = null,
+  ): Map<String, Any?> {
+    val context = dataContext ?: DataContextBuilder.build(response)
+    return calculatedValuesEngine.evaluate(allCalculatedValues, context)
   }
 
   fun calculateValuesIncremental(
@@ -86,9 +93,14 @@ class LiteQuestEvaluator(
     )
   }
 
-  fun buildDataContext(response: QuestionnaireResponse): MutableMap<String, Any?> {
+  fun buildDataContext(
+    response: QuestionnaireResponse,
+    calculatedValues: Map<String, Any?>? = null,
+  ): MutableMap<String, Any?> {
     val dataContext = DataContextBuilder.build(response)
-    if (allCalculatedValues.isNotEmpty()) {
+    if (calculatedValues != null) {
+      dataContext.putAll(calculatedValues)
+    } else if (allCalculatedValues.isNotEmpty()) {
       calculatedValuesEngine.evaluate(allCalculatedValues, dataContext)
     }
     return dataContext

@@ -24,6 +24,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -137,7 +139,14 @@ class QuestionnaireManagerTest {
     parentGroup = response.items.find { it.linkId == "parentGroup" }
     assertTrue(parentGroup != null, "Parent group should still exist in response")
     assertTrue(parentGroup.answers.isEmpty(), "Hidden parent group should have empty answers")
-    assertTrue(parentGroup.items.isEmpty(), "Hidden parent group should have empty nested items")
+    assertFalse(
+      parentGroup.items.isEmpty(),
+      "Hidden parent group should preserve its nested items structure",
+    )
+    assertTrue(
+      parentGroup.items.all { it.answers.isEmpty() },
+      "All nested items should have empty answers",
+    )
   }
 
   @Test
@@ -181,5 +190,238 @@ class QuestionnaireManagerTest {
 
     dataContext = evaluator.buildDataContext(manager.getResponse())
     assertFalse(dataContext.containsKey("hiddenField"))
+  }
+
+  @Test
+  fun testNestedItemUpdateAndValidation() {
+    val questionnaire =
+      Questionnaire(
+        id = "test-q",
+        title = "Test",
+        version = "1.0",
+        items =
+          listOf(
+            Item(
+              linkId = "rootField",
+              type = ItemType.STRING,
+              text = "Root Field",
+              required = true,
+            ),
+            Item(
+              linkId = "nestedGroup",
+              type = ItemType.GROUP,
+              text = "Nested Group",
+              items =
+                listOf(
+                  Item(
+                    linkId = "nestedField",
+                    type = ItemType.STRING,
+                    text = "Nested Field",
+                    required = true,
+                  )
+                ),
+            ),
+          ),
+      )
+
+    val evaluator = LiteQuestEvaluator(questionnaire)
+    val manager = QuestionnaireManager(questionnaire, evaluator)
+
+    // Initial state: both fields missing, should now have 2 validation errors (fixed)
+    assertEquals(
+      2,
+      manager.state.value.validationErrors.size,
+      "Initially should have 2 validation errors",
+    )
+
+    // Update root field
+    manager.updateAnswer("rootField", JsonPrimitive("root value"))
+    assertEquals(
+      1,
+      manager.state.value.validationErrors.size,
+      "After root update, should have 1 validation error remaining",
+    )
+
+    // Update nested field
+    manager.updateAnswer("nestedField", JsonPrimitive("nested value"))
+
+    val state = manager.state.value
+    val response = state.response
+
+    // Check if nested value is preserved
+    val nestedGroup = response.items.find { it.linkId == "nestedGroup" }
+    val nestedField = nestedGroup?.items?.find { it.linkId == "nestedField" }
+    assertEquals(
+      "nested value",
+      nestedField?.answers?.firstOrNull()?.value?.toString()?.trim('"'),
+      "Nested answer should be updated",
+    )
+
+    // Check validation errors
+    assertEquals(
+      0,
+      state.validationErrors.size,
+      "After both updates, should have 0 validation errors",
+    )
+  }
+
+  @Test
+  fun testValidationErrorsAreNotLostOnPartialUpdate() {
+    val questionnaire =
+      Questionnaire(
+        id = "test-q",
+        title = "Test",
+        version = "1.0",
+        items =
+          listOf(
+            Item(linkId = "field1", type = ItemType.STRING, text = "Field 1", required = true),
+            Item(linkId = "field2", type = ItemType.STRING, text = "Field 2", required = true),
+          ),
+      )
+
+    val evaluator = LiteQuestEvaluator(questionnaire)
+    val manager = QuestionnaireManager(questionnaire, evaluator)
+
+    // Initial: 2 errors
+    assertEquals(2, manager.state.value.validationErrors.size)
+
+    // Update field1
+    manager.updateAnswer("field1", JsonPrimitive("value 1"))
+
+    // Expect 1 error (for field2)
+    assertEquals(
+      1,
+      manager.state.value.validationErrors.size,
+      "Validation errors for other fields should NOT be lost",
+    )
+  }
+
+  @Test
+  fun testTogglingVisibilityDoesNotBreakHierarchy() {
+    val questionnaire =
+      Questionnaire(
+        id = "test-q",
+        title = "Test",
+        version = "1.0",
+        items =
+          listOf(
+            Item(linkId = "consent", type = ItemType.BOOLEAN, text = "Consent"),
+            Item(
+              linkId = "nestedGroup",
+              type = ItemType.GROUP,
+              text = "Nested Group",
+              visibleIf =
+                buildJsonObject {
+                  put(
+                    "==",
+                    buildJsonArray {
+                      add(buildJsonObject { put("var", JsonPrimitive("consent")) })
+                      add(JsonPrimitive(true))
+                    },
+                  )
+                },
+              items = listOf(Item(linkId = "fieldX", type = ItemType.STRING, text = "Field X")),
+            ),
+          ),
+      )
+
+    val evaluator = LiteQuestEvaluator(questionnaire)
+    val manager = QuestionnaireManager(questionnaire, evaluator)
+
+    // 1. Consent = true
+    manager.updateAnswer("consent", JsonPrimitive(true))
+
+    // 2. Update fieldX
+    manager.updateAnswer("fieldX", JsonPrimitive("first value"))
+
+    // 3. Toggle Consent = false
+    manager.updateAnswer("consent", JsonPrimitive(false))
+
+    // 4. Toggle Consent = true again
+    manager.updateAnswer("consent", JsonPrimitive(true))
+
+    // 5. Update fieldX AGAIN
+    manager.updateAnswer("fieldX", JsonPrimitive("second value"))
+
+    // Check if updated correctly (hierarchy preserved)
+    val response = manager.state.value.response
+    val nestedGroup = response.items.find { it.linkId == "nestedGroup" }
+    val fieldX = nestedGroup?.items?.find { it.linkId == "fieldX" }
+    assertEquals(
+      "second value",
+      fieldX?.answers?.firstOrNull()?.value?.toString()?.trim('"'),
+      "Fails to update answer after toggling visibility of parent group",
+    )
+  }
+
+  @Test
+  fun testSkipLogicInsideRepetition() {
+    val questionnaire =
+      Questionnaire(
+        id = "test-q",
+        title = "Test",
+        version = "1.0",
+        items =
+          listOf(
+            Item(
+              linkId = "group",
+              type = ItemType.GROUP,
+              text = "Repeating Group",
+              repeats = true,
+              items =
+                listOf(
+                  Item(linkId = "showChild", type = ItemType.BOOLEAN, text = "Show child?"),
+                  Item(
+                    linkId = "childField",
+                    type = ItemType.STRING,
+                    text = "Child Field",
+                    visibleIf =
+                      buildJsonObject {
+                        put(
+                          "==",
+                          buildJsonArray {
+                            add(buildJsonObject { put("var", JsonPrimitive("globalShow")) })
+                            add(JsonPrimitive(true))
+                          },
+                        )
+                      },
+                  ),
+                ),
+            ),
+            Item(linkId = "globalShow", type = ItemType.BOOLEAN, text = "Global Show"),
+          ),
+      )
+
+    val evaluator = LiteQuestEvaluator(questionnaire)
+    val manager = QuestionnaireManager(questionnaire, evaluator)
+
+    // 1. Initial state
+    manager.updateAnswer("globalShow", JsonPrimitive(true))
+    manager.addRepetition("group")
+
+    // 2. Update childField in first repetition
+    manager.updateInRepetition("group", 0, "childField", JsonPrimitive("some value"))
+
+    // Verify answer is there
+    val group = manager.state.value.response.items.find { it.linkId == "group" }
+    val answer = group?.answers?.getOrNull(0)
+    val field = answer?.items?.find { it.linkId == "childField" }
+    assertEquals(
+      "some value",
+      field?.answers?.firstOrNull()?.value?.toString()?.trim('"'),
+      "Answer should be present initially",
+    )
+
+    // 3. Toggle globalShow = false
+    manager.updateAnswer("globalShow", JsonPrimitive(false))
+
+    // 4. Verify answer is CLEARED in the data
+    val groupAfterHide = manager.state.value.response.items.find { it.linkId == "group" }
+    val answerAfterHide = groupAfterHide?.answers?.getOrNull(0)
+    val fieldAfterHide = answerAfterHide?.items?.find { it.linkId == "childField" }
+    assertTrue(
+      fieldAfterHide?.answers?.isEmpty() == true,
+      "Answer inside repetition should be cleared by skip logic",
+    )
   }
 }
