@@ -16,6 +16,7 @@
 package io.litequest.state
 
 import io.litequest.engine.LiteQuestEvaluator
+import io.litequest.model.CalculatedValue
 import io.litequest.model.Item
 import io.litequest.model.ItemType
 import io.litequest.model.Questionnaire
@@ -422,6 +423,79 @@ class QuestionnaireManagerTest {
     assertTrue(
       fieldAfterHide?.answers?.isEmpty() == true,
       "Answer inside repetition should be cleared by skip logic",
+    )
+  }
+
+  @Test
+  fun testTransitiveCalculatedValues() {
+    val questionnaire =
+      Questionnaire(
+        id = "test-q",
+        title = "Test",
+        version = "1.0",
+        items = listOf(Item(linkId = "fieldA", type = ItemType.INTEGER, text = "Field A")),
+        calculatedValues =
+          listOf(
+            CalculatedValue(
+              name = "calcB",
+              expression =
+                buildJsonObject {
+                  put(
+                    "+",
+                    buildJsonArray {
+                      add(buildJsonObject { put("var", JsonPrimitive("fieldA")) })
+                      add(JsonPrimitive(1))
+                    },
+                  )
+                },
+            ),
+            CalculatedValue(
+              name = "calcC",
+              expression =
+                buildJsonObject {
+                  put(
+                    "+",
+                    buildJsonArray {
+                      add(buildJsonObject { put("var", JsonPrimitive("calcB")) })
+                      add(JsonPrimitive(1))
+                    },
+                  )
+                },
+            ),
+          ),
+      )
+
+    val evaluator = LiteQuestEvaluator(questionnaire)
+    val manager = QuestionnaireManager(questionnaire, evaluator)
+
+    // 1. Initial state (fieldA = 10)
+    manager.updateAnswer("fieldA", JsonPrimitive(10))
+
+    // calcB should be 11, calcC should be 12
+    assertEquals(
+      11.0,
+      manager.state.value.calculatedValues["calcB"] as? Double,
+      "calcB should update correctly",
+    )
+    assertEquals(
+      12.0,
+      manager.state.value.calculatedValues["calcC"] as? Double,
+      "calcC should update TRANSITIVELY",
+    )
+
+    // 2. Update fieldA = 20
+    manager.updateAnswer("fieldA", JsonPrimitive(20))
+
+    // calcB should be 21, calcC should be 22
+    assertEquals(
+      21.0,
+      manager.state.value.calculatedValues["calcB"] as? Double,
+      "calcB should update correctly",
+    )
+    assertEquals(
+      22.0,
+      manager.state.value.calculatedValues["calcC"] as? Double,
+      "calcC should update TRANSITIVELY on subsequent changes",
     )
   }
 }

@@ -38,7 +38,7 @@ class DependencyExtractorTest {
 
     val dependencies = DependencyExtractor.extractDependencies(expression)
 
-    assertEquals(setOf("patient"), dependencies)
+    assertEquals(setOf("patient", "name", "first"), dependencies)
   }
 
   @Test

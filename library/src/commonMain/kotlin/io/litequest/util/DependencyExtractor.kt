@@ -34,7 +34,7 @@ object DependencyExtractor {
           if (key == "var") {
             val varName = (value as? JsonPrimitive)?.content
             if (varName != null) {
-              dependencies.add(varName.split(".").first())
+              dependencies.addAll(varName.split("."))
             }
           } else {
             extractRecursive(value, dependencies)

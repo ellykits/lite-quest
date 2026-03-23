@@ -67,7 +67,7 @@ class LiteQuestEvaluator(
     dataContext: MutableMap<String, Any?>? = null,
   ): Map<String, Any?> {
     val context = dataContext ?: DataContextBuilder.build(response)
-    return calculatedValuesEngine.evaluate(allCalculatedValues, context)
+    return calculatedValuesEngine.evaluate(context)
   }
 
   fun calculateValuesIncremental(
@@ -101,7 +101,7 @@ class LiteQuestEvaluator(
     if (calculatedValues != null) {
       dataContext.putAll(calculatedValues)
     } else if (allCalculatedValues.isNotEmpty()) {
-      calculatedValuesEngine.evaluate(allCalculatedValues, dataContext)
+      calculatedValuesEngine.evaluate(dataContext)
     }
     return dataContext
   }

@@ -202,9 +202,7 @@ internal fun AttachmentPickerComponent(
           IconButton(
             onClick = {
               coroutineScope.launch {
-                if (attachment != null) {
-                  FileStorageHelper.deleteAttachment(attachment)
-                }
+                FileStorageHelper.deleteAttachment(attachment)
                 onAttachmentChange(null)
               }
             },
