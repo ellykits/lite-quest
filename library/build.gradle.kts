@@ -10,21 +10,22 @@ plugins {
   alias(libs.plugins.composeMultiplatform)
   alias(libs.plugins.composeCompiler)
   alias(libs.plugins.maven.publish)
+  signing
 }
 
 group = "io.github.ellykits.litequest"
 
-version = "1.0.0-alpha02"
+version = "1.0.0-alpha03"
 
 kotlin {
   androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
 
   jvm("desktop") { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
 
-  wasmJs {
+  /*  wasmJs {
     browser()
     binaries.library()
-  }
+  }*/
 
   listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
     iosTarget.binaries.framework {
@@ -43,12 +44,17 @@ kotlin {
         implementation(libs.ktor.client.content.negotiation)
         implementation(libs.ktor.serialization.kotlinx.json)
 
-        implementation(compose.runtime)
-        implementation(compose.foundation)
-        implementation(compose.material3)
-        implementation(compose.ui)
+        implementation(libs.runtime)
+        implementation(libs.foundation)
+        implementation(libs.material3)
+        implementation(libs.ui)
 
         implementation(libs.material.icons.core)
+        implementation(libs.lucide)
+        implementation(libs.kscan)
+        implementation(libs.filekit.core)
+        implementation(libs.filekit.compose)
+        implementation(libs.coil.compose)
       }
     }
 
@@ -59,11 +65,17 @@ kotlin {
       }
     }
 
-    val androidMain by getting { dependencies { implementation(libs.ktor.client.android) } }
+    val androidMain by getting {
+      dependencies {
+        implementation(libs.ktor.client.android)
+        implementation(libs.androidx.activity.compose)
+        implementation(libs.androidx.core.ktx)
+      }
+    }
 
     val desktopMain by getting { dependencies { implementation(libs.ktor.client.cio) } }
 
-    val wasmJsMain by getting { dependencies { implementation(libs.ktor.client.js) } }
+    //    val wasmJsMain by getting { dependencies { implementation(libs.ktor.client.js) } }
 
     val iosX64Main by getting
     val iosArm64Main by getting
@@ -89,6 +101,13 @@ android {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
+}
+
+signing {
+  // This checks if any task in the current execution is a MavenLocal task
+  val isMavenLocal =
+    gradle.taskGraph.allTasks.any { it.name.contains("MavenLocal", ignoreCase = true) }
+  isRequired = !isMavenLocal
 }
 
 // Prepare for publishing

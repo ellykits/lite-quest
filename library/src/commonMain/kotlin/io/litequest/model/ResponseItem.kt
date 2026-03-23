@@ -20,6 +20,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ResponseItem(
   val linkId: String,
+  val text: String? = null,
   val answers: List<Answer> = emptyList(),
   val items: List<ResponseItem> = emptyList(),
 )

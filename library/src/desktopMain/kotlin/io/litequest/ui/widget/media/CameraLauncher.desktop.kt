@@ -13,14 +13,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.litequest.demo
+package io.litequest.ui.widget.media
 
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.runtime.Composable
+import io.github.vinceglb.filekit.PlatformFile
 
-data class ModeOption(
-  val id: String,
-  val title: String,
-  val description: String,
-  val icon: ImageVector,
-  val isPrimary: Boolean = false,
-)
+@Composable
+actual fun rememberCameraLauncher(onResult: (PlatformFile?) -> Unit): CameraLauncherInterface? =
+  null
+
+actual val isCameraSupported: Boolean = false

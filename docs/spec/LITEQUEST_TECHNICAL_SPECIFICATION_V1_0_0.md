@@ -430,13 +430,7 @@ Translation keys separate content from logic:
 
 ## 11. Future Roadmap
 
-### 11.1 Version 1.1 (Q1 2026)
-
-- FHIR Questionnaire bidirectional conversion
-- Enhanced skip logic with jump-to functionality
-- File attachment support (photos, documents, signatures)
-
-### 11.2 Version 1.2 (Q2 2026)
+### 11.1 Version 1.2 (Q2 2026)
 - Advanced validation rules (regex, LUHN algorithm)
 
 ---

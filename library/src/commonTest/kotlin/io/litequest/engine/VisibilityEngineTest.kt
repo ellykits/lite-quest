@@ -209,4 +209,97 @@ class VisibilityEngineTest {
     val dataContext3 = mapOf("age" to 25, "country" to "UK")
     assertFalse(engine.isVisible(item, dataContext3))
   }
+
+  @Test
+  fun testDotNotationVisibility() {
+    val item =
+      Item(
+        linkId = "householdInfo",
+        type = ItemType.GROUP,
+        text = "Household Info",
+        visibleIf =
+          buildJsonObject {
+            put(
+              "==",
+              buildJsonObject {
+                put("0", buildJsonObject { put("var", "consentSection.consentGiven") })
+                put("1", true)
+              },
+            )
+          },
+      )
+
+    val dataContext1 = mapOf("consentSection" to mapOf("consentGiven" to true))
+    assertTrue(engine.isVisible(item, dataContext1))
+
+    val dataContext2 = mapOf("consentSection" to mapOf("consentGiven" to false))
+    assertFalse(engine.isVisible(item, dataContext2))
+  }
+
+  @Test
+  fun testDotNotationWithNestedGroups() {
+    val items =
+      listOf(
+        Item(
+          linkId = "consentSection",
+          type = ItemType.GROUP,
+          text = "Consent",
+          items =
+            listOf(Item(linkId = "consentGiven", type = ItemType.BOOLEAN, text = "Do you consent?")),
+        ),
+        Item(
+          linkId = "householdInfo",
+          type = ItemType.GROUP,
+          text = "Household Info",
+          visibleIf =
+            buildJsonObject {
+              put(
+                "==",
+                buildJsonObject {
+                  put("0", buildJsonObject { put("var", "consentSection.consentGiven") })
+                  put("1", true)
+                },
+              )
+            },
+          items =
+            listOf(Item(linkId = "householdId", type = ItemType.STRING, text = "Household ID")),
+        ),
+      )
+
+    val dataContext = mapOf("consentSection" to mapOf("consentGiven" to true))
+
+    val visibleItems = engine.getVisibleItems(items, dataContext)
+
+    assertEquals(2, visibleItems.size)
+    assertTrue(visibleItems.any { it.linkId == "consentSection" })
+    assertTrue(visibleItems.any { it.linkId == "householdInfo" })
+  }
+
+  @Test
+  fun testDotNotationMultipleLevels() {
+    val dataContext = mapOf("patient" to mapOf("demographics" to mapOf("age" to 25)))
+
+    val varExpression = buildJsonObject { put("var", "patient.demographics.age") }
+    val varResult = evaluator.evaluate(varExpression, dataContext)
+    assertEquals(25, varResult)
+
+    val item =
+      Item(
+        linkId = "special-field",
+        type = ItemType.TEXT,
+        text = "Special field",
+        visibleIf =
+          buildJsonObject {
+            put(
+              "==",
+              buildJsonObject {
+                put("0", buildJsonObject { put("var", "patient.demographics.age") })
+                put("1", 25)
+              },
+            )
+          },
+      )
+
+    assertTrue(engine.isVisible(item, dataContext))
+  }
 }

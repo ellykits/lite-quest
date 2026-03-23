@@ -42,7 +42,7 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
     val errors = mutableListOf<ValidationError>()
 
     items.forEach { item ->
-      if (!visibilityEngine.isVisible(item, dataContext)) {
+      if (item.visibleIf != null && !visibilityEngine.isVisible(item, dataContext)) {
         return@forEach
       }
 
@@ -60,17 +60,18 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
         )
       }
 
-      item.validations.forEach { rule ->
-        val result = evaluator.evaluate(rule.expression, dataContext)
-        if (!TruthinessChecker.isTruthy(result)) {
-          errors.add(
-            ValidationError(
-              linkId = item.linkId,
-              path = currentPath,
-              message = rule.message,
-              itemText = item.text,
+      if (item.validations.isNotEmpty()) {
+        item.validations.forEach { rule ->
+          if (!TruthinessChecker.isTruthy(evaluator.evaluate(rule.expression, dataContext))) {
+            errors.add(
+              ValidationError(
+                linkId = item.linkId,
+                path = currentPath,
+                message = rule.message,
+                itemText = item.text,
+              )
             )
-          )
+          }
         }
       }
 

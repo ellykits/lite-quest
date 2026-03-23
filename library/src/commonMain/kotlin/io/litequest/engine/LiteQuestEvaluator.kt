@@ -15,26 +15,38 @@
 */
 package io.litequest.engine
 
+import io.litequest.model.CalculatedValue
 import io.litequest.model.Item
 import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.model.ValidationError
+import io.litequest.util.CalculatedExpressionCollector
 import io.litequest.util.DataContextBuilder
+import kotlinx.serialization.json.JsonElement
 
 class LiteQuestEvaluator(
   private val questionnaire: Questionnaire,
   jsonLogicEvaluator: JsonLogicEvaluator = JsonLogicEvaluator(),
 ) {
-  private val calculatedValuesEngine = CalculatedValuesEngine(jsonLogicEvaluator)
   private val visibilityEngine = VisibilityEngine(jsonLogicEvaluator)
   private val validationEngine = ValidationEngine(jsonLogicEvaluator)
   private val extractionEngine = ExtractionEngine()
 
+  private val allCalculatedValues: List<CalculatedValue> by lazy {
+    val itemExpressions = CalculatedExpressionCollector.collect(questionnaire.items)
+    questionnaire.calculatedValues + itemExpressions
+  }
+
+  private val calculatedValuesEngine: CalculatedValuesEngine by lazy {
+    CalculatedValuesEngine(jsonLogicEvaluator, allCalculatedValues)
+  }
+
   fun validateResponse(
     response: QuestionnaireResponse,
     items: List<Item>? = null,
+    calculatedValues: Map<String, Any?>? = null,
   ): List<ValidationError> {
-    val dataContext = buildDataContext(response)
+    val dataContext = buildDataContext(response, calculatedValues)
     return validationEngine.validateResponse(
       items = items ?: questionnaire.items,
       responseItems = response.items,
@@ -42,17 +54,33 @@ class LiteQuestEvaluator(
     )
   }
 
-  fun getVisibleItems(response: QuestionnaireResponse): List<Item> {
-    val dataContext = buildDataContext(response)
+  fun getVisibleItems(
+    response: QuestionnaireResponse,
+    calculatedValues: Map<String, Any?>? = null,
+  ): List<Item> {
+    val dataContext = buildDataContext(response, calculatedValues)
     return visibilityEngine.getVisibleItems(questionnaire.items, dataContext)
   }
 
-  fun calculateValues(response: QuestionnaireResponse): Map<String, Any?> {
-    val dataContext = DataContextBuilder.build(response)
-    return calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
+  fun calculateValues(
+    response: QuestionnaireResponse,
+    dataContext: MutableMap<String, Any?>? = null,
+  ): Map<String, Any?> {
+    val context = dataContext ?: DataContextBuilder.build(response)
+    return calculatedValuesEngine.evaluate(context)
   }
 
-  fun extractData(response: QuestionnaireResponse): kotlinx.serialization.json.JsonElement? {
+  fun calculateValuesIncremental(
+    response: QuestionnaireResponse,
+    changedFields: Set<String>,
+    currentCalculatedValues: Map<String, Any?>,
+  ): Map<String, Any?> {
+    val dataContext = DataContextBuilder.build(response)
+    dataContext.putAll(currentCalculatedValues)
+    return calculatedValuesEngine.evaluateIncremental(dataContext, changedFields)
+  }
+
+  fun extractData(response: QuestionnaireResponse): JsonElement? {
     val template = questionnaire.extractionTemplate ?: return null
     val dataContext = buildDataContext(response)
     val calculatedValues = calculateValues(response)
@@ -65,9 +93,16 @@ class LiteQuestEvaluator(
     )
   }
 
-  fun buildDataContext(response: QuestionnaireResponse): MutableMap<String, Any?> {
+  fun buildDataContext(
+    response: QuestionnaireResponse,
+    calculatedValues: Map<String, Any?>? = null,
+  ): MutableMap<String, Any?> {
     val dataContext = DataContextBuilder.build(response)
-    calculatedValuesEngine.evaluate(questionnaire.calculatedValues, dataContext)
+    if (calculatedValues != null) {
+      dataContext.putAll(calculatedValues)
+    } else if (allCalculatedValues.isNotEmpty()) {
+      calculatedValuesEngine.evaluate(dataContext)
+    }
     return dataContext
   }
 }

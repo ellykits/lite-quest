@@ -31,12 +31,13 @@ enum class ItemType {
   OPEN_CHOICE,
   DISPLAY,
   GROUP,
-  QUANTITY;
+  QUANTITY,
+  BARCODE,
+  IMAGE,
+  ATTACHMENT,
+  LAYOUT_ROW,
+  LAYOUT_COLUMN,
+  LAYOUT_BOX;
 
-  companion object {
-    fun fromString(value: String): ItemType {
-      return entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
-        ?: throw IllegalArgumentException("Unknown item type: $value")
-    }
-  }
+  companion object {}
 }

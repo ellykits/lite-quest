@@ -145,7 +145,13 @@ class DataContextBuilderTest {
     assertEquals(80.5, context["weight-kg"])
     assertEquals(1.8, context["height-m"])
     assertEquals(true, context["has-symptoms"])
-    assertEquals(3, context.size)
+
+    assertTrue(context["vitals-group"] is Map<*, *>)
+    @Suppress("UNCHECKED_CAST") val vitalsGroup = context["vitals-group"] as Map<String, Any?>
+    assertEquals(80.5, vitalsGroup["weight-kg"])
+    assertEquals(1.8, vitalsGroup["height-m"])
+
+    assertEquals(4, context.size)
   }
 
   @Test
@@ -179,7 +185,7 @@ class DataContextBuilderTest {
     val context = DataContextBuilder.build(response)
 
     assertTrue(context["medications"] is List<*>)
-    val medications = context["medications"] as List<Map<String, Any?>>
+    @Suppress("UNCHECKED_CAST") val medications = context["medications"] as List<Map<String, Any?>>
     assertEquals(2, medications.size)
 
     assertEquals("Aspirin", medications[0]["medication-name"])
@@ -216,12 +222,12 @@ class DataContextBuilderTest {
     val context = DataContextBuilder.build(response)
 
     assertTrue(context["patient-info"] is Map<*, *>)
-    val info = context["patient-info"] as Map<String, Any?>
+    @Suppress("UNCHECKED_CAST") val info = context["patient-info"] as Map<String, Any?>
     assertEquals("John Doe", info["name"])
     assertEquals(35L, info["age"])
 
     assertTrue(info["contact"] is Map<*, *>)
-    val contact = info["contact"] as Map<String, Any?>
+    @Suppress("UNCHECKED_CAST") val contact = info["contact"] as Map<String, Any?>
     assertEquals("john@example.com", contact["email"])
     assertEquals(1234567890L, contact["phone"])
   }

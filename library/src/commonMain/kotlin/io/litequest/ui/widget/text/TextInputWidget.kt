@@ -19,11 +19,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -31,25 +35,31 @@ class TextInputWidget(override val item: Item) : ItemWidget {
   @Composable
   override fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
-    val text = value?.jsonPrimitive?.content ?: ""
+    var localText by remember(value) { mutableStateOf(value?.jsonPrimitive?.content ?: "") }
+    val isMultiline = item.type == io.litequest.model.ItemType.TEXT
+
+    LaunchedEffect(localText) {
+      if (localText != (value?.jsonPrimitive?.content ?: "")) {
+        kotlinx.coroutines.delay(300)
+        onValueChange(JsonPrimitive(localText), item.text)
+      }
+    }
 
     OutlinedTextField(
-      value = text,
-      onValueChange = { newValue ->
-        if (newValue.isEmpty()) {
-          onValueChange(JsonNull)
-        } else {
-          onValueChange(JsonPrimitive(newValue))
-        }
-      },
+      value = localText,
+      onValueChange = { localText = it },
       label = { Text(item.text) },
       isError = errorMessage != null,
       supportingText = errorMessage?.let { { Text(it) } },
       modifier = Modifier.fillMaxWidth(),
-      singleLine = true,
+      singleLine = !isMultiline,
+      minLines = if (isMultiline) 3 else 1,
+      maxLines = if (isMultiline) 5 else 1,
+      enabled = !item.readOnly,
+      readOnly = item.readOnly,
     )
   }
 }

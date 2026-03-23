@@ -20,12 +20,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -33,26 +37,33 @@ class DecimalInputWidget(override val item: Item) : ItemWidget {
   @Composable
   override fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
-    val text = value?.jsonPrimitive?.content ?: ""
+    var localText by remember(value) { mutableStateOf(value?.jsonPrimitive?.content ?: "") }
+
+    LaunchedEffect(localText) {
+      if (localText != (value?.jsonPrimitive?.content ?: "")) {
+        kotlinx.coroutines.delay(300)
+        if (localText.isEmpty()) {
+          onValueChange(JsonPrimitive(""), item.text)
+        } else {
+          localText.toDoubleOrNull()?.let { onValueChange(JsonPrimitive(it), item.text) }
+        }
+      }
+    }
 
     OutlinedTextField(
-      value = text,
-      onValueChange = { newValue ->
-        if (newValue.isEmpty()) {
-          onValueChange(JsonNull)
-        } else {
-          newValue.toDoubleOrNull()?.let { onValueChange(JsonPrimitive(it)) }
-        }
-      },
+      value = localText,
+      onValueChange = { localText = it },
       label = { Text(item.text) },
       isError = errorMessage != null,
       supportingText = errorMessage?.let { { Text(it) } },
       modifier = Modifier.fillMaxWidth(),
       singleLine = true,
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+      enabled = !item.readOnly,
+      readOnly = item.readOnly,
     )
   }
 }

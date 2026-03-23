@@ -23,7 +23,10 @@ import kotlinx.serialization.json.put
 
 class CalculatedValuesEngineTest {
   private val evaluator = JsonLogicEvaluator()
-  private val engine = CalculatedValuesEngine(evaluator)
+
+  private fun createEngine(calculatedValues: List<CalculatedValue>): CalculatedValuesEngine {
+    return CalculatedValuesEngine(evaluator, calculatedValues)
+  }
 
   @Test
   fun testSimpleCalculation() {
@@ -44,8 +47,9 @@ class CalculatedValuesEngineTest {
         )
       )
     val dataContext = mutableMapOf<String, Any?>("a" to 5, "b" to 3)
+    val engine = createEngine(calculatedValues)
 
-    val results = engine.evaluate(calculatedValues, dataContext)
+    val results = engine.evaluate(dataContext)
 
     assertEquals(8.0, results["sum"])
     assertEquals(8.0, dataContext["sum"]) // Should also update context
@@ -81,8 +85,9 @@ class CalculatedValuesEngineTest {
         )
       )
     val dataContext = mutableMapOf<String, Any?>("weight" to 80.5, "height" to 1.8)
+    val engine = createEngine(calculatedValues)
 
-    val results = engine.evaluate(calculatedValues, dataContext)
+    val results = engine.evaluate(dataContext)
 
     val bmi = results["bmi"] as Double
     assertEquals(24.845679012345678, bmi, 0.0001)
@@ -133,8 +138,9 @@ class CalculatedValuesEngineTest {
         ),
       )
     val dataContext = mutableMapOf<String, Any?>("price" to 100.0, "quantity" to 2.0)
+    val engine = createEngine(calculatedValues)
 
-    val results = engine.evaluate(calculatedValues, dataContext)
+    val results = engine.evaluate(dataContext)
 
     assertEquals(200.0, results["subtotal"])
     assertEquals(30.0, results["tax"])
@@ -172,12 +178,14 @@ class CalculatedValuesEngineTest {
         )
       )
 
+    val engine = createEngine(calculatedValues)
+
     val dataContext1 = mutableMapOf<String, Any?>("amount" to 150.0)
-    val results1 = engine.evaluate(calculatedValues, dataContext1)
+    val results1 = engine.evaluate(dataContext1)
     assertEquals(10.0, results1["discount"])
 
     val dataContext2 = mutableMapOf<String, Any?>("amount" to 50.0)
-    val results2 = engine.evaluate(calculatedValues, dataContext2)
+    val results2 = engine.evaluate(dataContext2)
     assertEquals(0.0, results2["discount"])
   }
 
@@ -185,8 +193,9 @@ class CalculatedValuesEngineTest {
   fun testEmptyCalculatedValues() {
     val calculatedValues = emptyList<CalculatedValue>()
     val dataContext = mutableMapOf<String, Any?>("a" to 5)
+    val engine = createEngine(calculatedValues)
 
-    val results = engine.evaluate(calculatedValues, dataContext)
+    val results = engine.evaluate(dataContext)
 
     assertEquals(0, results.size)
     assertEquals(5, dataContext["a"]) // Original context unchanged

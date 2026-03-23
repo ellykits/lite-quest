@@ -23,14 +23,22 @@ import kotlinx.serialization.json.JsonObject
 object DataContextBuilder {
   fun build(response: QuestionnaireResponse): MutableMap<String, Any?> {
     val context = mutableMapOf<String, Any?>()
-    flattenResponseItems(response.items, context)
+    buildContext(response.items, context)
     return context
   }
 
-  private fun flattenResponseItems(items: List<ResponseItem>, context: MutableMap<String, Any?>) {
+  private fun buildContext(items: List<ResponseItem>, context: MutableMap<String, Any?>) {
     items.forEach { item ->
-      if (item.answers.isNotEmpty()) {
-        val values = item.answers.map { it.value }
+      if (item.answers.isNotEmpty() && item.answers.first().items.isNotEmpty()) {
+        val repetitions =
+          item.answers.map { answer ->
+            val repetitionContext = mutableMapOf<String, Any?>()
+            buildContext(answer.items, repetitionContext)
+            repetitionContext
+          }
+        context[item.linkId] = repetitions
+      } else if (item.answers.isNotEmpty()) {
+        val values = item.answers.mapNotNull { it.value }
         val processedValue =
           if (values.size == 1) {
             when (val singleValue = values.first()) {
@@ -42,18 +50,29 @@ object DataContextBuilder {
             values.map { it.toAnyOrNull() }
           }
         context[item.linkId] = processedValue
-      } else if (item.items.isNotEmpty()) {
-        flattenResponseItems(item.items, context)
+      }
+
+      if (item.items.isNotEmpty() && item.answers.isEmpty()) {
+        val nestedContext = mutableMapOf<String, Any?>()
+        buildContext(item.items, nestedContext)
+
+        if (nestedContext.isNotEmpty()) {
+          nestedContext.forEach { (key, value) ->
+            if (!key.contains('.') && !context.containsKey(key)) {
+              context[key] = value
+            }
+          }
+          context[item.linkId] = nestedContext
+        }
       }
     }
   }
 
-  private fun processJsonArray(jsonArray: JsonArray): List<Map<String, Any?>> {
-    return jsonArray.mapNotNull { element ->
-      if (element is JsonObject) {
-        processJsonObject(element)
-      } else {
-        null
+  private fun processJsonArray(jsonArray: JsonArray): List<Any?> {
+    return jsonArray.map { element ->
+      when (element) {
+        is JsonObject -> processJsonObject(element)
+        else -> element.toAnyOrNull()
       }
     }
   }

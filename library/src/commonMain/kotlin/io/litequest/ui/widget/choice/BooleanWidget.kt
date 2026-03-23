@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,10 +38,10 @@ class BooleanWidget(override val item: Item) : ItemWidget {
   @Composable
   override fun Render(
     value: JsonElement?,
-    onValueChange: (JsonElement) -> Unit,
+    onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String?,
   ) {
-    val checked = value?.jsonPrimitive?.content == "true"
+    val checked = remember(value) { value?.jsonPrimitive?.content == "true" }
 
     Row(
       modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -49,7 +50,12 @@ class BooleanWidget(override val item: Item) : ItemWidget {
     ) {
       Text(text = item.text, modifier = Modifier.weight(1f))
       Spacer(modifier = Modifier.width(8.dp))
-      Switch(checked = checked, onCheckedChange = { onValueChange(JsonPrimitive(it)) })
+      Switch(
+        checked = checked,
+        onCheckedChange = { newValue ->
+          onValueChange(JsonPrimitive(newValue), if (newValue) "Yes" else "No")
+        },
+      )
     }
   }
 }

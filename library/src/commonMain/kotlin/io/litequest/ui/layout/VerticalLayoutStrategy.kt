@@ -30,25 +30,25 @@ import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonElement
 
-class VerticalLayoutStrategy : LayoutStrategy {
+object VerticalLayoutStrategy : LayoutStrategy {
   @Composable
   override fun Layout(
     items: List<Item>,
     widgets: Map<String, ItemWidget>,
-    onValueChange: (String, JsonElement) -> Unit,
+    onValueChange: (String, JsonElement, String?) -> Unit,
     values: Map<String, JsonElement?>,
     errorMessages: Map<String, String>,
   ) {
     LazyColumn(
       modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars),
       contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
+      verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-      items(items) { item ->
+      items(items = items, key = { it.linkId }, contentType = { it.type }) { item ->
         widgets[item.linkId]?.let { widget ->
           widget.Render(
             value = values[item.linkId],
-            onValueChange = { value -> onValueChange(item.linkId, value) },
+            onValueChange = { value, text -> onValueChange(item.linkId, value, text) },
             errorMessage = errorMessages[item.linkId],
           )
         }
