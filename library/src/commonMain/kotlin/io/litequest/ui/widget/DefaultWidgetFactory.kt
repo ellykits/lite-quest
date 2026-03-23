@@ -38,32 +38,45 @@ import io.litequest.ui.widget.numeric.QuantityWidget
 import io.litequest.ui.widget.text.TextInputWidget
 
 class DefaultWidgetFactory : WidgetFactory {
+  private val registry = mutableMapOf<ItemType, (Item) -> ItemWidget>()
+
+  init {
+    registerStandardWidgets()
+  }
+
   override fun createWidget(item: Item): ItemWidget {
-    return when (item.type) {
-      ItemType.STRING,
-      ItemType.TEXT -> TextInputWidget(item)
-      ItemType.BOOLEAN -> BooleanWidget(item)
-      ItemType.DECIMAL -> DecimalInputWidget(item)
-      ItemType.INTEGER -> IntegerInputWidget(item)
-      ItemType.DATE -> DatePickerWidget(item)
-      ItemType.TIME -> TimePickerWidget(item)
-      ItemType.DATETIME -> DateTimePickerWidget(item)
-      ItemType.CHOICE -> ChoiceWidget(item)
-      ItemType.OPEN_CHOICE -> OpenChoiceWidget(item)
-      ItemType.DISPLAY -> DisplayWidget(item)
-      ItemType.QUANTITY -> QuantityWidget(item)
-      ItemType.BARCODE -> BarcodeScannerWidget(item)
-      ItemType.IMAGE -> ImageSelectorWidget(item)
-      ItemType.ATTACHMENT -> AttachmentWidget(item)
-      ItemType.LAYOUT_ROW -> RowLayoutWidget(item)
-      ItemType.LAYOUT_COLUMN -> ColumnLayoutWidget(item)
-      ItemType.LAYOUT_BOX -> BoxLayoutWidget(item)
-      ItemType.GROUP -> {
-        if (item.repeats) {
-          RepeatingGroupWidget(item)
-        } else {
-          GroupWidget(item)
-        }
+    return registry[item.type]?.invoke(item)
+      ?: error("No widget registered for type: ${item.type.value}")
+  }
+
+  fun registerWidget(type: ItemType, factory: (Item) -> ItemWidget) {
+    registry[type] = factory
+  }
+
+  private fun registerStandardWidgets() {
+    registerWidget(ItemType.STRING) { TextInputWidget(it) }
+    registerWidget(ItemType.TEXT) { TextInputWidget(it) }
+    registerWidget(ItemType.BOOLEAN) { BooleanWidget(it) }
+    registerWidget(ItemType.DECIMAL) { DecimalInputWidget(it) }
+    registerWidget(ItemType.INTEGER) { IntegerInputWidget(it) }
+    registerWidget(ItemType.DATE) { DatePickerWidget(it) }
+    registerWidget(ItemType.TIME) { TimePickerWidget(it) }
+    registerWidget(ItemType.DATETIME) { DateTimePickerWidget(it) }
+    registerWidget(ItemType.CHOICE) { ChoiceWidget(it) }
+    registerWidget(ItemType.OPEN_CHOICE) { OpenChoiceWidget(it) }
+    registerWidget(ItemType.DISPLAY) { DisplayWidget(it) }
+    registerWidget(ItemType.QUANTITY) { QuantityWidget(it) }
+    registerWidget(ItemType.BARCODE) { BarcodeScannerWidget(it) }
+    registerWidget(ItemType.IMAGE) { ImageSelectorWidget(it) }
+    registerWidget(ItemType.ATTACHMENT) { AttachmentWidget(it) }
+    registerWidget(ItemType.LAYOUT_ROW) { RowLayoutWidget(it) }
+    registerWidget(ItemType.LAYOUT_COLUMN) { ColumnLayoutWidget(it) }
+    registerWidget(ItemType.LAYOUT_BOX) { BoxLayoutWidget(it) }
+    registerWidget(ItemType.GROUP) { item ->
+      if (item.repeats) {
+        RepeatingGroupWidget(item)
+      } else {
+        GroupWidget(item)
       }
     }
   }

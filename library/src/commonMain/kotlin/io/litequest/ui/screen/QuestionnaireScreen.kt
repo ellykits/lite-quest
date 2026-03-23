@@ -68,6 +68,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.litequest.model.Questionnaire
+import io.litequest.state.QuestionnaireManager
 import io.litequest.state.QuestionnaireState
 import io.litequest.ui.QuestionnaireMode
 import io.litequest.ui.QuestionnaireType
@@ -75,12 +76,13 @@ import io.litequest.ui.pagination.PageNavigator
 import io.litequest.ui.pagination.PaginatedQuestionnaire
 import io.litequest.ui.renderer.FormRenderer
 import io.litequest.ui.summary.SummaryPage
+import io.litequest.ui.widget.WidgetFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestionnaireScreen(
   type: QuestionnaireType,
-  manager: io.litequest.state.QuestionnaireManager,
+  manager: QuestionnaireManager,
   onSubmit: () -> Unit,
   modifier: Modifier = Modifier,
   mode: QuestionnaireMode = QuestionnaireMode.Edit,
@@ -107,6 +109,7 @@ fun QuestionnaireScreen(
         showReview = showReview,
         customActions = customActions,
         modifier = modifier,
+        widgetFactory = manager.widgetFactory,
       )
     }
     is QuestionnaireType.Paginated -> {
@@ -123,6 +126,7 @@ fun QuestionnaireScreen(
         modifier = modifier,
         mode = mode,
         onModeChange = onModeChange,
+        widgetFactory = manager.widgetFactory,
       )
     }
   }
@@ -134,7 +138,7 @@ private fun SingleQuestionnaireScreen(
   questionnaire: Questionnaire,
   state: QuestionnaireState,
   mode: QuestionnaireMode,
-  manager: io.litequest.state.QuestionnaireManager,
+  manager: QuestionnaireManager,
   onSubmit: () -> Unit,
   onModeChange: ((QuestionnaireMode) -> Unit)?,
   onDismiss: (() -> Unit)?,
@@ -143,6 +147,7 @@ private fun SingleQuestionnaireScreen(
   showReview: Boolean,
   customActions: (@Composable () -> Unit)?,
   modifier: Modifier,
+  widgetFactory: WidgetFactory,
 ) {
   var showDismissDialog by remember { mutableStateOf(false) }
 
@@ -239,6 +244,7 @@ private fun SingleQuestionnaireScreen(
             onRepetitionFieldChange = { linkId, index, fieldLinkId, value, text ->
               manager.updateInRepetition(linkId, index, fieldLinkId, value, text)
             },
+            widgetFactory = widgetFactory,
           )
         }
       }
@@ -260,7 +266,7 @@ private fun SingleQuestionnaireScreen(
 private fun PaginatedQuestionnaireScreen(
   paginatedQuestionnaire: PaginatedQuestionnaire,
   state: QuestionnaireState,
-  manager: io.litequest.state.QuestionnaireManager,
+  manager: QuestionnaireManager,
   onSubmit: () -> Unit,
   onDismiss: (() -> Unit)?,
   showCloseButton: Boolean,
@@ -270,6 +276,7 @@ private fun PaginatedQuestionnaireScreen(
   modifier: Modifier,
   mode: QuestionnaireMode,
   onModeChange: ((QuestionnaireMode) -> Unit)?,
+  widgetFactory: WidgetFactory,
 ) {
   val pageNavigator =
     remember(paginatedQuestionnaire) { PageNavigator(paginatedQuestionnaire.pages) }
@@ -390,6 +397,7 @@ private fun PaginatedQuestionnaireScreen(
             state = state,
             manager = manager,
             modifier = Modifier.fillMaxSize(),
+            widgetFactory = widgetFactory,
           )
         }
       }
@@ -411,8 +419,9 @@ private fun PagerView(
   pageNavigator: PageNavigator,
   currentPage: Int,
   state: QuestionnaireState,
-  manager: io.litequest.state.QuestionnaireManager,
+  manager: QuestionnaireManager,
   modifier: Modifier = Modifier,
+  widgetFactory: WidgetFactory,
 ) {
   val pagerState = rememberPagerState(initialPage = currentPage) { pageNavigator.pages.size }
 
@@ -441,6 +450,7 @@ private fun PagerView(
       onRepetitionFieldChange = { linkId, index, fieldLinkId, value, text ->
         manager.updateInRepetition(linkId, index, fieldLinkId, value, text)
       },
+      widgetFactory = widgetFactory,
     )
   }
 }

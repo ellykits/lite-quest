@@ -24,6 +24,8 @@ import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.model.ResponseItem
 import io.litequest.model.ValidationError
+import io.litequest.ui.widget.DefaultWidgetFactory
+import io.litequest.ui.widget.WidgetFactory
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -38,6 +40,7 @@ class QuestionnaireManager(
   private val questionnaire: Questionnaire,
   private val evaluator: LiteQuestEvaluator,
   private val translationManager: TranslationManager? = null,
+  val widgetFactory: WidgetFactory = DefaultWidgetFactory(),
 ) {
   private val _state: MutableStateFlow<QuestionnaireState>
   val state: StateFlow<QuestionnaireState>

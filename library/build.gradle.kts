@@ -15,7 +15,7 @@ plugins {
 
 group = "io.github.ellykits.litequest"
 
-version = "1.0.0-alpha03"
+version = "1.0.0-alpha04"
 
 kotlin {
   androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }

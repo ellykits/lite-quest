@@ -18,26 +18,27 @@ package io.litequest.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class ItemType {
-  STRING,
-  TEXT,
-  BOOLEAN,
-  DECIMAL,
-  INTEGER,
-  DATE,
-  TIME,
-  DATETIME,
-  CHOICE,
-  OPEN_CHOICE,
-  DISPLAY,
-  GROUP,
-  QUANTITY,
-  BARCODE,
-  IMAGE,
-  ATTACHMENT,
-  LAYOUT_ROW,
-  LAYOUT_COLUMN,
-  LAYOUT_BOX;
-
-  companion object {}
+@JvmInline
+value class ItemType(val value: String) {
+  companion object {
+    val STRING = ItemType("STRING")
+    val TEXT = ItemType("TEXT")
+    val BOOLEAN = ItemType("BOOLEAN")
+    val DECIMAL = ItemType("DECIMAL")
+    val INTEGER = ItemType("INTEGER")
+    val DATE = ItemType("DATE")
+    val TIME = ItemType("TIME")
+    val DATETIME = ItemType("DATETIME")
+    val CHOICE = ItemType("CHOICE")
+    val OPEN_CHOICE = ItemType("OPEN_CHOICE")
+    val DISPLAY = ItemType("DISPLAY")
+    val GROUP = ItemType("GROUP")
+    val QUANTITY = ItemType("QUANTITY")
+    val BARCODE = ItemType("BARCODE")
+    val IMAGE = ItemType("IMAGE")
+    val ATTACHMENT = ItemType("ATTACHMENT")
+    val LAYOUT_ROW = ItemType("LAYOUT_ROW")
+    val LAYOUT_COLUMN = ItemType("LAYOUT_COLUMN")
+    val LAYOUT_BOX = ItemType("LAYOUT_BOX")
+  }
 }

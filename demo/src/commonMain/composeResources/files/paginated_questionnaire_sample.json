@@ -286,6 +286,26 @@
           ]
         }
       ]
+    },
+    {
+      "id": "page6",
+      "title": "Feedback",
+      "description": "Rate your experience.",
+      "order": 6,
+      "items": [
+        {
+          "linkId": "ratingSection",
+          "text": "App Experience",
+          "type": "GROUP",
+          "items": [
+            {
+              "linkId": "appRating",
+              "text": "How would you rate your experience with this form?",
+              "type": "RATING"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

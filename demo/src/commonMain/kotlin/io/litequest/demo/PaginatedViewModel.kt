@@ -17,11 +17,14 @@ package io.litequest.demo
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.litequest.demo.components.RatingWidget
 import io.litequest.engine.LiteQuestEvaluator
+import io.litequest.model.ItemType
 import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.state.QuestionnaireManager
 import io.litequest.ui.pagination.PaginatedQuestionnaire
+import io.litequest.ui.widget.DefaultWidgetFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -66,7 +69,9 @@ class PaginatedViewModel : ViewModel() {
       .flatMapLatest { paginated ->
         val q = convertToQuestionnaire(paginated)
         val evaluator = LiteQuestEvaluator(q)
-        MutableStateFlow(QuestionnaireManager(q, evaluator))
+        val factory =
+          DefaultWidgetFactory().apply { registerWidget(ItemType("RATING")) { RatingWidget(it) } }
+        MutableStateFlow(QuestionnaireManager(q, evaluator, widgetFactory = factory))
       }
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
