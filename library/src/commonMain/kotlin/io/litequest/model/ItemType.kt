@@ -18,7 +18,6 @@ package io.litequest.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-@JvmInline
 value class ItemType(val value: String) {
   companion object {
     val STRING = ItemType("STRING")
