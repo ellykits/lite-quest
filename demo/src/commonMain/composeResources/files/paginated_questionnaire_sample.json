@@ -34,7 +34,9 @@
       "order": 2,
       "visibleIf": {
         "==": [
-          {"var": "consentSection.consentGiven"},
+          {
+            "var": "consentSection.consentGiven"
+          },
           true
         ]
       },
@@ -71,7 +73,9 @@
       "order": 3,
       "visibleIf": {
         "==": [
-          {"var": "consentSection.consentGiven"},
+          {
+            "var": "consentSection.consentGiven"
+          },
           true
         ]
       },
@@ -99,9 +103,13 @@
           "readOnly": true,
           "calculatedExpression": {
             "cat": [
-              {"var": "firstName"},
+              {
+                "var": "firstName"
+              },
               " ",
-              {"var": "lastName"}
+              {
+                "var": "lastName"
+              }
             ]
           }
         },
@@ -172,7 +180,9 @@
       "order": 4,
       "visibleIf": {
         "==": [
-          {"var": "consentSection.consentGiven"},
+          {
+            "var": "consentSection.consentGiven"
+          },
           true
         ]
       },
@@ -200,11 +210,17 @@
           "readOnly": true,
           "calculatedExpression": {
             "/": [
-              {"var": "weight"},
+              {
+                "var": "weight"
+              },
               {
                 "*": [
-                  {"var": "height"},
-                  {"var": "height"}
+                  {
+                    "var": "height"
+                  },
+                  {
+                    "var": "height"
+                  }
                 ]
               }
             ]
@@ -252,7 +268,9 @@
       "order": 5,
       "visibleIf": {
         "==": [
-          {"var": "consentSection.consentGiven"},
+          {
+            "var": "consentSection.consentGiven"
+          },
           true
         ]
       },

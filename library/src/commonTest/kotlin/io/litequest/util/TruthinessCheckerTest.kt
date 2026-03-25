@@ -101,6 +101,7 @@ class TruthinessCheckerTest {
   @Test
   fun testObjectsAreTruthy() {
     assertTrue(TruthinessChecker.isTruthy(Any()))
-    assertTrue(TruthinessChecker.isTruthy(mapOf<String, Any>()))
+    assertFalse(TruthinessChecker.isTruthy(mapOf<String, Any>()), "Empty map should be falsy")
+    assertTrue(TruthinessChecker.isTruthy(mapOf("a" to 1)), "Non-empty map should be truthy")
   }
 }

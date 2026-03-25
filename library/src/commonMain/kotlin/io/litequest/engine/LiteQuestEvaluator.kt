@@ -62,6 +62,14 @@ class LiteQuestEvaluator(
     return visibilityEngine.getVisibleItems(questionnaire.items, dataContext)
   }
 
+  fun getVisiblePaths(
+    response: QuestionnaireResponse,
+    calculatedValues: Map<String, Any?>? = null,
+  ): Set<String> {
+    val dataContext = buildDataContext(response, calculatedValues)
+    return visibilityEngine.getVisiblePaths(questionnaire.items, response.items, dataContext)
+  }
+
   fun calculateValues(
     response: QuestionnaireResponse,
     dataContext: MutableMap<String, Any?>? = null,

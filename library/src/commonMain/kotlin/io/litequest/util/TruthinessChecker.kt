@@ -27,6 +27,7 @@ object TruthinessChecker {
       is Number -> value.toDouble() != 0.0
       is String -> value.isNotEmpty()
       is Collection<*> -> value.isNotEmpty()
+      is Map<*, *> -> value.isNotEmpty()
       is JsonNull -> false
       is JsonElement -> isTruthyJson(value)
       else -> true

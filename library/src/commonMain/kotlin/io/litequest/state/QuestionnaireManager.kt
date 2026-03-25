@@ -130,7 +130,14 @@ class QuestionnaireManager(
       return response
     }
 
-    val itemsWithCalculated = mergeCalculatedValuesIntoItems(response.items, calculatedValues)
+    val visibleLinkIds = collectVisibleLinkIds(_state.value.visibleItems)
+    val visibleCalculatedValues = calculatedValues.filterKeys { visibleLinkIds.contains(it) }
+    if (visibleCalculatedValues.isEmpty()) {
+      return response
+    }
+
+    val itemsWithCalculated =
+      mergeCalculatedValuesIntoItems(response.items, visibleCalculatedValues)
     return response.copy(items = itemsWithCalculated)
   }
 
@@ -156,8 +163,8 @@ class QuestionnaireManager(
 
     // 2. Determine visibility using these values
     val visibleItems = evaluator.getVisibleItems(response, calculatedValues)
-    val visibleLinkIds = collectVisibleLinkIds(visibleItems)
-    val cleanedResponse = clearHiddenItemAnswers(response, visibleLinkIds)
+    val visiblePaths = evaluator.getVisiblePaths(response, calculatedValues)
+    val cleanedResponse = clearHiddenItemAnswers(response, visiblePaths)
 
     // 3. Validate using these values
     val validationErrors = evaluator.validateResponse(cleanedResponse, items, calculatedValues)
@@ -186,31 +193,51 @@ class QuestionnaireManager(
 
   private fun clearHiddenItemAnswers(
     response: QuestionnaireResponse,
-    visibleLinkIds: Set<String>,
+    visiblePaths: Set<String>,
   ): QuestionnaireResponse {
-    val cleanedItems = clearAnswersFromHidden(response.items, visibleLinkIds)
+    val cleanedItems = clearAnswersFromHidden(response.items, visiblePaths)
     return response.copy(items = cleanedItems)
   }
 
   private fun clearAnswersFromHidden(
     items: List<ResponseItem>,
-    visibleLinkIds: Set<String>,
+    visiblePaths: Set<String>,
+    pathPrefix: String = "",
   ): List<ResponseItem> {
     return items.map { item ->
+      val currentPath = if (pathPrefix.isEmpty()) item.linkId else "$pathPrefix.${item.linkId}"
+
       val cleanedAnswers =
-        item.answers.map { answer ->
-          if (answer.items.isNotEmpty()) {
-            answer.copy(items = clearAnswersFromHidden(answer.items, visibleLinkIds))
+        item.answers.mapIndexed { index, answer ->
+          val indexedPath =
+            if (item.answers.size > 1 || isInRepeatingGroup(pathPrefix)) {
+              "$currentPath.$index"
+            } else {
+              currentPath
+            }
+          // Strictly speaking, if it's a repeating group, we should always use the index.
+          // But our getVisiblePaths uses indexes for ALL repetitions.
+          val actualPath = if (answer.items.isNotEmpty()) "$currentPath.$index" else currentPath
+
+          if (visiblePaths.contains(actualPath) || visiblePaths.contains(currentPath)) {
+            if (answer.items.isNotEmpty()) {
+              answer.copy(items = clearAnswersFromHidden(answer.items, visiblePaths, actualPath))
+            } else {
+              answer
+            }
           } else {
-            answer
+            answer.copy(value = null, items = emptyList())
           }
         }
 
-      if (visibleLinkIds.contains(item.linkId)) {
+      if (
+        visiblePaths.contains(currentPath) ||
+          item.answers.any { visiblePaths.contains("$currentPath.${item.answers.indexOf(it)}") }
+      ) {
         if (item.items.isNotEmpty()) {
           item.copy(
             answers = cleanedAnswers,
-            items = clearAnswersFromHidden(item.items, visibleLinkIds),
+            items = clearAnswersFromHidden(item.items, visiblePaths, currentPath),
           )
         } else {
           item.copy(answers = cleanedAnswers)
@@ -220,13 +247,17 @@ class QuestionnaireManager(
           answers = emptyList(),
           items =
             if (item.items.isNotEmpty()) {
-              clearAnswersFromHidden(item.items, visibleLinkIds)
+              clearAnswersFromHidden(item.items, visiblePaths, currentPath)
             } else {
               emptyList()
             },
         )
       }
     }
+  }
+
+  private fun isInRepeatingGroup(path: String): Boolean {
+    return path.contains(Regex("\\.\\d+"))
   }
 
   private fun findItemInQuestionnaire(items: List<Item>, linkId: String): Item? {

@@ -19,8 +19,10 @@ import io.litequest.util.asObject
 import io.litequest.util.toAnyOrNull
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 open class JsonLogicEvaluator {
   fun evaluate(logic: JsonElement, data: Map<String, Any?>): Any? {
@@ -312,13 +314,36 @@ open class JsonLogicEvaluator {
     return value != null
   }
 
-  private fun isTruthy(value: Any?): Boolean {
+  fun isTruthy(value: Any?): Boolean {
     return when (value) {
       null -> false
       is Boolean -> value
       is Number -> value.toDouble() != 0.0
       is String -> value.isNotEmpty()
+      is Collection<*> -> value.isNotEmpty()
+      is Map<*, *> -> value.isNotEmpty()
+      is JsonElement -> isTruthyJson(value)
       else -> true
+    }
+  }
+
+  private fun isTruthyJson(element: JsonElement): Boolean {
+    return when (element) {
+      is JsonPrimitive -> {
+        element.contentOrNull?.lowercase()?.let {
+          if (it == "true") return true
+          if (it == "false") return false
+        }
+        val doubleVal = element.contentOrNull?.toDoubleOrNull()
+        if (doubleVal != null) {
+          doubleVal != 0.0
+        } else {
+          element.contentOrNull?.isNotEmpty() ?: false
+        }
+      }
+      is JsonArray -> element.isNotEmpty()
+      is JsonObject -> element.isNotEmpty()
+      is JsonNull -> false
     }
   }
 }
