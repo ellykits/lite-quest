@@ -127,6 +127,7 @@
               "linkId": "dob",
               "text": "Date of Birth",
               "type": "DATE",
+              "required": true,
               "extension": {
                 "displayFormat": "dd/MM/yyyy",
                 "outputFormat": "yyyy-MM-dd"

@@ -123,7 +123,8 @@
             {
               "linkId": "dob",
               "text": "Date of Birth",
-              "type": "DATE"
+              "type": "DATE",
+              "required": true
             },
             {
               "linkId": "gender",

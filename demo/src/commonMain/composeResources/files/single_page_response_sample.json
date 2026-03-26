@@ -29,7 +29,11 @@
         {
           "linkId": "householdId",
           "text": "Scan Household Card",
-          "answers": []
+          "answers": [
+            {
+              "value": "HH-QR-2026-0001"
+            }
+          ]
         },
         {
           "linkId": "structureDetails",

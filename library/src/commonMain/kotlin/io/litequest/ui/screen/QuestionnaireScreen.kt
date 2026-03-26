@@ -232,7 +232,7 @@ private fun SingleQuestionnaireScreen(
             if (onModeChange != null) {
               ReviewEditButton(mode = mode, onModeChange = onModeChange, showReview = showReview)
             }
-            if (showCloseButton && onDismiss != null) {
+            if (showCloseButton && onDismiss != null && mode != QuestionnaireMode.Summary) {
               IconButton(
                 onClick = {
                   if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
@@ -410,7 +410,7 @@ private fun PaginatedQuestionnaireScreen(
             if (onModeChange != null) {
               ReviewEditButton(mode = mode, onModeChange = onModeChange, showReview = showReview)
             }
-            if (showCloseButton && onDismiss != null) {
+            if (showCloseButton && onDismiss != null && mode != QuestionnaireMode.Summary) {
               IconButton(
                 onClick = {
                   if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {

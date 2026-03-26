@@ -38,6 +38,7 @@ import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -82,6 +83,12 @@ class DatePickerWidget(override val item: Item) : ItemWidget {
       label = item.text,
       value = displayValue,
       onClick = { showDialog = true },
+      onClear =
+        if (!item.readOnly) {
+          { onValueChange(JsonNull, item.text) }
+        } else {
+          null
+        },
       errorMessage = errorMessage,
     )
 
