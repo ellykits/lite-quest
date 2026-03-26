@@ -16,6 +16,10 @@
 package io.litequest.ui.widget.choice
 
 import io.litequest.model.AnswerOption
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 
 internal fun handleExclusiveToggle(
   code: String,
@@ -40,4 +44,16 @@ internal fun handleExclusiveToggle(
 internal fun getDisplayText(selectedCodes: Set<String>, answerOptions: List<AnswerOption>): String {
   val selectedOptions = answerOptions.filter { selectedCodes.contains(it.code) }
   return selectedOptions.joinToString(", ") { it.display }
+}
+
+internal fun toggleSingleChoice(currentCode: String?, clickedCode: String): String? {
+  return if (currentCode == clickedCode) null else clickedCode
+}
+
+internal fun multiSelectionToJson(selectedCodes: Set<String>): JsonElement {
+  return if (selectedCodes.isEmpty()) {
+    JsonNull
+  } else {
+    JsonArray(selectedCodes.map { JsonPrimitive(it) })
+  }
 }

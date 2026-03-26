@@ -80,7 +80,7 @@ class PaginatedViewModel : ViewModel() {
 
   fun submit() {
     manager.value?.let { manager ->
-      val response = manager.getResponse()
+      val response = manager.submit()
       val jsonString = json.encodeToString<QuestionnaireResponse>(response)
       _submittedJson.value = jsonString
     }

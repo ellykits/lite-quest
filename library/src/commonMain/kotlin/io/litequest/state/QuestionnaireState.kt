@@ -26,8 +26,11 @@ data class QuestionnaireState(
   val visibleItems: List<Item>,
   val validationErrors: List<ValidationError>,
   val calculatedValues: Map<String, Any?>,
-  val isValid: Boolean,
+  val isSubmitted: Boolean = false,
 ) {
+  val isValid: Boolean
+    get() = validationErrors.isEmpty()
+
   companion object {
     fun initial(
       questionnaire: Questionnaire,
@@ -40,7 +43,7 @@ data class QuestionnaireState(
         visibleItems = items,
         validationErrors = emptyList(),
         calculatedValues = emptyMap(),
-        isValid = false,
+        isSubmitted = false,
       )
     }
   }

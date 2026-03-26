@@ -25,7 +25,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +37,6 @@ import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
 /** Multi-select checkbox widget for OPEN_CHOICE items. */
@@ -77,12 +78,18 @@ class OpenChoiceWidget(override val item: Item) : ItemWidget {
         onToggle = { code ->
           val updatedCodes = handleExclusiveToggle(code, selectedCodes, item.answerOptions)
           val textInput = getDisplayText(updatedCodes, item.answerOptions)
-          onValueChange(
-            JsonArray(updatedCodes.map { JsonPrimitive(it) }),
-            textInput.ifEmpty { null },
-          )
+          onValueChange(multiSelectionToJson(updatedCodes), textInput.ifEmpty { null })
         },
       )
+
+      if (selectedCodes.isNotEmpty()) {
+        TextButton(
+          onClick = { onValueChange(multiSelectionToJson(emptySet()), null) },
+          modifier = Modifier.padding(top = 4.dp),
+        ) {
+          Text("Clear selection")
+        }
+      }
 
       if (errorMessage != null) {
         Text(
@@ -103,7 +110,7 @@ class OpenChoiceWidget(override val item: Item) : ItemWidget {
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       options.forEach { option ->
-        androidx.compose.runtime.key(option.code) {
+        key(option.code) {
           val isChecked = selectedCodes.contains(option.code)
           val bgColor =
             if (isChecked) {

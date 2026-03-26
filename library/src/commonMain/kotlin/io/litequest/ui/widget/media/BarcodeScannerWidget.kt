@@ -29,6 +29,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ScanBarcode
 import io.litequest.model.Item
@@ -68,13 +71,11 @@ class BarcodeScannerWidget(override val item: Item) : ItemWidget {
       )
 
       if (showScanner && isBarcodeScannerSupported) {
-        androidx.compose.ui.window.Dialog(
+        Dialog(
           onDismissRequest = { showScanner = false },
-          properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+          properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
-          Box(
-            modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black)
-          ) {
+          Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
             BarcodeScannerView(
               modifier = Modifier.fillMaxSize(),
               onResult = { result ->

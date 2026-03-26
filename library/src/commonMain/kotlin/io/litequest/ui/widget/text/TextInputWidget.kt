@@ -26,8 +26,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.litequest.model.Item
+import io.litequest.model.ItemType
 import io.litequest.ui.widget.ItemWidget
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -39,12 +42,16 @@ class TextInputWidget(override val item: Item) : ItemWidget {
     errorMessage: String?,
   ) {
     var localText by remember(value) { mutableStateOf(value?.jsonPrimitive?.content ?: "") }
-    val isMultiline = item.type == io.litequest.model.ItemType.TEXT
+    val isMultiline = item.type == ItemType.TEXT
 
     LaunchedEffect(localText) {
       if (localText != (value?.jsonPrimitive?.content ?: "")) {
-        kotlinx.coroutines.delay(300)
-        onValueChange(JsonPrimitive(localText), item.text)
+        delay(300)
+        if (localText.isBlank()) {
+          onValueChange(JsonNull, item.text)
+        } else {
+          onValueChange(JsonPrimitive(localText), item.text)
+        }
       }
     }
 

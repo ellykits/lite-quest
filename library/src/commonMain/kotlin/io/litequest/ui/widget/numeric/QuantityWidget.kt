@@ -29,9 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 class QuantityWidget(override val item: Item) : ItemWidget {
@@ -62,16 +65,15 @@ class QuantityWidget(override val item: Item) : ItemWidget {
             else -> ""
           }
       ) {
-        kotlinx.coroutines.delay(300)
+        delay(300)
         if (localText.isEmpty()) {
-          onValueChange(JsonPrimitive(""), item.text)
+          onValueChange(JsonNull, item.text)
         } else {
           localText.toDoubleOrNull()?.let {
-            val json =
-              kotlinx.serialization.json.buildJsonObject {
-                put("value", JsonPrimitive(it))
-                put("unit", JsonPrimitive(unit))
-              }
+            val json = buildJsonObject {
+              put("value", JsonPrimitive(it))
+              put("unit", JsonPrimitive(unit))
+            }
             onValueChange(json, item.text)
           }
         }

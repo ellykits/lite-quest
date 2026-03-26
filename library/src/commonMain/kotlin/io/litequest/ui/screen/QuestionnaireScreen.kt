@@ -25,15 +25,19 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -67,7 +71,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import io.litequest.model.Questionnaire
+import io.litequest.model.ValidationError
 import io.litequest.state.QuestionnaireManager
 import io.litequest.state.QuestionnaireState
 import io.litequest.ui.QuestionnaireMode
@@ -76,6 +83,7 @@ import io.litequest.ui.pagination.PageNavigator
 import io.litequest.ui.pagination.PaginatedQuestionnaire
 import io.litequest.ui.renderer.FormRenderer
 import io.litequest.ui.summary.SummaryPage
+import io.litequest.ui.validation.ValidationPresentation
 import io.litequest.ui.widget.WidgetFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,6 +98,7 @@ fun QuestionnaireScreen(
   onDismiss: (() -> Unit)? = null,
   showCloseButton: Boolean = false,
   showDismissDialogOnClose: Boolean = true,
+  showValidationDialogOnSubmit: Boolean = true,
   showReview: Boolean = true,
   customActions: (@Composable () -> Unit)? = null,
 ) {
@@ -106,6 +115,7 @@ fun QuestionnaireScreen(
         onDismiss = onDismiss,
         showCloseButton = showCloseButton,
         showDismissDialogOnClose = showDismissDialogOnClose,
+        showValidationDialogOnSubmit = showValidationDialogOnSubmit,
         showReview = showReview,
         customActions = customActions,
         modifier = modifier,
@@ -121,6 +131,7 @@ fun QuestionnaireScreen(
         onDismiss = onDismiss,
         showCloseButton = showCloseButton,
         showDismissDialogOnClose = showDismissDialogOnClose,
+        showValidationDialogOnSubmit = showValidationDialogOnSubmit,
         showReview = showReview,
         customActions = customActions,
         modifier = modifier,
@@ -144,12 +155,17 @@ private fun SingleQuestionnaireScreen(
   onDismiss: (() -> Unit)?,
   showCloseButton: Boolean,
   showDismissDialogOnClose: Boolean,
+  showValidationDialogOnSubmit: Boolean,
   showReview: Boolean,
   customActions: (@Composable () -> Unit)?,
   modifier: Modifier,
   widgetFactory: WidgetFactory,
 ) {
   var showDismissDialog by remember { mutableStateOf(false) }
+  var showValidationDialog by remember { mutableStateOf(false) }
+  var showAllValidationErrors by remember { mutableStateOf(false) }
+  var submitAttemptedFieldIds by remember { mutableStateOf(emptySet<String>()) }
+  var touchedFieldIds by remember { mutableStateOf(emptySet<String>()) }
 
   if (showDismissDialog && onDismiss != null && mode == QuestionnaireMode.Edit) {
     DismissDialog(
@@ -160,6 +176,35 @@ private fun SingleQuestionnaireScreen(
       },
       onCancel = { showDismissDialog = false },
     )
+  }
+  if (showValidationDialog) {
+    ValidationErrorsDialog(
+      errors = state.validationErrors,
+      onGoBack = { showValidationDialog = false },
+      onSubmitAnyway = {
+        showValidationDialog = false
+        onSubmit()
+      },
+    )
+  }
+
+  val submitAction = {
+    submitAttemptedFieldIds = state.validationErrors.map { it.linkId }.toSet()
+    if (
+      ValidationPresentation.shouldShowSubmitValidationDialog(
+        showValidationDialogOnSubmit = showValidationDialogOnSubmit,
+        mode = mode,
+        errors = state.validationErrors,
+      )
+    ) {
+      showAllValidationErrors = true
+      showValidationDialog = true
+    } else {
+      if (mode != QuestionnaireMode.ReadOnly) {
+        showAllValidationErrors = true
+      }
+      onSubmit()
+    }
   }
 
   Scaffold(
@@ -187,7 +232,7 @@ private fun SingleQuestionnaireScreen(
             if (onModeChange != null) {
               ReviewEditButton(mode = mode, onModeChange = onModeChange, showReview = showReview)
             }
-            if (showCloseButton && onDismiss != null) {
+            if (showCloseButton && onDismiss != null && mode != QuestionnaireMode.Summary) {
               IconButton(
                 onClick = {
                   if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
@@ -225,7 +270,7 @@ private fun SingleQuestionnaireScreen(
             customActions()
           }
         } else {
-          DefaultFormActions(onSubmit = onSubmit, mode = mode)
+          DefaultFormActions(onSubmit = submitAction, mode = mode)
         }
       }
     },
@@ -238,10 +283,17 @@ private fun SingleQuestionnaireScreen(
           FormRenderer(
             items = state.visibleItems,
             state = state,
-            onAnswerChange = { linkId, value, text -> manager.updateAnswer(linkId, value, text) },
+            onAnswerChange = { linkId, value, text ->
+              touchedFieldIds = touchedFieldIds + linkId
+              manager.updateAnswer(linkId, value, text)
+            },
+            touchedFieldIds = touchedFieldIds,
+            showAllValidationErrors = showAllValidationErrors,
+            submitAttemptedFieldIds = submitAttemptedFieldIds,
             onRepetitionAdd = { linkId -> manager.addRepetition(linkId) },
             onRepetitionRemove = { linkId, index -> manager.removeRepetition(linkId, index) },
             onRepetitionFieldChange = { linkId, index, fieldLinkId, value, text ->
+              touchedFieldIds = touchedFieldIds + fieldLinkId
               manager.updateInRepetition(linkId, index, fieldLinkId, value, text)
             },
             widgetFactory = widgetFactory,
@@ -253,7 +305,7 @@ private fun SingleQuestionnaireScreen(
         SummaryPage(
           state = state,
           paginatedQuestionnaire = null,
-          onSubmit = onSubmit,
+          onSubmit = submitAction,
           modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp),
         )
       }
@@ -271,6 +323,7 @@ private fun PaginatedQuestionnaireScreen(
   onDismiss: (() -> Unit)?,
   showCloseButton: Boolean,
   showDismissDialogOnClose: Boolean,
+  showValidationDialogOnSubmit: Boolean,
   showReview: Boolean,
   customActions: (@Composable () -> Unit)?,
   modifier: Modifier,
@@ -283,6 +336,10 @@ private fun PaginatedQuestionnaireScreen(
   val totalPages = paginatedQuestionnaire.pages.size
   val pageIndex by pageNavigator.currentPageIndex.collectAsState()
   var showDismissDialog by remember { mutableStateOf(false) }
+  var showValidationDialog by remember { mutableStateOf(false) }
+  var showAllValidationErrors by remember { mutableStateOf(false) }
+  var submitAttemptedFieldIds by remember { mutableStateOf(emptySet<String>()) }
+  var touchedFieldIds by remember { mutableStateOf(emptySet<String>()) }
 
   if (showDismissDialog && onDismiss != null && mode != QuestionnaireMode.Summary) {
     DismissDialog(
@@ -293,6 +350,35 @@ private fun PaginatedQuestionnaireScreen(
       },
       onCancel = { showDismissDialog = false },
     )
+  }
+  if (showValidationDialog) {
+    ValidationErrorsDialog(
+      errors = state.validationErrors,
+      onGoBack = { showValidationDialog = false },
+      onSubmitAnyway = {
+        showValidationDialog = false
+        onSubmit()
+      },
+    )
+  }
+
+  val submitAction = {
+    submitAttemptedFieldIds = state.validationErrors.map { it.linkId }.toSet()
+    if (
+      ValidationPresentation.shouldShowSubmitValidationDialog(
+        showValidationDialogOnSubmit = showValidationDialogOnSubmit,
+        mode = mode,
+        errors = state.validationErrors,
+      )
+    ) {
+      showAllValidationErrors = true
+      showValidationDialog = true
+    } else {
+      if (mode != QuestionnaireMode.ReadOnly) {
+        showAllValidationErrors = true
+      }
+      onSubmit()
+    }
   }
 
   Scaffold(
@@ -324,7 +410,7 @@ private fun PaginatedQuestionnaireScreen(
             if (onModeChange != null) {
               ReviewEditButton(mode = mode, onModeChange = onModeChange, showReview = showReview)
             }
-            if (showCloseButton && onDismiss != null) {
+            if (showCloseButton && onDismiss != null && mode != QuestionnaireMode.Summary) {
               IconButton(
                 onClick = {
                   if (showDismissDialogOnClose && mode == QuestionnaireMode.Edit) {
@@ -363,7 +449,7 @@ private fun PaginatedQuestionnaireScreen(
           }
         } else {
           DefaultFormActions(
-            onSubmit = onSubmit,
+            onSubmit = submitAction,
             mode = mode,
             pageNavigator = pageNavigator,
             totalPages = totalPages,
@@ -396,6 +482,10 @@ private fun PaginatedQuestionnaireScreen(
             currentPage = pageIndex,
             state = state,
             manager = manager,
+            touchedFieldIds = touchedFieldIds,
+            onFieldTouched = { linkId -> touchedFieldIds = touchedFieldIds + linkId },
+            showAllValidationErrors = showAllValidationErrors,
+            submitAttemptedFieldIds = submitAttemptedFieldIds,
             modifier = Modifier.fillMaxSize(),
             widgetFactory = widgetFactory,
           )
@@ -406,7 +496,7 @@ private fun PaginatedQuestionnaireScreen(
         SummaryPage(
           state = state,
           paginatedQuestionnaire = paginatedQuestionnaire,
-          onSubmit = onSubmit,
+          onSubmit = submitAction,
           modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp),
         )
       }
@@ -420,6 +510,10 @@ private fun PagerView(
   currentPage: Int,
   state: QuestionnaireState,
   manager: QuestionnaireManager,
+  touchedFieldIds: Set<String>,
+  onFieldTouched: (String) -> Unit,
+  showAllValidationErrors: Boolean,
+  submitAttemptedFieldIds: Set<String>,
   modifier: Modifier = Modifier,
   widgetFactory: WidgetFactory,
 ) {
@@ -444,10 +538,17 @@ private fun PagerView(
     FormRenderer(
       items = visiblePageItems,
       state = state,
-      onAnswerChange = { linkId, value, text -> manager.updateAnswer(linkId, value, text) },
+      onAnswerChange = { linkId, value, text ->
+        onFieldTouched(linkId)
+        manager.updateAnswer(linkId, value, text)
+      },
+      touchedFieldIds = touchedFieldIds,
+      showAllValidationErrors = showAllValidationErrors,
+      submitAttemptedFieldIds = submitAttemptedFieldIds,
       onRepetitionAdd = { linkId -> manager.addRepetition(linkId) },
       onRepetitionRemove = { linkId, index -> manager.removeRepetition(linkId, index) },
       onRepetitionFieldChange = { linkId, index, fieldLinkId, value, text ->
+        onFieldTouched(fieldLinkId)
         manager.updateInRepetition(linkId, index, fieldLinkId, value, text)
       },
       widgetFactory = widgetFactory,
@@ -601,4 +702,72 @@ private fun DismissDialog(
     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     shape = MaterialTheme.shapes.extraLarge,
   )
+}
+
+@Composable
+private fun ValidationErrorsDialog(
+  errors: List<ValidationError>,
+  onGoBack: () -> Unit,
+  onSubmitAnyway: () -> Unit,
+) {
+  val scrollState = rememberScrollState()
+
+  Dialog(
+    onDismissRequest = onGoBack,
+    properties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    Surface(
+      modifier = Modifier.fillMaxWidth(0.92f).widthIn(max = 760.dp),
+      shape = MaterialTheme.shapes.extraLarge,
+      tonalElevation = 6.dp,
+      color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    ) {
+      Column(
+        modifier = Modifier.padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
+        Text("Validation issues", style = MaterialTheme.typography.headlineSmall)
+        Text(
+          "Please review the following fields before submitting:",
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        Column(
+          modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).verticalScroll(scrollState),
+          verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+          errors.forEachIndexed { index, error ->
+            val questionText = error.itemText?.takeIf { it.isNotBlank() } ?: error.linkId
+            val reason = ValidationPresentation.formatValidationReason(error)
+            Surface(
+              modifier = Modifier.fillMaxWidth(),
+              shape = MaterialTheme.shapes.medium,
+              color = MaterialTheme.colorScheme.surfaceContainer,
+            ) {
+              Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+              ) {
+                Text("${index + 1}. $questionText", style = MaterialTheme.typography.titleSmall)
+                Text(
+                  reason,
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.error,
+                )
+              }
+            }
+          }
+        }
+
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+        ) {
+          TextButton(onClick = onGoBack) { Text("Go back") }
+          Button(onClick = onSubmitAnyway) { Text("Submit anyway") }
+        }
+      }
+    }
+  }
 }

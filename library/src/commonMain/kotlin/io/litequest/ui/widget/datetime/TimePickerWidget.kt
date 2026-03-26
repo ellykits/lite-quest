@@ -38,6 +38,7 @@ import io.litequest.ui.widget.ItemWidget
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -68,6 +69,12 @@ class TimePickerWidget(override val item: Item) : ItemWidget {
       label = item.text,
       value = timeString,
       onClick = { showDialog = true },
+      onClear =
+        if (!item.readOnly) {
+          { onValueChange(JsonNull, item.text) }
+        } else {
+          null
+        },
       icon = Lucide.Clock,
       errorMessage = errorMessage,
     )

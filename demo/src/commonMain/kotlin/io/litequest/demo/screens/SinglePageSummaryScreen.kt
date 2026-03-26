@@ -59,5 +59,11 @@ fun SinglePageSummaryScreen(
     }
   }
 
-  SubmissionHandler(submittedJson = submittedJson, onDismiss = { viewModel.resetForm() })
+  SubmissionHandler(
+    submittedJson = submittedJson,
+    onDismiss = {
+      viewModel.resetForm()
+      onBack()
+    },
+  )
 }

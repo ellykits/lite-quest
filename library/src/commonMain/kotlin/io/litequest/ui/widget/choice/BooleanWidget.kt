@@ -16,11 +16,13 @@
 package io.litequest.ui.widget.choice
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,19 +45,28 @@ class BooleanWidget(override val item: Item) : ItemWidget {
   ) {
     val checked = remember(value) { value?.jsonPrimitive?.content == "true" }
 
-    Row(
-      modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Text(text = item.text, modifier = Modifier.weight(1f))
-      Spacer(modifier = Modifier.width(8.dp))
-      Switch(
-        checked = checked,
-        onCheckedChange = { newValue ->
-          onValueChange(JsonPrimitive(newValue), if (newValue) "Yes" else "No")
-        },
-      )
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(text = item.text, modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.width(8.dp))
+        Switch(
+          checked = checked,
+          onCheckedChange = { newValue ->
+            onValueChange(JsonPrimitive(newValue), if (newValue) "Yes" else "No")
+          },
+        )
+      }
+      if (errorMessage != null) {
+        Text(
+          text = errorMessage,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.error,
+        )
+      }
     }
   }
 }

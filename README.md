@@ -3,7 +3,7 @@
 ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.ellykits.litequest/litequest-library)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-purple.svg)](https://kotlinlang.org)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-green.svg)](https://kotlinlang.org/docs/multiplatform.html)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Desktop-green.svg)](https://kotlinlang.org/docs/multiplatform.html)
 
 A lightweight, FHIR-inspired questionnaire library for Kotlin Multiplatform applications.
 
@@ -18,7 +18,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.ellykits.litequest:litequest-library:1.0.0-alpha04")
+                implementation("io.github.ellykits.litequest:litequest-library:1.0.0-alpha05")
             }
         }
     }
@@ -59,11 +59,10 @@ fun MyQuestionnaireScreen() {
 
     QuestionnaireScreen(
         type = QuestionnaireType.Single(questionnaire),
-        state = state,
+        manager = manager,
         mode = mode,
-        onAnswerChange = { linkId, value, text -> manager.updateAnswer(linkId, value, text) },
-        onSubmit = { println("Form submitted: ${state.response}") },
         onModeChange = { newMode -> mode = newMode },
+        onSubmit = { println("Form submitted: ${state.response}") },
         onDismiss = { /* Handle dismiss */ }
     )
 }
@@ -91,10 +90,20 @@ val paginatedQuestionnaire = PaginatedQuestionnaire(
     )
 )
 
+val flatQuestionnaire = Questionnaire(
+    id = paginatedQuestionnaire.id,
+    title = paginatedQuestionnaire.title,
+    version = paginatedQuestionnaire.version,
+    items = paginatedQuestionnaire.pages.flatMap { it.items }
+)
+
+val evaluator = LiteQuestEvaluator(flatQuestionnaire)
+val manager = QuestionnaireManager(flatQuestionnaire, evaluator)
+
 QuestionnaireScreen(
     type = QuestionnaireType.Paginated(paginatedQuestionnaire),
-    state = state,
-    onAnswerChange = { linkId, value, text -> manager.updateAnswer(linkId, value, text) },
+    manager = manager,
+    onModeChange = null,
     onSubmit = { /* Handle submission */ },
     onDismiss = { /* Handle dismiss */ }
 )
@@ -102,17 +111,40 @@ QuestionnaireScreen(
 
 ### JsonLogic Expressions
 
-Visibility conditions (skip logic):
+Visibility conditions (skip logic) support both simple and nested paths:
 
 ```kotlin
+// Simple row-scoped visibility
 Item(
     linkId = "symptoms",
     text = "Please describe your symptoms",
     visibleIf = buildJsonObject {
-        put("==", buildJsonObject {
-            put("0", buildJsonObject { put("var", "has-symptoms") })
-            put("1", true)
+        put("==", buildJsonArray {
+            add(buildJsonObject { put("var", "has-symptoms") })
+            add(JsonPrimitive(true))
         })
+    }
+)
+
+// Qualified paths inside repeating groups
+// If inside 'receivedItems', it correctly resolves to the current row
+Item(
+    linkId = "itemId",
+    text = "Item ID",
+    visibleIf = buildJsonObject {
+        put("==", buildJsonArray {
+            add(buildJsonObject { put("var", "receivedItems.method") })
+            add(JsonPrimitive("SEARCH"))
+        })
+    }
+)
+
+// Logic with negation
+Item(
+    linkId = "additionalNote",
+    text = "Additional Note",
+    visibleIf = buildJsonObject {
+        put("!", buildJsonObject { put("var", "skipNotes") })
     }
 )
 ```
@@ -201,23 +233,16 @@ QuestionnaireScreen(
 )
 ```
 
-### Custom JsonLogic Evaluator
+### JsonLogic Extensibility
+
+`LiteQuestEvaluator` accepts a `JsonLogicEvaluator` instance:
 
 ```kotlin
-class CustomJsonLogicEvaluator : JsonLogicEvaluator() {
-    override fun evaluate(logic: JsonElement, data: Map<String, Any?>): Any? {
-        // Add custom operators
-        if (logic is JsonObject && logic.containsKey("custom_contains")) {
-            // Your custom logic here
-        }
-        return super.evaluate(logic, data)
-    }
-}
-
-val customEvaluator = CustomJsonLogicEvaluator()
-val evaluator = LiteQuestEvaluator(questionnaire, customEvaluator)
+val evaluator = LiteQuestEvaluator(questionnaire, JsonLogicEvaluator())
 val manager = QuestionnaireManager(questionnaire, evaluator)
 ```
+
+Custom operators are not yet pluggable through overrides. If you need extra operators, extend `JsonLogicEvaluator.kt` in the library source.
 
 ## Architecture
 
@@ -245,26 +270,26 @@ LiteQuest uses a **custom Kotlin Multiplatform implementation of [JsonLogic](htt
 
 **Supported Operators:**
 
-| Operator | Category    | Description                                                         | Example                                                         |
-|----------|-------------|---------------------------------------------------------------------|-----------------------------------------------------------------|
-| `var`    | Variables   | Access form field values with dot notation support for nested paths | `{"var": "firstName"}` or `{"var": "patient.demographics.age"}` |
-| `==`     | Comparison  | Equality check - returns true if values are equal                   | `{"==": [{"var": "age"}, 18]}`                                  |
-| `!=`     | Comparison  | Inequality check - returns true if values are not equal             | `{"!=": [{"var": "status"}, "active"]}`                         |
-| `>`      | Comparison  | Greater than - numeric comparison                                   | `{">": [{"var": "age"}, 18]}`                                   |
-| `>=`     | Comparison  | Greater than or equal to - numeric comparison                       | `{">=": [{"var": "score"}, 70]}`                                |
-| `<`      | Comparison  | Less than - numeric comparison                                      | `{"<": [{"var": "temperature"}, 38]}`                           |
-| `<=`     | Comparison  | Less than or equal to - numeric comparison                          | `{"<=": [{"var": "bmi"}, 25]}`                                  |
-| `and`    | Logic       | Logical AND - returns true if all conditions are true               | `{"and": [{"var": "isAdult"}, {"var": "hasConsent"}]}`          |
-| `or`     | Logic       | Logical OR - returns true if any condition is true                  | `{"or": [{"var": "isEmergency"}, {"var": "hasPermission"}]}`    |
-| `!`      | Logic       | Logical NOT - negates a boolean value                               | `{"!": {"var": "isDisabled"}}`                                  |
-| `!!`     | Logic       | Truthy check - returns true if value exists and is truthy           | `{"!!": {"var": "optionalField"}}`                              |
-| `if`     | Conditional | Ternary conditional - if/then/else logic                            | `{"if": [{"var": "isAdult"}, "adult", "minor"]}`                |
-| `+`      | Arithmetic  | Addition - sums numeric values                                      | `{"+": [{"var": "score1"}, {"var": "score2"}]}`                 |
-| `-`      | Arithmetic  | Subtraction - subtracts second value from first                     | `{"-": [{"var": "total"}, {"var": "discount"}]}`                |
-| `*`      | Arithmetic  | Multiplication - multiplies numeric values                          | `{"*": [{"var": "price"}, {"var": "quantity"}]}`                |
-| `/`      | Arithmetic  | Division - divides first value by second                            | `{"/": [{"var": "weight"}, {"var": "height"}]}`                 |
-| `%`      | Arithmetic  | Modulo - returns remainder of division                              | `{"%": [{"var": "number"}, 2]}`                                 |
-| `cat`    | String      | Concatenation - joins strings together                              | `{"cat": [{"var": "firstName"}, " ", {"var": "lastName"}]}`     |
+| Operator | Category    | Description                                                                                                                                                  | Example                                                      |
+| -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `var`    | Variables   | Access form field values with support for **Row-Scoped Evaluation** (e.g. `receivedItems.method` resolves to current row) and dot notation for global paths. | `{"var": "firstName"}` or `{"var": "receivedItems.method"}`  |
+| `==`     | Comparison  | Equality check - returns true if values are equal                                                                                                            | `{"==": [{"var": "age"}, 18]}`                               |
+| `!=`     | Comparison  | Inequality check - returns true if values are not equal                                                                                                      | `{"!=": [{"var": "status"}, "active"]}`                      |
+| `>`      | Comparison  | Greater than - numeric comparison                                                                                                                            | `{">": [{"var": "age"}, 18]}`                                |
+| `>=`     | Comparison  | Greater than or equal to - numeric comparison                                                                                                                | `{">=": [{"var": "score"}, 70]}`                             |
+| `<`      | Comparison  | Less than - numeric comparison                                                                                                                               | `{"<": [{"var": "temperature"}, 38]}`                        |
+| `<=`     | Comparison  | Less than or equal to - numeric comparison                                                                                                                   | `{"<=": [{"var": "bmi"}, 25]}`                               |
+| `and`    | Logic       | Logical AND - returns true if all conditions are true                                                                                                        | `{"and": [{"var": "isAdult"}, {"var": "hasConsent"}]}`       |
+| `or`     | Logic       | Logical OR - returns true if any condition is true                                                                                                           | `{"or": [{"var": "isEmergency"}, {"var": "hasPermission"}]}` |
+| `!`      | Logic       | Logical NOT - negates a value.                                                                                                                               | `{"!": {"var": "isDisabled"}}`                               |
+| `!!`     | Logic       | Truthy check - returns true if value exists and is truthy                                                                                                    | `{"!!": {"var": "optionalField"}}`                           |
+| `if`     | Conditional | Ternary conditional - if/then/else logic                                                                                                                     | `{"if": [{"var": "isAdult"}, "adult", "minor"]}`             |
+| `+`      | Arithmetic  | Addition - sums numeric values                                                                                                                               | `{"+": [{"var": "score1"}, {"var": "score2"}]}`              |
+| `-`      | Arithmetic  | Subtraction - subtracts second value from first                                                                                                              | `{"-": [{"var": "total"}, {"var": "discount"}]}`             |
+| `*`      | Arithmetic  | Multiplication - multiplies numeric values                                                                                                                   | `{"*": [{"var": "price"}, {"var": "quantity"}]}`             |
+| `/`      | Arithmetic  | Division - divides first value by second                                                                                                                     | `{"/": [{"var": "weight"}, {"var": "height"}]}`              |
+| `%`      | Arithmetic  | Modulo - returns remainder of division                                                                                                                       | `{"%": [{"var": "number"}, 2]}`                              |
+| `cat`    | String      | Concatenation - joins strings together                                                                                                                       | `{"cat": [{"var": "firstName"}, " ", {"var": "lastName"}]}`  |
 
 **Implementation:**
 
@@ -284,7 +309,7 @@ Answer Change → Recalculate Values → Update Visibility → Revalidate → Em
 ### Widget Types
 
 | ItemType      | Widget               | Data Type    | Features                                        |
-|---------------|----------------------|--------------|-------------------------------------------------|
+| ------------- | -------------------- | ------------ | ----------------------------------------------- |
 | STRING        | TextInputWidget      | String       | Single-line text input                          |
 | TEXT          | TextInputWidget      | String       | Multi-line text area                            |
 | BOOLEAN       | BooleanWidget        | Boolean      | Switch/Checkbox toggle                          |
@@ -298,7 +323,6 @@ Answer Change → Recalculate Values → Update Visibility → Revalidate → Em
 | DISPLAY       | DisplayWidget        | N/A          | Static text or instructional content            |
 | GROUP         | GroupWidget          | N/A          | Logical grouping of items, supports repetition  |
 | QUANTITY      | QuantityWidget       | Object       | Numeric value with associated unit              |
-| REFERENCE     | ReferenceWidget      | Object       | Searchable reference to external entities       |
 | BARCODE       | BarcodeScannerWidget | String       | Integrated camera barcode scanning (KScan)      |
 | IMAGE         | ImageSelectorWidget  | File/Base64  | Image capture or gallery selection (FileKit)    |
 | ATTACHMENT    | AttachmentWidget     | File/Base64  | Generic file attachment support (FileKit)       |
@@ -322,7 +346,7 @@ Answer Change → Recalculate Values → Update Visibility → Revalidate → Em
 
 ### iOS
 
-Open `iosApp/iosApp.xcodeproj` in Xcode and run.
+Open `iosDemo/iosDemo.xcodeproj` in Xcode and run.
 
 ## Development
 
@@ -350,11 +374,11 @@ Open `iosApp/iosApp.xcodeproj` in Xcode and run.
 ## Platform Support
 
 | Platform   | Status          | Min Version          |
-|------------|-----------------|----------------------|
-| Android    | ✅ Stable        | API 24 (Android 7.0) |
-| iOS        | ✅ Stable        | iOS 14.0+            |
-| Desktop    | ✅ Stable        | JVM 11+              |
-| Web (WASM) | ⚠️ Experimental | Modern browsers      |
+| ---------- | --------------- | -------------------- |
+| Android    | ✅ Stable       | API 24 (Android 7.0) |
+| iOS        | ✅ Stable       | iOS 14.0+            |
+| Desktop    | ✅ Stable       | JVM 11+              |
+| Web (WASM) | ⚠️ Disabled in current build | N/A      |
 
 ## Documentation
 

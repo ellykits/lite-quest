@@ -30,6 +30,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -97,7 +98,7 @@ class GroupWidget(override val item: Item) : ItemWidget {
             verticalArrangement = Arrangement.spacedBy(12.dp),
           ) {
             childWidgets.forEach { (childItem, childWidget) ->
-              androidx.compose.runtime.key(childItem.linkId) {
+              key(childItem.linkId) {
                 childWidget.Render(
                   value = context.values[childItem.linkId],
                   onValueChange = { newValue, text ->

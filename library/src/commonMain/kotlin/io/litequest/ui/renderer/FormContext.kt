@@ -25,6 +25,7 @@ data class FormContext(
   val values: Map<String, JsonElement?>,
   val onValueChange: (String, JsonElement, String?) -> Unit,
   val errorMessages: Map<String, String>,
+  val pathErrorMessages: Map<String, String> = emptyMap(),
   val widgetFactory: WidgetFactory,
   val repetitions: Map<String, List<Map<String, JsonElement?>>> = emptyMap(),
   val onRepetitionAdd: ((String) -> Unit)? = null,
