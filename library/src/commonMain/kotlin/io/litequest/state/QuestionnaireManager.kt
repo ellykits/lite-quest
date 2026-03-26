@@ -58,13 +58,14 @@ class QuestionnaireManager(
           visibleItems = initialVisibleItems,
           validationErrors = initialValidationErrors,
           calculatedValues = initialCalculatedValues,
-          isValid = initialValidationErrors.isEmpty(),
+          isSubmitted = false,
         )
       )
     state = _state.asStateFlow()
   }
 
   fun updateAnswer(linkId: String, value: JsonElement, text: String? = null) {
+    ensureEditable()
     val currentResponse = _state.value.response
     val updatedItems = updateResponseItem(currentResponse.items, linkId, value, text)
     val updatedResponse = currentResponse.copy(items = updatedItems)
@@ -73,6 +74,7 @@ class QuestionnaireManager(
   }
 
   fun addRepetition(groupLinkId: String) {
+    ensureEditable()
     val currentResponse = _state.value.response
     val groupItem = findItemInQuestionnaire(questionnaire.items, groupLinkId) ?: return
     if (!groupItem.repeats) return
@@ -83,6 +85,7 @@ class QuestionnaireManager(
   }
 
   fun removeRepetition(groupLinkId: String, repetitionIndex: Int) {
+    ensureEditable()
     val currentResponse = _state.value.response
     val updatedItems =
       removeRepetitionFromResponseItem(currentResponse.items, groupLinkId, repetitionIndex)
@@ -97,6 +100,7 @@ class QuestionnaireManager(
     value: JsonElement,
     text: String? = null,
   ) {
+    ensureEditable()
     val currentResponse = _state.value.response
     val updatedItems =
       updateFieldInRepetition(
@@ -116,7 +120,7 @@ class QuestionnaireManager(
   }
 
   fun isValid(): Boolean {
-    return validate().isEmpty()
+    return _state.value.isValid
   }
 
   fun extractData(): JsonElement? {
@@ -141,7 +145,29 @@ class QuestionnaireManager(
     return response.copy(items = itemsWithCalculated)
   }
 
+  fun submit(force: Boolean = true): QuestionnaireResponse {
+    val currentState = _state.value
+    if (currentState.isSubmitted) {
+      return currentState.response
+    }
+
+    val validationErrors = evaluator.validateResponse(currentState.response)
+    if (validationErrors.isNotEmpty() && !force) {
+      throw IllegalStateException("Cannot submit invalid questionnaire response.")
+    }
+
+    val finalizedResponse = getResponse()
+    _state.value =
+      currentState.copy(
+        response = finalizedResponse,
+        validationErrors = validationErrors,
+        isSubmitted = true,
+      )
+    return finalizedResponse
+  }
+
   fun setResponse(response: QuestionnaireResponse) {
+    ensureEditable()
     recomputeState(response)
   }
 
@@ -176,8 +202,14 @@ class QuestionnaireManager(
         visibleItems = visibleItems,
         validationErrors = validationErrors,
         calculatedValues = calculatedValues,
-        isValid = validationErrors.isEmpty(),
+        isSubmitted = _state.value.isSubmitted,
       )
+  }
+
+  private fun ensureEditable() {
+    check(!_state.value.isSubmitted) {
+      "Questionnaire has already been submitted and is locked for edits."
+    }
   }
 
   private fun collectVisibleLinkIds(items: List<Item>): Set<String> {

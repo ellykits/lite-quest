@@ -59,5 +59,11 @@ fun PaginatedSummaryScreen(
     }
   }
 
-  SubmissionHandler(submittedJson = submittedJson, onDismiss = { viewModel.resetForm() })
+  SubmissionHandler(
+    submittedJson = submittedJson,
+    onDismiss = {
+      viewModel.resetForm()
+      onBack()
+    },
+  )
 }

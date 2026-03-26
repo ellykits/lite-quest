@@ -23,6 +23,7 @@ import io.litequest.model.ResponseItem
 import io.litequest.state.QuestionnaireState
 import io.litequest.ui.layout.LayoutStrategy
 import io.litequest.ui.layout.VerticalLayoutStrategy
+import io.litequest.ui.validation.ValidationPresentation
 import io.litequest.ui.widget.ItemWidget
 import io.litequest.ui.widget.WidgetFactory
 import kotlinx.serialization.json.JsonElement
@@ -33,6 +34,9 @@ fun FormRenderer(
   items: List<Item>,
   state: QuestionnaireState,
   onAnswerChange: (String, JsonElement, String?) -> Unit,
+  touchedFieldIds: Set<String> = emptySet(),
+  showAllValidationErrors: Boolean = false,
+  submitAttemptedFieldIds: Set<String> = emptySet(),
   onRepetitionAdd: ((String) -> Unit)? = null,
   onRepetitionRemove: ((String, Int) -> Unit)? = null,
   onRepetitionFieldChange: ((String, Int, String, JsonElement, String?) -> Unit)? = null,
@@ -42,13 +46,7 @@ fun FormRenderer(
   // Widget instances are cached by linkId and survive across visibleItems list changes.
   // GroupWidget, ChoiceWidget etc. hold Item definition (never changes) so reuse is safe.
   val widgetCache = remember(widgetFactory) { mutableMapOf<String, ItemWidget>() }
-  val widgets =
-    remember(items, widgetCache) {
-      items.associateBy(
-        keySelector = { it.linkId },
-        valueTransform = { widgetCache.getOrPut(it.linkId) { widgetFactory.createWidget(it) } },
-      )
-    }
+  items.forEach { item -> widgetCache.getOrPut(item.linkId) { widgetFactory.createWidget(item) } }
 
   // Flatten response items + calculated values into a single values map.
   // Wrapped in remember so this only runs on actual state changes, not during scroll.
@@ -72,9 +70,27 @@ fun FormRenderer(
 
   val values = processedState.first
   val repetitions = processedState.second
+  val visibleValidationErrors =
+    remember(
+      state.validationErrors,
+      touchedFieldIds,
+      showAllValidationErrors,
+      submitAttemptedFieldIds,
+    ) {
+      ValidationPresentation.visibleValidationErrors(
+        errors = state.validationErrors,
+        touchedFieldIds = touchedFieldIds,
+        showAllValidationErrors = showAllValidationErrors,
+        submitAttemptedFieldIds = submitAttemptedFieldIds,
+      )
+    }
   val errorMessages =
-    remember(state.validationErrors) {
-      state.validationErrors.associate { it.linkId to it.message }
+    remember(visibleValidationErrors) {
+      visibleValidationErrors.associate { it.linkId to it.message }
+    }
+  val pathErrorMessages =
+    remember(visibleValidationErrors) {
+      visibleValidationErrors.associate { it.path.joinToString(".") to it.message }
     }
 
   val formContext =
@@ -92,6 +108,7 @@ fun FormRenderer(
         values = values,
         onValueChange = onAnswerChange,
         errorMessages = errorMessages,
+        pathErrorMessages = pathErrorMessages,
         widgetFactory = widgetFactory,
         repetitions = repetitions,
         onRepetitionAdd = onRepetitionAdd,
@@ -103,7 +120,7 @@ fun FormRenderer(
   CompositionLocalProvider(LocalFormContext provides formContext) {
     layoutStrategy.Layout(
       items = items,
-      widgets = widgets,
+      widgets = widgetCache,
       onValueChange = onAnswerChange,
       values = values,
       errorMessages = errorMessages,

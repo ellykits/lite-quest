@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -39,7 +40,9 @@ object VerticalLayoutStrategy : LayoutStrategy {
     values: Map<String, JsonElement?>,
     errorMessages: Map<String, String>,
   ) {
+    val listState = rememberLazyListState()
     LazyColumn(
+      state = listState,
       modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars),
       contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
       verticalArrangement = Arrangement.spacedBy(20.dp),

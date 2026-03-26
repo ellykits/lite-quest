@@ -144,7 +144,9 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
                         text,
                       )
                     },
-                    errorMessage = null,
+                    errorMessage =
+                      context.pathErrorMessages["${item.linkId}.$index.${childItem.linkId}"]
+                        ?: context.errorMessages[childItem.linkId],
                   )
                 }
               }

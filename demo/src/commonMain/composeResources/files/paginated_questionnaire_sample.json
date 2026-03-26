@@ -23,7 +23,8 @@
         {
           "linkId": "consentGiven",
           "text": "Do you consent to the registration?",
-          "type": "BOOLEAN"
+          "type": "BOOLEAN",
+          "required": true
         }
       ]
     },
@@ -49,17 +50,20 @@
         {
           "linkId": "structureDetails",
           "text": "Building Characteristics",
-          "type": "TEXT"
+          "type": "TEXT",
+          "required": true
         },
         {
           "linkId": "roomsCount",
           "text": "Number of Sleeping Rooms",
-          "type": "INTEGER"
+          "type": "INTEGER",
+          "required": true
         },
         {
           "linkId": "waterUsage",
           "text": "Monthly Water Usage",
           "type": "QUANTITY",
+          "required": true,
           "extension": {
             "unit": "L"
           }
@@ -87,12 +91,14 @@
             {
               "linkId": "firstName",
               "text": "First Name",
-              "type": "STRING"
+              "type": "STRING",
+              "required": true
             },
             {
               "linkId": "lastName",
               "text": "Last Name",
-              "type": "STRING"
+              "type": "STRING",
+              "required": true
             }
           ]
         },
@@ -130,6 +136,7 @@
               "linkId": "gender",
               "text": "Gender",
               "type": "CHOICE",
+              "required": true,
               "answerOptions": [
                 {
                   "code": "m",
@@ -151,6 +158,7 @@
           "linkId": "occupation",
           "text": "Primary Occupation",
           "type": "OPEN_CHOICE",
+          "required": true,
           "answerOptions": [
             {
               "code": "farmer",
@@ -194,12 +202,14 @@
             {
               "linkId": "height",
               "text": "Height (m)",
-              "type": "DECIMAL"
+              "type": "DECIMAL",
+              "required": true
             },
             {
               "linkId": "weight",
               "text": "Weight (kg)",
-              "type": "DECIMAL"
+              "type": "DECIMAL",
+              "required": true
             }
           ]
         },
@@ -234,6 +244,7 @@
               "linkId": "visitTime",
               "text": "Registration Date & Time",
               "type": "DATETIME",
+              "required": true,
               "extension": {
                 "displayFormat": "dd/MM/yyyy HH:mm",
                 "outputFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
@@ -243,6 +254,7 @@
               "linkId": "followUpTime",
               "text": "Preferred Follow-up",
               "type": "TIME",
+              "required": true,
               "extension": {
                 "use24Hour": true
               }
@@ -284,12 +296,14 @@
             {
               "linkId": "memberName",
               "text": "Member Name",
-              "type": "STRING"
+              "type": "STRING",
+              "required": true
             },
             {
               "linkId": "relationship",
               "text": "Relationship",
               "type": "CHOICE",
+              "required": true,
               "answerOptions": [
                 {
                   "code": "spouse",
@@ -319,7 +333,8 @@
             {
               "linkId": "appRating",
               "text": "How would you rate your experience with this form?",
-              "type": "RATING"
+              "type": "RATING",
+              "required": true
             }
           ]
         }

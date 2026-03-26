@@ -77,7 +77,7 @@ class SinglePageViewModel : ViewModel() {
 
   fun submit() {
     manager.value?.let { manager ->
-      val response = manager.getResponse()
+      val response = manager.submit()
       _submittedJson.value = json.encodeToString<QuestionnaireResponse>(response)
     }
   }

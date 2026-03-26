@@ -22,6 +22,7 @@ import io.litequest.model.ItemType
 import io.litequest.model.Questionnaire
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonPrimitive
@@ -497,5 +498,50 @@ class QuestionnaireManagerTest {
       manager.state.value.calculatedValues["calcC"] as? Double,
       "calcC should update TRANSITIVELY on subsequent changes",
     )
+  }
+
+  @Test
+  fun testSubmitLocksQuestionnaireAgainstFurtherEdits() {
+    val questionnaire =
+      Questionnaire(
+        id = "lock-test",
+        title = "Lock Test",
+        version = "1.0",
+        items = listOf(Item(linkId = "name", type = ItemType.STRING, text = "Name")),
+      )
+
+    val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
+    manager.updateAnswer("name", JsonPrimitive("John"))
+
+    val submitted = manager.submit()
+    assertTrue(manager.state.value.isSubmitted)
+    assertEquals("John", submitted.items.first().answers.first().value?.toString()?.trim('"'))
+
+    assertFailsWith<IllegalStateException> { manager.updateAnswer("name", JsonPrimitive("Jane")) }
+    assertFailsWith<IllegalStateException> { manager.setResponse(submitted) }
+  }
+
+  @Test
+  fun testSubmitWithForceFalseRejectsInvalidResponse() {
+    val questionnaire =
+      Questionnaire(
+        id = "submit-validation-test",
+        title = "Submit Validation Test",
+        version = "1.0",
+        items =
+          listOf(
+            Item(
+              linkId = "consentGiven",
+              type = ItemType.BOOLEAN,
+              text = "Consent",
+              required = true,
+            )
+          ),
+      )
+
+    val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
+
+    assertFailsWith<IllegalStateException> { manager.submit(force = false) }
+    assertFalse(manager.state.value.isSubmitted)
   }
 }

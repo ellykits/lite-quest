@@ -17,6 +17,7 @@ package io.litequest.demo.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -76,8 +78,7 @@ fun SubmissionResultDialog(
         Surface(
           modifier =
             Modifier.fillMaxSize().clickable(
-              interactionSource =
-                remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+              interactionSource = remember { MutableInteractionSource() },
               indication = null,
             ) {},
           shape = RectangleShape,
@@ -126,7 +127,7 @@ fun SubmissionResultDialog(
             Spacer(modifier = Modifier.height(24.dp))
 
             Column(
-              modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+              modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
               verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
               HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
@@ -152,6 +153,12 @@ fun SubmissionResultDialog(
                   lineHeight = MaterialTheme.typography.bodySmall.lineHeight,
                 )
               }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+              Button(onClick = onDismissRequest) { Text(text = "Close") }
             }
           }
         }

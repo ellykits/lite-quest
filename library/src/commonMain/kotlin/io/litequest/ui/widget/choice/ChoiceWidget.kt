@@ -34,6 +34,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,8 +44,8 @@ import androidx.compose.ui.unit.dp
 import io.litequest.model.AnswerOption
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -71,7 +72,7 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
           onToggle = { code ->
             val updated = handleExclusiveToggle(code, selectedCodes, item.answerOptions)
             val text = getDisplayText(updated, item.answerOptions)
-            onValueChange(JsonArray(updated.map { JsonPrimitive(it) }), text.ifEmpty { null })
+            onValueChange(multiSelectionToJson(updated), text.ifEmpty { null })
           },
         )
         ErrorLabel(errorMessage)
@@ -87,8 +88,12 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
             options = item.answerOptions,
             selectedCode = selectedCode,
             onSelected = { code ->
-              val text = item.answerOptions.find { it.code == code }?.display
-              onValueChange(JsonPrimitive(code), text)
+              val toggledCode = toggleSingleChoice(selectedCode.ifEmpty { null }, code)
+              val text =
+                toggledCode?.let { chosen ->
+                  item.answerOptions.find { it.code == chosen }?.display
+                }
+              onValueChange(toggledCode?.let { JsonPrimitive(it) } ?: JsonNull, text)
             },
             enabled = !item.readOnly,
           )
@@ -97,8 +102,12 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
             options = item.answerOptions,
             selectedCode = selectedCode,
             onSelected = { code ->
-              val text = item.answerOptions.find { it.code == code }?.display
-              onValueChange(JsonPrimitive(code), text)
+              if (code == null) {
+                onValueChange(JsonNull, null)
+              } else {
+                val text = item.answerOptions.find { it.code == code }?.display
+                onValueChange(JsonPrimitive(code), text)
+              }
             },
             isError = errorMessage != null,
             readOnly = item.readOnly,
@@ -140,7 +149,7 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       options.forEach { option ->
-        androidx.compose.runtime.key(option.code) {
+        key(option.code) {
           val isChecked = selectedCodes.contains(option.code)
           val bgColor =
             if (isChecked) {
@@ -184,7 +193,7 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       options.forEach { option ->
-        androidx.compose.runtime.key(option.code) {
+        key(option.code) {
           val isSelected = option.code == selectedCode
           val bgColor =
             if (isSelected) {
@@ -228,7 +237,7 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
   private fun DropdownChoice(
     options: List<AnswerOption>,
     selectedCode: String,
-    onSelected: (String) -> Unit,
+    onSelected: (String?) -> Unit,
     isError: Boolean,
     readOnly: Boolean = false,
   ) {
@@ -256,6 +265,13 @@ class ChoiceWidget(override val item: Item) : ItemWidget {
       )
 
       ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenuItem(
+          text = { Text("No selection") },
+          onClick = {
+            onSelected(null)
+            expanded = false
+          },
+        )
         options.forEach { option ->
           DropdownMenuItem(
             text = { Text(option.display) },

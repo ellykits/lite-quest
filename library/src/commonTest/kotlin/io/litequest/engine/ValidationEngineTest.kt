@@ -23,6 +23,7 @@ import io.litequest.model.ValidationRule
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -56,6 +57,53 @@ class ValidationEngineTest {
     val errors = engine.validateResponse(items, responseItems, dataContext)
 
     assertTrue(errors.isEmpty())
+  }
+
+  @Test
+  fun testRequiredFieldBlankStringIsTreatedAsMissing() {
+    val items =
+      listOf(Item(linkId = "name", type = ItemType.STRING, text = "Name", required = true))
+    val responseItems =
+      listOf(ResponseItem(linkId = "name", answers = listOf(Answer(JsonPrimitive("")))))
+    val dataContext = mapOf("name" to "")
+
+    val errors = engine.validateResponse(items, responseItems, dataContext)
+
+    assertEquals(1, errors.size)
+    assertEquals("name", errors.first().linkId)
+    assertTrue(errors.first().message.contains("required"))
+  }
+
+  @Test
+  fun testRequiredFieldWhitespaceStringIsTreatedAsMissing() {
+    val items =
+      listOf(Item(linkId = "name", type = ItemType.STRING, text = "Name", required = true))
+    val responseItems =
+      listOf(ResponseItem(linkId = "name", answers = listOf(Answer(JsonPrimitive("   ")))))
+    val dataContext = mapOf("name" to "   ")
+
+    val errors = engine.validateResponse(items, responseItems, dataContext)
+
+    assertEquals(1, errors.size)
+    assertEquals("name", errors.first().linkId)
+    assertTrue(errors.first().message.contains("required"))
+  }
+
+  @Test
+  fun testRequiredFieldEmptyArrayIsTreatedAsMissing() {
+    val items =
+      listOf(
+        Item(linkId = "choices", type = ItemType.OPEN_CHOICE, text = "Choices", required = true)
+      )
+    val responseItems =
+      listOf(ResponseItem(linkId = "choices", answers = listOf(Answer(JsonArray(emptyList())))))
+    val dataContext = mapOf("choices" to emptyList<String>())
+
+    val errors = engine.validateResponse(items, responseItems, dataContext)
+
+    assertEquals(1, errors.size)
+    assertEquals("choices", errors.first().linkId)
+    assertTrue(errors.first().message.contains("required"))
   }
 
   @Test

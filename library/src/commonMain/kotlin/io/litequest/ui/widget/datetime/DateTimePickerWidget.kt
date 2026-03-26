@@ -15,6 +15,7 @@
 */
 package io.litequest.ui.widget.datetime
 
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -119,7 +120,7 @@ class DateTimePickerWidget(override val item: Item) : ItemWidget {
     }
 
     if (showTimePicker) {
-      androidx.compose.material3.AlertDialog(
+      AlertDialog(
         onDismissRequest = { showTimePicker = false },
         confirmButton = {
           TextButton(

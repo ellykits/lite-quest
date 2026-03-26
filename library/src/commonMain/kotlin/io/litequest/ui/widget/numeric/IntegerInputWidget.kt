@@ -29,7 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import io.litequest.model.Item
 import io.litequest.ui.widget.ItemWidget
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -44,9 +46,9 @@ class IntegerInputWidget(override val item: Item) : ItemWidget {
 
     LaunchedEffect(localText) {
       if (localText != (value?.jsonPrimitive?.content ?: "")) {
-        kotlinx.coroutines.delay(300)
+        delay(300)
         if (localText.isEmpty()) {
-          onValueChange(JsonPrimitive(""), item.text)
+          onValueChange(JsonNull, item.text)
         } else {
           localText.toIntOrNull()?.let { onValueChange(JsonPrimitive(it), item.text) }
         }

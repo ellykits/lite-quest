@@ -78,7 +78,13 @@ fun App() {
             )
           }
         }
-        SubmissionHandler(submittedJson = submittedJson, onDismiss = { viewModel.resetForm() })
+        SubmissionHandler(
+          submittedJson = submittedJson,
+          onDismiss = {
+            viewModel.resetForm()
+            navController.popBackStack()
+          },
+        )
       }
 
       composable<Route.SinglePageSummary> {
@@ -112,7 +118,13 @@ fun App() {
             )
           }
         }
-        SubmissionHandler(submittedJson = submittedJson, onDismiss = { viewModel.resetForm() })
+        SubmissionHandler(
+          submittedJson = submittedJson,
+          onDismiss = {
+            viewModel.resetForm()
+            navController.popBackStack()
+          },
+        )
       }
 
       composable<Route.PaginatedSummary> {

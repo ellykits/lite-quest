@@ -20,6 +20,10 @@ import io.litequest.model.ItemType
 import io.litequest.model.ResponseItem
 import io.litequest.model.ValidationError
 import io.litequest.util.TruthinessChecker
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
   private val visibilityEngine = VisibilityEngine(evaluator)
@@ -64,7 +68,7 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
       val responseItem = responseItems[item.linkId]
       val currentPath = path + item.linkId
 
-      if (item.required && (responseItem == null || responseItem.answers.isEmpty())) {
+      if (item.required && !hasMeaningfulAnswer(responseItem)) {
         errors.add(
           ValidationError(
             linkId = item.linkId,
@@ -132,5 +136,19 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
     return type == ItemType.LAYOUT_ROW ||
       type == ItemType.LAYOUT_COLUMN ||
       type == ItemType.LAYOUT_BOX
+  }
+
+  private fun hasMeaningfulAnswer(responseItem: ResponseItem?): Boolean {
+    val answer = responseItem?.answers?.firstOrNull() ?: return false
+    return isMeaningfulValue(answer.value)
+  }
+
+  private fun isMeaningfulValue(value: JsonElement?): Boolean {
+    return when (value) {
+      null -> false
+      is JsonPrimitive -> !value.content.isBlank()
+      is JsonArray -> value.isNotEmpty()
+      is JsonObject -> value.isNotEmpty()
+    }
   }
 }
