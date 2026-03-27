@@ -25,8 +25,22 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
 open class JsonLogicEvaluator {
-  fun evaluate(logic: JsonElement, data: Map<String, Any?>): Any? {
+
+  open fun evaluate(logic: JsonElement, data: Map<String, Any?>): Any? {
     return evaluateNode(logic, data)
+  }
+
+  open fun isTruthy(value: Any?): Boolean {
+    return when (value) {
+      null -> false
+      is Boolean -> value
+      is Number -> value.toDouble() != 0.0
+      is String -> value.isNotEmpty()
+      is Collection<*> -> value.isNotEmpty()
+      is Map<*, *> -> value.isNotEmpty()
+      is JsonElement -> isTruthyJson(value)
+      else -> true
+    }
   }
 
   private fun evaluateNode(node: JsonElement, data: Map<String, Any?>): Any? {
@@ -69,27 +83,97 @@ open class JsonLogicEvaluator {
   }
 
   private fun evaluateVar(args: JsonElement, data: Map<String, Any?>): Any? {
-    val varName = (args as? JsonPrimitive)?.content ?: return null
-    return resolveNestedPath(varName, data)
+    return when (args) {
+      is JsonPrimitive -> resolveNestedPath(args.content, data)
+      is JsonArray -> {
+        val varName = (args.getOrNull(0) as? JsonPrimitive)?.content ?: return null
+        val resolvedValue = resolveNestedPath(varName, data)
+        if (resolvedValue != null) {
+          resolvedValue
+        } else {
+          args.getOrNull(1)?.toAnyOrNull()
+        }
+      }
+      else -> null
+    }
   }
 
   private fun resolveNestedPath(path: String, data: Map<String, Any?>): Any? {
-    if (!path.contains('.')) {
+    if (path.isEmpty()) {
+      return null
+    }
+
+    // Exact-key lookup first so keys containing dots still work.
+    if (data.containsKey(path)) {
       return data[path]
     }
 
     var current: Any? = data
-    for (part in path.split('.')) {
+    for (part in parsePath(path)) {
       current =
         when (current) {
           is Map<*, *> -> {
-            @Suppress("UNCHECKED_CAST") (current as? Map<String, Any?>)?.get(part)
+            current[part]
+          }
+          is List<*> -> {
+            val index = part.toIntOrNull() ?: return null
+            current.getOrNull(index)
           }
           else -> return null
         }
     }
 
     return current
+  }
+
+  private fun parsePath(path: String): List<String> {
+    val segments = mutableListOf<String>()
+    val token = StringBuilder()
+    var index = 0
+
+    fun flushToken() {
+      if (token.isNotEmpty()) {
+        segments.add(token.toString())
+        token.clear()
+      }
+    }
+
+    while (index < path.length) {
+      when (val char = path[index]) {
+        '.' -> {
+          flushToken()
+          index += 1
+        }
+        '[' -> {
+          flushToken()
+          val closingIndex = path.indexOf(']', startIndex = index + 1)
+          if (closingIndex == -1) {
+            token.append(path.substring(index))
+            index = path.length
+          } else {
+            var bracketToken = path.substring(index + 1, closingIndex).trim()
+            if (
+              bracketToken.length >= 2 &&
+                ((bracketToken.startsWith('"') && bracketToken.endsWith('"')) ||
+                  (bracketToken.startsWith('\'') && bracketToken.endsWith('\'')))
+            ) {
+              bracketToken = bracketToken.substring(1, bracketToken.length - 1)
+            }
+            if (bracketToken.isNotEmpty()) {
+              segments.add(bracketToken)
+            }
+            index = closingIndex + 1
+          }
+        }
+        else -> {
+          token.append(char)
+          index += 1
+        }
+      }
+    }
+
+    flushToken()
+    return segments
   }
 
   private fun evaluateEquals(args: JsonElement, data: Map<String, Any?>): Boolean {
@@ -312,19 +396,6 @@ open class JsonLogicEvaluator {
     val varName = (args as? JsonPrimitive)?.content ?: return false
     val value = resolveNestedPath(varName, data)
     return value != null
-  }
-
-  fun isTruthy(value: Any?): Boolean {
-    return when (value) {
-      null -> false
-      is Boolean -> value
-      is Number -> value.toDouble() != 0.0
-      is String -> value.isNotEmpty()
-      is Collection<*> -> value.isNotEmpty()
-      is Map<*, *> -> value.isNotEmpty()
-      is JsonElement -> isTruthyJson(value)
-      else -> true
-    }
   }
 
   private fun isTruthyJson(element: JsonElement): Boolean {

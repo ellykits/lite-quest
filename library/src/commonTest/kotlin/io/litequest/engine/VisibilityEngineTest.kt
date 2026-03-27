@@ -15,11 +15,14 @@
 */
 package io.litequest.engine
 
+import io.litequest.model.Answer
 import io.litequest.model.Item
 import io.litequest.model.ItemType
+import io.litequest.model.ResponseItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -301,5 +304,133 @@ class VisibilityEngineTest {
       )
 
     assertTrue(engine.isVisible(item, dataContext))
+  }
+
+  @Test
+  fun testBracketAndIndexedNotationResolution() {
+    val dataContext =
+      mapOf(
+        "households" to listOf(mapOf("members" to listOf(mapOf("age" to 21), mapOf("age" to 18))))
+      )
+
+    val varExpression = buildJsonObject { put("var", "households[0].members.1.age") }
+    val value = evaluator.evaluate(varExpression, dataContext)
+
+    assertEquals(18, value)
+  }
+
+  @Test
+  fun testDeepNestedLayoutVisibilityInheritance() {
+    val items =
+      listOf(
+        Item(
+          linkId = "rootBox",
+          type = ItemType.LAYOUT_BOX,
+          visibleIf = buildJsonObject { put("var", "showRoot") },
+          items =
+            listOf(
+              Item(
+                linkId = "innerRow",
+                type = ItemType.LAYOUT_ROW,
+                items =
+                  listOf(
+                    Item(
+                      linkId = "section",
+                      type = ItemType.GROUP,
+                      items = listOf(Item(linkId = "target", type = ItemType.STRING)),
+                    )
+                  ),
+              )
+            ),
+        )
+      )
+
+    val hidden = engine.getVisibleItems(items, mapOf("showRoot" to false))
+    assertTrue(
+      hidden.isEmpty(),
+      "Children must not be visible when an ancestor container is hidden",
+    )
+
+    val visible = engine.getVisibleItems(items, mapOf("showRoot" to true))
+    val target =
+      visible.firstOrNull()?.items?.firstOrNull()?.items?.firstOrNull()?.items?.firstOrNull()
+    assertEquals("target", target?.linkId)
+  }
+
+  @Test
+  fun testVisiblePathsForNestedRepeatingQualifiedVisibility() {
+    val items =
+      listOf(
+        Item(
+          linkId = "orders",
+          type = ItemType.GROUP,
+          repeats = true,
+          items =
+            listOf(
+              Item(
+                linkId = "details",
+                type = ItemType.GROUP,
+                items =
+                  listOf(
+                    Item(
+                      linkId = "sku",
+                      type = ItemType.STRING,
+                      visibleIf =
+                        buildJsonObject {
+                          put(
+                            "==",
+                            buildJsonObject {
+                              put("0", buildJsonObject { put("var", "orders.type") })
+                              put("1", "PHYSICAL")
+                            },
+                          )
+                        },
+                    )
+                  ),
+              )
+            ),
+        )
+      )
+
+    val responseItems =
+      listOf(
+        ResponseItem(
+          linkId = "orders",
+          answers =
+            listOf(
+              Answer(
+                items =
+                  listOf(
+                    ResponseItem(
+                      linkId = "details",
+                      items = listOf(ResponseItem(linkId = "sku", answers = listOf(Answer()))),
+                    )
+                  )
+              ),
+              Answer(
+                items =
+                  listOf(
+                    ResponseItem(
+                      linkId = "details",
+                      items = listOf(ResponseItem(linkId = "sku", answers = listOf(Answer()))),
+                    )
+                  )
+              ),
+            ),
+        )
+      )
+
+    val dataContext =
+      mapOf("orders" to listOf(mapOf("type" to "PHYSICAL"), mapOf("type" to "DIGITAL")))
+
+    val visiblePaths = engine.getVisiblePaths(items, responseItems, dataContext)
+
+    assertTrue("orders.0" in visiblePaths)
+    assertTrue("orders.0.details" in visiblePaths)
+    assertTrue("orders.0.details.sku" in visiblePaths)
+    assertTrue("orders.1" in visiblePaths)
+    assertTrue("orders.1.details" in visiblePaths)
+    assertFalse("orders.1.details.sku" in visiblePaths)
+    assertNull(visiblePaths.firstOrNull { it.contains("orders.2") })
   }
 }

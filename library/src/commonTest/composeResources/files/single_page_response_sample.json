@@ -4,68 +4,64 @@
   "authored": "2026-03-17T15:30:00Z",
   "items": [
     {
-      "linkId": "consentSection",
-      "text": "Registration Consent",
+      "linkId": "welcomeBox",
       "items": [
         {
           "linkId": "introText",
           "answers": []
-        },
-        {
-          "linkId": "consentGiven",
-          "text": "Do you consent to the registration?",
-          "answers": [
-            {
-              "value": true
-            }
-          ]
         }
       ]
     },
     {
-      "linkId": "householdInfo",
-      "text": "Household Identification",
-      "items": [
+      "linkId": "consentGiven",
+      "text": "Do you consent to the registration?",
+      "answers": [
         {
-          "linkId": "householdId",
-          "text": "Scan Household Card",
-          "answers": []
-        },
-        {
-          "linkId": "structureDetails",
-          "text": "Building Characteristics",
-          "answers": [
-            {
-              "value": "Single story stone house with iron sheet roofing. Connected to grid power."
-            }
-          ]
-        },
-        {
-          "linkId": "roomsCount",
-          "text": "Number of Sleeping Rooms",
-          "answers": [
-            {
-              "value": 3
-            }
-          ]
-        },
-        {
-          "linkId": "waterUsage",
-          "text": "Monthly Water Usage (Liters)",
-          "answers": [
-            {
-              "value": {
-                "value": 1500.0,
-                "unit": "L"
-              }
-            }
-          ]
+          "value": true
         }
       ]
     },
     {
-      "linkId": "headOfHousehold",
-      "text": "Head of Household Details",
+      "linkId": "householdId",
+      "text": "Scan Household Card",
+      "answers": [
+        {
+          "value": "HH-QR-2026-0001"
+        }
+      ]
+    },
+    {
+      "linkId": "structureDetails",
+      "text": "Building Characteristics",
+      "answers": [
+        {
+          "value": "Single story stone house with iron sheet roofing. Connected to grid power."
+        }
+      ]
+    },
+    {
+      "linkId": "roomsCount",
+      "text": "Number of Sleeping Rooms",
+      "answers": [
+        {
+          "value": 3
+        }
+      ]
+    },
+    {
+      "linkId": "waterUsage",
+      "text": "Monthly Water Usage",
+      "answers": [
+        {
+          "value": {
+            "value": 1500.0,
+            "unit": "L"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "nameRow",
       "items": [
         {
           "linkId": "firstName",
@@ -93,7 +89,12 @@
               "value": "John Kibaki"
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "linkId": "demographicsRow",
+      "items": [
         {
           "linkId": "dob",
           "text": "Date of Birth",
@@ -108,24 +109,32 @@
           "text": "Gender",
           "answers": [
             {
-              "value": "m"
+              "value": "o"
             }
           ]
         },
         {
-          "linkId": "occupation",
-          "text": "Primary Occupation",
+          "linkId": "otherGender",
+          "text": "Other Gender",
           "answers": [
             {
-              "value": "teacher"
+              "value": "Non-binary"
             }
           ]
         }
       ]
     },
     {
-      "linkId": "healthMetrics",
-      "text": "Health Metrics (Head)",
+      "linkId": "occupation",
+      "text": "Primary Occupation",
+      "answers": [
+        {
+          "value": "farmer"
+        }
+      ]
+    },
+    {
+      "linkId": "vitalsCol",
       "items": [
         {
           "linkId": "height",
@@ -153,7 +162,12 @@
               "value": 23.82
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "linkId": "visitLog",
+      "items": [
         {
           "linkId": "visitTime",
           "text": "Registration Timestamp",
@@ -175,20 +189,14 @@
       ]
     },
     {
-      "linkId": "mediaSection",
-      "text": "Documentation & Media",
-      "items": [
-        {
-          "linkId": "headPhoto",
-          "text": "Head of Household Photo",
-          "answers": []
-        },
-        {
-          "linkId": "idDocument",
-          "text": "National ID Scan (Attachment)",
-          "answers": []
-        }
-      ]
+      "linkId": "headPhoto",
+      "text": "Head of Household Photo",
+      "answers": []
+    },
+    {
+      "linkId": "idDocument",
+      "text": "National ID Scan (Attachment)",
+      "answers": []
     },
     {
       "linkId": "membersSection",

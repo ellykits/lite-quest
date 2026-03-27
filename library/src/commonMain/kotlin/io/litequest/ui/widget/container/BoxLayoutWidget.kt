@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import io.litequest.model.Item
 import io.litequest.ui.renderer.LocalFormContext
@@ -35,13 +34,8 @@ class BoxLayoutWidget(override val item: Item) : ItemWidget {
   ) {
     val context = LocalFormContext.current
 
-    val widgetCache = remember(context.widgetFactory) { mutableMapOf<String, ItemWidget>() }
     val childWidgets =
-      remember(item.items, widgetCache) {
-        item.items.associateWith { childItem ->
-          widgetCache.getOrPut(childItem.linkId) { context.widgetFactory.createWidget(childItem) }
-        }
-      }
+      item.items.associateWith { childItem -> context.widgetFactory.createWidget(childItem) }
 
     Box(modifier = Modifier.fillMaxWidth()) {
       childWidgets.forEach { (childItem, childWidget) ->

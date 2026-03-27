@@ -24,7 +24,6 @@ import io.litequest.state.QuestionnaireState
 import io.litequest.ui.layout.LayoutStrategy
 import io.litequest.ui.layout.VerticalLayoutStrategy
 import io.litequest.ui.validation.ValidationPresentation
-import io.litequest.ui.widget.ItemWidget
 import io.litequest.ui.widget.WidgetFactory
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -35,18 +34,21 @@ fun FormRenderer(
   state: QuestionnaireState,
   onAnswerChange: (String, JsonElement, String?) -> Unit,
   touchedFieldIds: Set<String> = emptySet(),
+  touchedFieldPaths: Set<String> = emptySet(),
   showAllValidationErrors: Boolean = false,
   submitAttemptedFieldIds: Set<String> = emptySet(),
+  submitAttemptedFieldPaths: Set<String> = emptySet(),
   onRepetitionAdd: ((String) -> Unit)? = null,
   onRepetitionRemove: ((String, Int) -> Unit)? = null,
   onRepetitionFieldChange: ((String, Int, String, JsonElement, String?) -> Unit)? = null,
   widgetFactory: WidgetFactory,
   layoutStrategy: LayoutStrategy = VerticalLayoutStrategy,
 ) {
-  // Widget instances are cached by linkId and survive across visibleItems list changes.
-  // GroupWidget, ChoiceWidget etc. hold Item definition (never changes) so reuse is safe.
-  val widgetCache = remember(widgetFactory) { mutableMapOf<String, ItemWidget>() }
-  items.forEach { item -> widgetCache.getOrPut(item.linkId) { widgetFactory.createWidget(item) } }
+  // Build widgets from current visible items so nested visibility changes are reflected.
+  val widgets =
+    remember(items, widgetFactory) {
+      items.associate { it.linkId to widgetFactory.createWidget(it) }
+    }
 
   // Flatten response items + calculated values into a single values map.
   // Wrapped in remember so this only runs on actual state changes, not during scroll.
@@ -74,14 +76,18 @@ fun FormRenderer(
     remember(
       state.validationErrors,
       touchedFieldIds,
+      touchedFieldPaths,
       showAllValidationErrors,
       submitAttemptedFieldIds,
+      submitAttemptedFieldPaths,
     ) {
       ValidationPresentation.visibleValidationErrors(
         errors = state.validationErrors,
         touchedFieldIds = touchedFieldIds,
+        touchedFieldPaths = touchedFieldPaths,
         showAllValidationErrors = showAllValidationErrors,
         submitAttemptedFieldIds = submitAttemptedFieldIds,
+        submitAttemptedFieldPaths = submitAttemptedFieldPaths,
       )
     }
   val errorMessages =
@@ -97,6 +103,7 @@ fun FormRenderer(
     remember(
       values,
       errorMessages,
+      pathErrorMessages,
       widgetFactory,
       repetitions,
       onAnswerChange,
@@ -120,7 +127,7 @@ fun FormRenderer(
   CompositionLocalProvider(LocalFormContext provides formContext) {
     layoutStrategy.Layout(
       items = items,
-      widgets = widgetCache,
+      widgets = widgets,
       onValueChange = onAnswerChange,
       values = values,
       errorMessages = errorMessages,

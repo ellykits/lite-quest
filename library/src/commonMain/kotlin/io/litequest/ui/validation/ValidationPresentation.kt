@@ -22,19 +22,40 @@ internal object ValidationPresentation {
   fun visibleValidationErrors(
     errors: List<ValidationError>,
     touchedFieldIds: Set<String>,
+    touchedFieldPaths: Set<String> = emptySet(),
     showAllValidationErrors: Boolean,
     submitAttemptedFieldIds: Set<String> = emptySet(),
+    submitAttemptedFieldPaths: Set<String> = emptySet(),
   ): List<ValidationError> {
+    fun ValidationError.isRepeatedField(): Boolean =
+      path.any { segment -> segment.all(Char::isDigit) }
+
+    fun ValidationError.isTouched(): Boolean {
+      val fieldPath = path.joinToString(".")
+      return if (isRepeatedField()) {
+        touchedFieldPaths.contains(fieldPath)
+      } else {
+        touchedFieldIds.contains(linkId) || touchedFieldPaths.contains(fieldPath)
+      }
+    }
+
+    fun ValidationError.wasInSubmitAttempt(): Boolean {
+      val fieldPath = path.joinToString(".")
+      return if (isRepeatedField()) {
+        submitAttemptedFieldPaths.contains(fieldPath)
+      } else {
+        submitAttemptedFieldIds.contains(linkId) || submitAttemptedFieldPaths.contains(fieldPath)
+      }
+    }
+
     return if (showAllValidationErrors) {
-      if (submitAttemptedFieldIds.isEmpty()) {
+      if (submitAttemptedFieldIds.isEmpty() && submitAttemptedFieldPaths.isEmpty()) {
         errors
       } else {
-        errors.filter {
-          submitAttemptedFieldIds.contains(it.linkId) || touchedFieldIds.contains(it.linkId)
-        }
+        errors.filter { it.wasInSubmitAttempt() || it.isTouched() }
       }
     } else {
-      errors.filter { touchedFieldIds.contains(it.linkId) }
+      errors.filter { it.isTouched() }
     }
   }
 

@@ -66,11 +66,15 @@ class QuestionnaireManagerSampleRegressionTest {
 
     val ungatedExpected =
       expectedResponse.items.filter {
-        !consentGatedLinkIds.contains(it.linkId) && it.linkId != "consentSection"
+        !consentGatedLinkIds.contains(it.linkId) &&
+          it.linkId != "consentSection" &&
+          it.linkId != "consentGiven"
       }
     val ungatedActual =
       skippedResponse.items.filter {
-        !consentGatedLinkIds.contains(it.linkId) && it.linkId != "consentSection"
+        !consentGatedLinkIds.contains(it.linkId) &&
+          it.linkId != "consentSection" &&
+          it.linkId != "consentGiven"
       }
     assertResponseMatchesExpected(ungatedExpected, ungatedActual, calculatedLinkIds)
   }
@@ -80,7 +84,10 @@ class QuestionnaireManagerSampleRegressionTest {
     val questionnaire = loadQuestionnaireSample().withRequiredField("firstName")
     val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
 
-    assertTrue(manager.state.value.validationErrors.isEmpty())
+    assertTrue(
+      manager.state.value.validationErrors.none { it.linkId == "firstName" },
+      "firstName should not fail before consent makes it visible",
+    )
 
     manager.updateAnswer("consentGiven", JsonPrimitive(true))
     assertTrue(
@@ -223,7 +230,7 @@ class QuestionnaireManagerSampleRegressionTest {
     return items
       .filter {
         val expr = it.visibleIf?.toString() ?: return@filter false
-        expr.contains("consentSection.consentGiven")
+        expr.contains("\"consentGiven\"")
       }
       .map { it.linkId }
       .toSet()

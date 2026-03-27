@@ -19,13 +19,13 @@ import io.litequest.engine.LiteQuestEvaluator
 import io.litequest.i18n.TranslationManager
 import io.litequest.model.Answer
 import io.litequest.model.Item
-import io.litequest.model.ItemType
 import io.litequest.model.Questionnaire
 import io.litequest.model.QuestionnaireResponse
 import io.litequest.model.ResponseItem
 import io.litequest.model.ValidationError
 import io.litequest.ui.widget.DefaultWidgetFactory
 import io.litequest.ui.widget.WidgetFactory
+import io.litequest.util.QuestionnaireStructureValidator
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -46,6 +46,7 @@ class QuestionnaireManager(
   val state: StateFlow<QuestionnaireState>
 
   init {
+    QuestionnaireStructureValidator.requireUniqueLinkIds(questionnaire.items)
     val emptyResponse = createEmptyResponse()
     val initialVisibleItems = evaluator.getVisibleItems(emptyResponse)
     val initialCalculatedValues = evaluator.calculateValues(emptyResponse)
@@ -408,29 +409,18 @@ class QuestionnaireManager(
   }
 
   private fun initializeResponseItems(items: List<Item>): List<ResponseItem> {
-    return items.flatMap { item ->
-      when (item.type) {
-        ItemType.LAYOUT_ROW,
-        ItemType.LAYOUT_COLUMN,
-        ItemType.LAYOUT_BOX -> {
-          initializeResponseItems(item.items)
-        }
-        else -> {
-          listOf(
-            ResponseItem(
-              linkId = item.linkId,
-              text = item.text.takeIf { it.isNotEmpty() },
-              answers = emptyList(),
-              items =
-                if (item.items.isNotEmpty() && !item.repeats) {
-                  initializeResponseItems(item.items)
-                } else {
-                  emptyList()
-                },
-            )
-          )
-        }
-      }
+    return items.map { item ->
+      ResponseItem(
+        linkId = item.linkId,
+        text = item.text.takeIf { it.isNotEmpty() },
+        answers = emptyList(),
+        items =
+          if (item.items.isNotEmpty() && !item.repeats) {
+            initializeResponseItems(item.items)
+          } else {
+            emptyList()
+          },
+      )
     }
   }
 
