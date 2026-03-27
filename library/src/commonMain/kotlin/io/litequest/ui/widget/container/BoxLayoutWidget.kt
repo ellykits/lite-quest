@@ -18,6 +18,7 @@ package io.litequest.ui.widget.container
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import io.litequest.model.Item
@@ -33,18 +34,26 @@ class BoxLayoutWidget(override val item: Item) : ItemWidget {
     errorMessage: String?,
   ) {
     val context = LocalFormContext.current
+    val nestedContext = context.copy(pathPrefix = context.childPath(item.linkId))
 
     val childWidgets =
       item.items.associateWith { childItem -> context.widgetFactory.createWidget(childItem) }
 
     Box(modifier = Modifier.fillMaxWidth()) {
       childWidgets.forEach { (childItem, childWidget) ->
+        if (!nestedContext.isChildVisible(childItem.linkId)) {
+          return@forEach
+        }
         key(childItem.linkId) {
-          childWidget.Render(
-            value = context.values[childItem.linkId],
-            onValueChange = { value, text -> context.onValueChange(childItem.linkId, value, text) },
-            errorMessage = context.errorMessages[childItem.linkId],
-          )
+          CompositionLocalProvider(LocalFormContext provides nestedContext) {
+            childWidget.Render(
+              value = context.values[childItem.linkId],
+              onValueChange = { value, text ->
+                context.onValueChange(childItem.linkId, value, text)
+              },
+              errorMessage = context.errorMessages[childItem.linkId],
+            )
+          }
         }
       }
     }

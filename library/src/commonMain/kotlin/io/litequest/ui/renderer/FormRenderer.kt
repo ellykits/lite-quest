@@ -116,6 +116,7 @@ fun FormRenderer(
         onValueChange = onAnswerChange,
         errorMessages = errorMessages,
         pathErrorMessages = pathErrorMessages,
+        visiblePaths = state.visiblePaths,
         widgetFactory = widgetFactory,
         repetitions = repetitions,
         onRepetitionAdd = onRepetitionAdd,

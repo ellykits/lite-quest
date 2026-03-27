@@ -69,7 +69,8 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
       }
 
       repetitions.forEachIndexed { index, repetitionValues ->
-        val rowPrefix = "${item.linkId}.$index."
+        val rowBasePath = context.childPath(item.linkId) + ".$index"
+        val rowPrefix = "$rowBasePath."
         val rowPathErrors =
           context.pathErrorMessages
             .filterKeys { it.startsWith(rowPrefix) }
@@ -89,6 +90,7 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
             },
             errorMessages = rowFieldErrors,
             pathErrorMessages = rowPathErrors,
+            pathPrefix = rowBasePath,
           )
 
         key("${item.linkId}_rep$index") {
@@ -149,6 +151,9 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
               }
 
               childWidgets.forEach { (childItem, childWidget) ->
+                if (!rowContext.isChildVisible(childItem.linkId)) {
+                  return@forEach
+                }
                 key("${item.linkId}_$index.${childItem.linkId}") {
                   CompositionLocalProvider(LocalFormContext provides rowContext) {
                     childWidget.Render(

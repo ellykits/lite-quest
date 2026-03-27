@@ -26,12 +26,22 @@ data class FormContext(
   val onValueChange: (String, JsonElement, String?) -> Unit,
   val errorMessages: Map<String, String>,
   val pathErrorMessages: Map<String, String> = emptyMap(),
+  val visiblePaths: Set<String> = emptySet(),
+  val pathPrefix: String = "",
   val widgetFactory: WidgetFactory,
   val repetitions: Map<String, List<Map<String, JsonElement?>>> = emptyMap(),
   val onRepetitionAdd: ((String) -> Unit)? = null,
   val onRepetitionRemove: ((String, Int) -> Unit)? = null,
   val onRepetitionFieldChange: ((String, Int, String, JsonElement, String?) -> Unit)? = null,
-)
+) {
+  fun childPath(linkId: String): String {
+    return if (pathPrefix.isEmpty()) linkId else "$pathPrefix.$linkId"
+  }
+
+  fun isChildVisible(linkId: String): Boolean {
+    return visiblePaths.isEmpty() || visiblePaths.contains(childPath(linkId))
+  }
+}
 
 val LocalFormContext =
   compositionLocalOf<FormContext> {
