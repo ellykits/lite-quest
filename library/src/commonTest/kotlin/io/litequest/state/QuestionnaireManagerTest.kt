@@ -33,6 +33,117 @@ import kotlinx.serialization.json.put
 
 class QuestionnaireManagerTest {
   @Test
+  fun testDuplicateLinkIdsFailFast() {
+    val questionnaire =
+      Questionnaire(
+        id = "dup-q",
+        title = "Duplicate IDs",
+        version = "1.0",
+        items =
+          listOf(
+            Item(linkId = "shared", type = ItemType.STRING, text = "Top level"),
+            Item(
+              linkId = "groupA",
+              type = ItemType.GROUP,
+              text = "Group A",
+              items = listOf(Item(linkId = "shared", type = ItemType.BOOLEAN, text = "Duplicate")),
+            ),
+          ),
+      )
+
+    val error =
+      assertFailsWith<IllegalArgumentException> {
+        QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
+      }
+
+    assertTrue(
+      error.message?.contains("Duplicate linkId values are not allowed") == true,
+      "Error message should clearly describe duplicate linkId guard",
+    )
+  }
+
+  @Test
+  fun testQualifiedVisibilityThroughLayoutContainerWorks() {
+    val questionnaire =
+      Questionnaire(
+        id = "layout-path-q",
+        title = "Layout Path",
+        version = "1.0",
+        items =
+          listOf(
+            Item(
+              linkId = "headOfHousehold",
+              type = ItemType.GROUP,
+              items =
+                listOf(
+                  Item(
+                    linkId = "demographicsRow",
+                    type = ItemType.LAYOUT_ROW,
+                    items =
+                      listOf(
+                        Item(
+                          linkId = "gender",
+                          type = ItemType.CHOICE,
+                          answerOptions =
+                            listOf(
+                              io.litequest.model.AnswerOption(code = "m", display = "Male"),
+                              io.litequest.model.AnswerOption(code = "o", display = "Other"),
+                            ),
+                        ),
+                        Item(
+                          linkId = "otherGender",
+                          type = ItemType.STRING,
+                          visibleIf =
+                            buildJsonObject {
+                              put(
+                                "==",
+                                buildJsonArray {
+                                  add(
+                                    buildJsonObject {
+                                      put(
+                                        "var",
+                                        JsonPrimitive("headOfHousehold.demographicsRow.gender"),
+                                      )
+                                    }
+                                  )
+                                  add(JsonPrimitive("o"))
+                                },
+                              )
+                            },
+                        ),
+                      ),
+                  )
+                ),
+            )
+          ),
+      )
+
+    val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
+
+    manager.updateAnswer("gender", JsonPrimitive("m"))
+    assertFalse(
+      manager.state.value.visibleItems
+        .first { it.linkId == "headOfHousehold" }
+        .items
+        .first { it.linkId == "demographicsRow" }
+        .items
+        .any { it.linkId == "otherGender" },
+      "otherGender should be hidden when gender != o",
+    )
+
+    manager.updateAnswer("gender", JsonPrimitive("o"))
+    assertTrue(
+      manager.state.value.visibleItems
+        .first { it.linkId == "headOfHousehold" }
+        .items
+        .first { it.linkId == "demographicsRow" }
+        .items
+        .any { it.linkId == "otherGender" },
+      "otherGender should be visible when gender == o",
+    )
+  }
+
+  @Test
   fun testHiddenItemAnswersAreCleared() {
     val questionnaire =
       Questionnaire(

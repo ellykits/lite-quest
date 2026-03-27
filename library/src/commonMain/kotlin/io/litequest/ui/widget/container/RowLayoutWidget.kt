@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.litequest.model.Item
@@ -39,13 +38,8 @@ class RowLayoutWidget(override val item: Item) : ItemWidget {
   ) {
     val context = LocalFormContext.current
 
-    val widgetCache = remember(context.widgetFactory) { mutableMapOf<String, ItemWidget>() }
     val childWidgets =
-      remember(item.items, widgetCache) {
-        item.items.associateWith { childItem ->
-          widgetCache.getOrPut(childItem.linkId) { context.widgetFactory.createWidget(childItem) }
-        }
-      }
+      item.items.associateWith { childItem -> context.widgetFactory.createWidget(childItem) }
 
     FlowRow(
       modifier = Modifier.fillMaxWidth(),

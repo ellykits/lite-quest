@@ -45,17 +45,7 @@ class VisibilityEngine(private val evaluator: JsonLogicEvaluator) {
   }
 
   fun getVisibleItems(items: List<Item>, dataContext: Map<String, Any?>): List<Item> {
-    return items.mapNotNull { item ->
-      if (item.visibleIf == null || isVisible(item, dataContext)) {
-        if (item.items.isEmpty()) {
-          item
-        } else {
-          item.copy(items = getVisibleItems(item.items, dataContext))
-        }
-      } else {
-        null
-      }
-    }
+    return items.collectVisibleItems(dataContext, parentVisible = true)
   }
 
   /** Returns a set of unique paths (e.g. "group.0.field") for all visible items in the response. */
@@ -65,57 +55,116 @@ class VisibilityEngine(private val evaluator: JsonLogicEvaluator) {
     dataContext: Map<String, Any?>,
     pathPrefix: String = "",
   ): Set<String> {
+    return collectVisiblePaths(
+      itemDefinitions = items,
+      responseItems = responseItems,
+      dataContext = dataContext,
+      pathPrefix = pathPrefix,
+      parentVisible = true,
+    )
+  }
+
+  private fun List<Item>.collectVisibleItems(
+    dataContext: Map<String, Any?>,
+    parentVisible: Boolean,
+  ): List<Item> {
+    return mapNotNull { item ->
+      val itemVisible = parentVisible && (item.visibleIf == null || isVisible(item, dataContext))
+      if (!itemVisible) {
+        null
+      } else if (item.items.isEmpty()) {
+        item
+      } else {
+        item.copy(items = item.items.collectVisibleItems(dataContext, parentVisible = true))
+      }
+    }
+  }
+
+  private fun collectVisiblePaths(
+    itemDefinitions: List<Item>,
+    responseItems: List<ResponseItem>,
+    dataContext: Map<String, Any?>,
+    pathPrefix: String,
+    parentVisible: Boolean,
+  ): Set<String> {
     val visiblePaths = mutableSetOf<String>()
     val responseMap = responseItems.associateBy { it.linkId }
 
-    items.forEach { item ->
-      if (item.isLayoutContainer()) {
-        if (isVisible(item, dataContext)) {
-          visiblePaths.addAll(getVisiblePaths(item.items, responseItems, dataContext, pathPrefix))
+    itemDefinitions.forEach { item ->
+      if (!parentVisible) {
+        return@forEach
+      }
+
+      if (item.repeats) {
+        val responseItem = responseMap[item.linkId]
+        val repetitionData = dataContext[item.linkId] as? List<*>
+        val currentPath = if (pathPrefix.isEmpty()) item.linkId else "$pathPrefix.${item.linkId}"
+        responseItem?.answers?.forEachIndexed { index, answer ->
+          val rowData = repetitionData?.getOrNull(index) as? Map<String, Any?>
+          val rowVisible =
+            item.visibleIf == null ||
+              isVisible(item, dataContext, rowData, groupLinkId = item.linkId)
+          if (!rowVisible) {
+            return@forEachIndexed
+          }
+
+          val indexedPath = "$currentPath.$index"
+          val rowScopedContext =
+            if (rowData != null) {
+              dataContext + rowData + mapOf(item.linkId to rowData)
+            } else {
+              dataContext
+            }
+
+          visiblePaths.add(indexedPath)
+          visiblePaths.addAll(
+            collectVisiblePaths(
+              itemDefinitions = item.items,
+              responseItems = answer.items,
+              dataContext = rowScopedContext,
+              pathPrefix = indexedPath,
+              parentVisible = true,
+            )
+          )
         }
         return@forEach
       }
 
-      val currentPath = if (pathPrefix.isEmpty()) item.linkId else "$pathPrefix.${item.linkId}"
-
-      if (item.repeats) {
-        val responseItem = responseMap[item.linkId]
-        responseItem?.answers?.forEachIndexed { index, answer ->
-          val rowData =
-            (dataContext[item.linkId] as? List<*>)?.getOrNull(index) as? Map<String, Any?>
-          val indexedPath = "$currentPath.$index"
-
-          if (isVisible(item, dataContext, rowData, item.linkId)) {
-            visiblePaths.add(indexedPath)
-            if (item.items.isNotEmpty()) {
-              visiblePaths.addAll(
-                getVisiblePaths(
-                  items = item.items,
-                  responseItems = answer.items,
-                  dataContext =
-                    if (rowData != null) {
-                      dataContext + rowData + mapOf(item.linkId to rowData)
-                    } else {
-                      dataContext
-                    },
-                  pathPrefix = indexedPath,
-                )
-              )
-            }
-          }
-        }
-      } else {
-        if (isVisible(item, dataContext)) {
-          visiblePaths.add(currentPath)
-          if (item.items.isNotEmpty()) {
-            val nestedResponse = responseMap[item.linkId]?.items ?: emptyList()
-            visiblePaths.addAll(
-              getVisiblePaths(item.items, nestedResponse, dataContext, currentPath)
-            )
-          }
-        }
+      val itemVisible = item.visibleIf == null || isVisible(item, dataContext)
+      if (!itemVisible) {
+        return@forEach
       }
+
+      if (item.isLayoutContainer()) {
+        val currentPath = if (pathPrefix.isEmpty()) item.linkId else "$pathPrefix.${item.linkId}"
+        visiblePaths.add(currentPath)
+        val nestedResponse = responseMap[item.linkId]?.items ?: emptyList()
+        visiblePaths.addAll(
+          collectVisiblePaths(
+            itemDefinitions = item.items,
+            responseItems = nestedResponse,
+            dataContext = dataContext,
+            pathPrefix = currentPath,
+            parentVisible = true,
+          )
+        )
+        return@forEach
+      }
+
+      val currentPath = if (pathPrefix.isEmpty()) item.linkId else "$pathPrefix.${item.linkId}"
+      visiblePaths.add(currentPath)
+      val nestedResponse = responseMap[item.linkId]?.items ?: emptyList()
+      visiblePaths.addAll(
+        collectVisiblePaths(
+          itemDefinitions = item.items,
+          responseItems = nestedResponse,
+          dataContext = dataContext,
+          pathPrefix = currentPath,
+          parentVisible = true,
+        )
+      )
     }
+
     return visiblePaths
   }
 

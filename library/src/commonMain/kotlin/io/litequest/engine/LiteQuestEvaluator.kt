@@ -22,12 +22,17 @@ import io.litequest.model.QuestionnaireResponse
 import io.litequest.model.ValidationError
 import io.litequest.util.CalculatedExpressionCollector
 import io.litequest.util.DataContextBuilder
+import io.litequest.util.QuestionnaireStructureValidator
 import kotlinx.serialization.json.JsonElement
 
 class LiteQuestEvaluator(
   private val questionnaire: Questionnaire,
   jsonLogicEvaluator: JsonLogicEvaluator = JsonLogicEvaluator(),
 ) {
+  init {
+    QuestionnaireStructureValidator.requireUniqueLinkIds(questionnaire.items)
+  }
+
   private val visibilityEngine = VisibilityEngine(jsonLogicEvaluator)
   private val validationEngine = ValidationEngine(jsonLogicEvaluator)
   private val extractionEngine = ExtractionEngine()

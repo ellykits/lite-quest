@@ -4,8 +4,13 @@
   "authored": "2026-03-17T15:30:00Z",
   "items": [
     {
-      "linkId": "introText",
-      "answers": []
+      "linkId": "welcomeBox",
+      "items": [
+        {
+          "linkId": "introText",
+          "answers": []
+        }
+      ]
     },
     {
       "linkId": "consentGiven",
@@ -56,47 +61,66 @@
       ]
     },
     {
-      "linkId": "firstName",
-      "text": "First Name",
-      "answers": [
+      "linkId": "nameRow",
+      "items": [
         {
-          "value": "John"
+          "linkId": "firstName",
+          "text": "First Name",
+          "answers": [
+            {
+              "value": "John"
+            }
+          ]
+        },
+        {
+          "linkId": "lastName",
+          "text": "Last Name",
+          "answers": [
+            {
+              "value": "Kibaki"
+            }
+          ]
+        },
+        {
+          "linkId": "fullNameDisplay",
+          "text": "Full Name (Calculated)",
+          "answers": [
+            {
+              "value": "John Kibaki"
+            }
+          ]
         }
       ]
     },
     {
-      "linkId": "lastName",
-      "text": "Last Name",
-      "answers": [
+      "linkId": "demographicsRow",
+      "items": [
         {
-          "value": "Kibaki"
-        }
-      ]
-    },
-    {
-      "linkId": "fullNameDisplay",
-      "text": "Full Name (Calculated)",
-      "answers": [
+          "linkId": "dob",
+          "text": "Date of Birth",
+          "answers": [
+            {
+              "value": "1985-05-12"
+            }
+          ]
+        },
         {
-          "value": "John Kibaki"
-        }
-      ]
-    },
-    {
-      "linkId": "dob",
-      "text": "Date of Birth",
-      "answers": [
+          "linkId": "gender",
+          "text": "Gender",
+          "answers": [
+            {
+              "value": "o"
+            }
+          ]
+        },
         {
-          "value": "1985-05-12"
-        }
-      ]
-    },
-    {
-      "linkId": "gender",
-      "text": "Gender",
-      "answers": [
-        {
-          "value": "m"
+          "linkId": "otherGender",
+          "text": "Other Gender",
+          "answers": [
+            {
+              "value": "Non-binary"
+            }
+          ]
         }
       ]
     },
@@ -110,47 +134,57 @@
       ]
     },
     {
-      "linkId": "height",
-      "text": "Height (m)",
-      "answers": [
+      "linkId": "vitalsCol",
+      "items": [
         {
-          "value": 1.78
+          "linkId": "height",
+          "text": "Height (m)",
+          "answers": [
+            {
+              "value": 1.78
+            }
+          ]
+        },
+        {
+          "linkId": "weight",
+          "text": "Weight (kg)",
+          "answers": [
+            {
+              "value": 75.5
+            }
+          ]
+        },
+        {
+          "linkId": "bmiDisplay",
+          "text": "Calculated BMI",
+          "answers": [
+            {
+              "value": 23.82
+            }
+          ]
         }
       ]
     },
     {
-      "linkId": "weight",
-      "text": "Weight (kg)",
-      "answers": [
+      "linkId": "visitLog",
+      "items": [
         {
-          "value": 75.5
-        }
-      ]
-    },
-    {
-      "linkId": "bmiDisplay",
-      "text": "Calculated BMI",
-      "answers": [
+          "linkId": "visitTime",
+          "text": "Registration Timestamp",
+          "answers": [
+            {
+              "value": "2026-03-17T10:15:00Z"
+            }
+          ]
+        },
         {
-          "value": 23.82
-        }
-      ]
-    },
-    {
-      "linkId": "visitTime",
-      "text": "Registration Date & Time",
-      "answers": [
-        {
-          "value": "2026-03-17T10:15:00Z"
-        }
-      ]
-    },
-    {
-      "linkId": "followUpTime",
-      "text": "Preferred Follow-up",
-      "answers": [
-        {
-          "value": "09:00:00"
+          "linkId": "followUpTime",
+          "text": "Preferred Follow-up",
+          "answers": [
+            {
+              "value": "09:00:00"
+            }
+          ]
         }
       ]
     },
@@ -161,7 +195,7 @@
     },
     {
       "linkId": "idDocument",
-      "text": "National ID Attachment",
+      "text": "National ID Scan (Attachment)",
       "answers": []
     },
     {
@@ -181,7 +215,7 @@
             },
             {
               "linkId": "relationship",
-              "text": "Relationship",
+              "text": "Relationship to Head",
               "answers": [
                 {
                   "value": "spouse"
@@ -203,7 +237,7 @@
             },
             {
               "linkId": "relationship",
-              "text": "Relationship",
+              "text": "Relationship to Head",
               "answers": [
                 {
                   "value": "child"

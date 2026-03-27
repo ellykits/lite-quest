@@ -4,100 +4,103 @@
   "version": "1.0.0",
   "items": [
     {
-      "linkId": "consentSection",
-      "text": "Registration Consent",
-      "type": "GROUP",
+      "linkId": "welcomeBox",
+      "type": "LAYOUT_BOX",
       "items": [
         {
-          "linkId": "welcomeBox",
-          "type": "LAYOUT_BOX",
-          "items": [
-            {
-              "linkId": "introText",
-              "text": "Welcome to the Community Health Registration. Please ensure all details are accurate for the Household Head and members.",
-              "type": "DISPLAY"
-            }
-          ]
-        },
-        {
-          "linkId": "consentGiven",
-          "text": "Do you consent to the registration?",
-          "type": "BOOLEAN",
-          "required": true
+          "linkId": "introText",
+          "text": "Welcome to the Community Health Registration. Please ensure all details are accurate for the Household Head and members.",
+          "type": "DISPLAY"
         }
       ]
     },
     {
-      "linkId": "householdInfo",
-      "text": "Household Identification",
-      "type": "GROUP",
+      "linkId": "consentGiven",
+      "text": "Do you consent to the registration?",
+      "type": "BOOLEAN",
+      "required": true
+    },
+    {
+      "linkId": "householdId",
+      "text": "Scan Household Card",
+      "type": "BARCODE",
       "visibleIf": {
         "==": [
           {
-            "var": "consentSection.consentGiven"
+            "var": "consentGiven"
+          },
+          true
+        ]
+      }
+    },
+    {
+      "linkId": "structureDetails",
+      "text": "Building Characteristics",
+      "type": "TEXT",
+      "required": true,
+      "visibleIf": {
+        "==": [
+          {
+            "var": "consentGiven"
+          },
+          true
+        ]
+      }
+    },
+    {
+      "linkId": "roomsCount",
+      "text": "Number of Sleeping Rooms",
+      "type": "INTEGER",
+      "required": true,
+      "visibleIf": {
+        "==": [
+          {
+            "var": "consentGiven"
+          },
+          true
+        ]
+      }
+    },
+    {
+      "linkId": "waterUsage",
+      "text": "Monthly Water Usage",
+      "type": "QUANTITY",
+      "required": true,
+      "extension": {
+        "unit": "L"
+      },
+      "visibleIf": {
+        "==": [
+          {
+            "var": "consentGiven"
+          },
+          true
+        ]
+      }
+    },
+    {
+      "linkId": "nameRow",
+      "type": "LAYOUT_ROW",
+      "visibleIf": {
+        "==": [
+          {
+            "var": "consentGiven"
           },
           true
         ]
       },
       "items": [
         {
-          "linkId": "householdId",
-          "text": "Scan Household Card",
-          "type": "BARCODE"
-        },
-        {
-          "linkId": "structureDetails",
-          "text": "Building Characteristics",
-          "type": "TEXT",
+          "linkId": "firstName",
+          "text": "First Name",
+          "type": "STRING",
           "required": true
         },
         {
-          "linkId": "roomsCount",
-          "text": "Number of Sleeping Rooms",
-          "type": "INTEGER",
+          "linkId": "lastName",
+          "text": "Last Name",
+          "type": "STRING",
           "required": true
-        },
-        {
-          "linkId": "waterUsage",
-          "text": "Monthly Water Usage",
-          "type": "QUANTITY",
-          "required": true,
-          "extension": {
-            "unit": "L"
-          }
-        }
-      ]
-    },
-    {
-      "linkId": "headOfHousehold",
-      "text": "Head of Household Details",
-      "type": "GROUP",
-      "visibleIf": {
-        "==": [
-          {
-            "var": "consentSection.consentGiven"
-          },
-          true
-        ]
-      },
-      "items": [
-        {
-          "linkId": "nameRow",
-          "type": "LAYOUT_ROW",
-          "items": [
-            {
-              "linkId": "firstName",
-              "text": "First Name",
-              "type": "STRING",
-              "required": true
-            },
-            {
-              "linkId": "lastName",
-              "text": "Last Name",
-              "type": "STRING",
-              "required": true
-            }
-          ]
         },
         {
           "linkId": "fullNameDisplay",
@@ -115,96 +118,123 @@
               }
             ]
           }
-        },
-        {
-          "linkId": "demographicsRow",
-          "type": "LAYOUT_ROW",
-          "items": [
-            {
-              "linkId": "dob",
-              "text": "Date of Birth",
-              "type": "DATE",
-              "required": true
-            },
-            {
-              "linkId": "gender",
-              "text": "Gender",
-              "type": "CHOICE",
-              "required": true,
-              "answerOptions": [
-                {
-                  "code": "m",
-                  "display": "Male"
-                },
-                {
-                  "code": "f",
-                  "display": "Female"
-                },
-                {
-                  "code": "o",
-                  "display": "Other"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "linkId": "occupation",
-          "text": "Primary Occupation",
-          "type": "OPEN_CHOICE",
-          "required": true,
-          "answerOptions": [
-            {
-              "code": "farmer",
-              "display": "Farmer"
-            },
-            {
-              "code": "trader",
-              "display": "Trader"
-            },
-            {
-              "code": "teacher",
-              "display": "Teacher"
-            },
-            {
-              "code": "none",
-              "display": "None of the above",
-              "exclusive": true
-            }
-          ]
         }
       ]
     },
     {
-      "linkId": "healthMetrics",
-      "text": "Health Metrics (Head)",
-      "type": "GROUP",
+      "linkId": "demographicsRow",
+      "type": "LAYOUT_ROW",
       "visibleIf": {
         "==": [
           {
-            "var": "consentSection.consentGiven"
+            "var": "consentGiven"
           },
           true
         ]
       },
       "items": [
         {
-          "linkId": "vitalsCol",
-          "type": "LAYOUT_COLUMN",
-          "items": [
+          "linkId": "dob",
+          "text": "Date of Birth",
+          "type": "DATE",
+          "required": true,
+          "extension": {
+            "displayFormat": "dd/MM/yyyy",
+            "outputFormat": "yyyy-MM-dd"
+          }
+        },
+        {
+          "linkId": "gender",
+          "text": "Gender",
+          "type": "CHOICE",
+          "required": true,
+          "answerOptions": [
             {
-              "linkId": "height",
-              "text": "Height (m)",
-              "type": "DECIMAL",
-              "required": true
+              "code": "m",
+              "display": "Male"
             },
             {
-              "linkId": "weight",
-              "text": "Weight (kg)",
-              "type": "DECIMAL",
-              "required": true
+              "code": "f",
+              "display": "Female"
+            },
+            {
+              "code": "o",
+              "display": "Other"
             }
           ]
+        },
+        {
+          "linkId": "otherGender",
+          "text": "Other Gender",
+          "type": "STRING",
+          "required": true,
+          "visibleIf": {
+            "==": [
+              {
+                "var": "gender"
+              },
+              "o"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "occupation",
+      "text": "Primary Occupation",
+      "type": "OPEN_CHOICE",
+      "required": true,
+      "visibleIf": {
+        "==": [
+          {
+            "var": "consentGiven"
+          },
+          true
+        ]
+      },
+      "answerOptions": [
+        {
+          "code": "farmer",
+          "display": "Farmer"
+        },
+        {
+          "code": "trader",
+          "display": "Trader"
+        },
+        {
+          "code": "teacher",
+          "display": "Teacher"
+        },
+        {
+          "code": "none",
+          "display": "None of the above",
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "linkId": "vitalsCol",
+      "type": "LAYOUT_COLUMN",
+      "visibleIf": {
+        "==": [
+          {
+            "var": "consentGiven"
+          },
+          true
+        ]
+      },
+      "items": [
+        {
+          "linkId": "height",
+          "text": "Height (m)",
+          "type": "DECIMAL",
+          "required": true
+        },
+        {
+          "linkId": "weight",
+          "text": "Weight (kg)",
+          "type": "DECIMAL",
+          "required": true
         },
         {
           "linkId": "bmiDisplay",
@@ -228,51 +258,67 @@
               }
             ]
           }
-        },
-        {
-          "linkId": "visitLog",
-          "type": "LAYOUT_ROW",
-          "items": [
-            {
-              "linkId": "visitTime",
-              "text": "Registration Timestamp",
-              "type": "DATETIME",
-              "required": true
-            },
-            {
-              "linkId": "followUpTime",
-              "text": "Preferred Follow-up",
-              "type": "TIME",
-              "required": true
-            }
-          ]
         }
       ]
     },
     {
-      "linkId": "mediaSection",
-      "text": "Documentation & Media",
-      "type": "GROUP",
+      "linkId": "visitLog",
+      "type": "LAYOUT_ROW",
       "visibleIf": {
         "==": [
           {
-            "var": "consentSection.consentGiven"
+            "var": "consentGiven"
           },
           true
         ]
       },
       "items": [
         {
-          "linkId": "headPhoto",
-          "text": "Head of Household Photo",
-          "type": "IMAGE"
+          "linkId": "visitTime",
+          "text": "Registration Timestamp",
+          "type": "DATETIME",
+          "required": true,
+          "extension": {
+            "displayFormat": "dd/MM/yyyy HH:mm",
+            "outputFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
         },
         {
-          "linkId": "idDocument",
-          "text": "National ID Scan (Attachment)",
-          "type": "ATTACHMENT"
+          "linkId": "followUpTime",
+          "text": "Preferred Follow-up",
+          "type": "TIME",
+          "required": true,
+          "extension": {
+            "use24Hour": true
+          }
         }
       ]
+    },
+    {
+      "linkId": "headPhoto",
+      "text": "Head of Household Photo",
+      "type": "IMAGE",
+      "visibleIf": {
+        "==": [
+          {
+            "var": "consentGiven"
+          },
+          true
+        ]
+      }
+    },
+    {
+      "linkId": "idDocument",
+      "text": "National ID Scan (Attachment)",
+      "type": "ATTACHMENT",
+      "visibleIf": {
+        "==": [
+          {
+            "var": "consentGiven"
+          },
+          true
+        ]
+      }
     },
     {
       "linkId": "membersSection",
@@ -282,7 +328,7 @@
       "visibleIf": {
         "==": [
           {
-            "var": "consentSection.consentGiven"
+            "var": "consentGiven"
           },
           true
         ]

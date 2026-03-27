@@ -49,12 +49,14 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
     items.forEach { item ->
       if (item.isLayoutContainer()) {
         if (item.visibleIf == null || visibilityEngine.isVisible(item, dataContext)) {
+          val layoutResponse = responseItems[item.linkId]
+          val nestedResponseMap = layoutResponse?.items?.associateBy { it.linkId } ?: responseItems
           errors.addAll(
             validateResponseMap(
               items = item.items,
-              responseItems = responseItems,
+              responseItems = nestedResponseMap,
               dataContext = dataContext,
-              path = path,
+              path = path + item.linkId,
             )
           )
         }

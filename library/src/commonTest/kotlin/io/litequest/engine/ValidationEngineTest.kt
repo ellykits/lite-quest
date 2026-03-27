@@ -267,4 +267,224 @@ class ValidationEngineTest {
 
     assertEquals(2, errors.size)
   }
+
+  @Test
+  fun testRepeatingNestedLayoutValidationPath() {
+    val items =
+      listOf(
+        Item(
+          linkId = "membersSection",
+          type = ItemType.GROUP,
+          repeats = true,
+          items =
+            listOf(
+              Item(
+                linkId = "memberRow",
+                type = ItemType.LAYOUT_ROW,
+                items =
+                  listOf(
+                    Item(
+                      linkId = "memberName",
+                      type = ItemType.STRING,
+                      text = "Member Name",
+                      required = true,
+                    )
+                  ),
+              )
+            ),
+        )
+      )
+
+    val responseItems =
+      listOf(
+        ResponseItem(
+          linkId = "membersSection",
+          answers =
+            listOf(
+              Answer(
+                items =
+                  listOf(
+                    ResponseItem(linkId = "memberRow", items = listOf(ResponseItem("memberName")))
+                  )
+              )
+            ),
+        )
+      )
+
+    val dataContext = mapOf("membersSection" to listOf(mapOf("memberName" to "")))
+    val errors = engine.validateResponse(items, responseItems, dataContext)
+
+    assertEquals(1, errors.size)
+    assertEquals("memberName", errors.first().linkId)
+    assertEquals(listOf("membersSection", "0", "memberRow", "memberName"), errors.first().path)
+  }
+
+  @Test
+  fun testRepeatingNestedLayoutValidationPassesWhenFilled() {
+    val items =
+      listOf(
+        Item(
+          linkId = "membersSection",
+          type = ItemType.GROUP,
+          repeats = true,
+          items =
+            listOf(
+              Item(
+                linkId = "memberRow",
+                type = ItemType.LAYOUT_ROW,
+                items =
+                  listOf(
+                    Item(
+                      linkId = "memberName",
+                      type = ItemType.STRING,
+                      text = "Member Name",
+                      required = true,
+                    )
+                  ),
+              )
+            ),
+        )
+      )
+
+    val responseItems =
+      listOf(
+        ResponseItem(
+          linkId = "membersSection",
+          answers =
+            listOf(
+              Answer(
+                items =
+                  listOf(
+                    ResponseItem(
+                      linkId = "memberRow",
+                      items =
+                        listOf(
+                          ResponseItem(
+                            linkId = "memberName",
+                            answers = listOf(Answer(JsonPrimitive("Alice"))),
+                          )
+                        ),
+                    )
+                  )
+              )
+            ),
+        )
+      )
+
+    val dataContext = mapOf("membersSection" to listOf(mapOf("memberName" to "Alice")))
+    val errors = engine.validateResponse(items, responseItems, dataContext)
+
+    assertTrue(errors.isEmpty())
+  }
+
+  @Test
+  fun testDeeplyNestedRepeatingValidationUsesIndexedPath() {
+    val items =
+      listOf(
+        Item(
+          linkId = "membersSection",
+          type = ItemType.GROUP,
+          repeats = true,
+          items =
+            listOf(
+              Item(
+                linkId = "memberBox",
+                type = ItemType.LAYOUT_BOX,
+                items =
+                  listOf(
+                    Item(
+                      linkId = "memberRow",
+                      type = ItemType.LAYOUT_ROW,
+                      items =
+                        listOf(
+                          Item(
+                            linkId = "memberColumn",
+                            type = ItemType.LAYOUT_COLUMN,
+                            items =
+                              listOf(
+                                Item(
+                                  linkId = "memberName",
+                                  type = ItemType.STRING,
+                                  text = "Member Name",
+                                  required = true,
+                                )
+                              ),
+                          )
+                        ),
+                    )
+                  ),
+              )
+            ),
+        )
+      )
+
+    val responseItems =
+      listOf(
+        ResponseItem(
+          linkId = "membersSection",
+          answers =
+            listOf(
+              Answer(
+                items =
+                  listOf(
+                    ResponseItem(
+                      linkId = "memberBox",
+                      items =
+                        listOf(
+                          ResponseItem(
+                            linkId = "memberRow",
+                            items =
+                              listOf(
+                                ResponseItem(
+                                  linkId = "memberColumn",
+                                  items =
+                                    listOf(
+                                      ResponseItem(
+                                        linkId = "memberName",
+                                        answers = listOf(Answer(JsonPrimitive("Alice"))),
+                                      )
+                                    ),
+                                )
+                              ),
+                          )
+                        ),
+                    )
+                  )
+              ),
+              Answer(
+                items =
+                  listOf(
+                    ResponseItem(
+                      linkId = "memberBox",
+                      items =
+                        listOf(
+                          ResponseItem(
+                            linkId = "memberRow",
+                            items =
+                              listOf(
+                                ResponseItem(
+                                  linkId = "memberColumn",
+                                  items = listOf(ResponseItem(linkId = "memberName")),
+                                )
+                              ),
+                          )
+                        ),
+                    )
+                  )
+              ),
+            ),
+        )
+      )
+
+    val dataContext =
+      mapOf("membersSection" to listOf(mapOf("memberName" to "Alice"), mapOf("memberName" to "")))
+    val errors = engine.validateResponse(items, responseItems, dataContext)
+
+    assertEquals(1, errors.size)
+    assertEquals("memberName", errors.first().linkId)
+    assertEquals(
+      listOf("membersSection", "1", "memberBox", "memberRow", "memberColumn", "memberName"),
+      errors.first().path,
+    )
+  }
 }

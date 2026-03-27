@@ -37,6 +37,20 @@ class ValidationPresentationTest {
       message = "fieldB.range",
       itemText = "Field B",
     )
+  private val repeatedErrorA0 =
+    ValidationError(
+      linkId = "fieldA",
+      path = listOf("repeatGroup", "0", "fieldA"),
+      message = "Field A.required",
+      itemText = "Field A",
+    )
+  private val repeatedErrorA1 =
+    ValidationError(
+      linkId = "fieldA",
+      path = listOf("repeatGroup", "1", "fieldA"),
+      message = "Field A.required",
+      itemText = "Field A",
+    )
 
   @Test
   fun visibleValidationErrors_returnsAll_whenShowAllIsTrue() {
@@ -77,6 +91,36 @@ class ValidationPresentationTest {
 
     assertEquals(1, result.size)
     assertEquals("fieldB", result.first().linkId)
+  }
+
+  @Test
+  fun visibleValidationErrors_forRepeatedFields_usesPathScopedTouch() {
+    val result =
+      ValidationPresentation.visibleValidationErrors(
+        errors = listOf(repeatedErrorA0, repeatedErrorA1),
+        touchedFieldIds = setOf("fieldA"),
+        touchedFieldPaths = setOf("repeatGroup.0.fieldA"),
+        showAllValidationErrors = false,
+      )
+
+    assertEquals(1, result.size)
+    assertEquals(listOf("repeatGroup", "0", "fieldA"), result.first().path)
+  }
+
+  @Test
+  fun visibleValidationErrors_forRepeatedFields_usesPathScopedSubmitAttempt() {
+    val result =
+      ValidationPresentation.visibleValidationErrors(
+        errors = listOf(repeatedErrorA0, repeatedErrorA1),
+        touchedFieldIds = emptySet(),
+        touchedFieldPaths = emptySet(),
+        showAllValidationErrors = true,
+        submitAttemptedFieldIds = emptySet(),
+        submitAttemptedFieldPaths = setOf("repeatGroup.1.fieldA"),
+      )
+
+    assertEquals(1, result.size)
+    assertEquals(listOf("repeatGroup", "1", "fieldA"), result.first().path)
   }
 
   @Test

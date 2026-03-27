@@ -165,7 +165,9 @@ private fun SingleQuestionnaireScreen(
   var showValidationDialog by remember { mutableStateOf(false) }
   var showAllValidationErrors by remember { mutableStateOf(false) }
   var submitAttemptedFieldIds by remember { mutableStateOf(emptySet<String>()) }
+  var submitAttemptedFieldPaths by remember { mutableStateOf(emptySet<String>()) }
   var touchedFieldIds by remember { mutableStateOf(emptySet<String>()) }
+  var touchedFieldPaths by remember { mutableStateOf(emptySet<String>()) }
 
   if (showDismissDialog && onDismiss != null && mode == QuestionnaireMode.Edit) {
     DismissDialog(
@@ -190,6 +192,7 @@ private fun SingleQuestionnaireScreen(
 
   val submitAction = {
     submitAttemptedFieldIds = state.validationErrors.map { it.linkId }.toSet()
+    submitAttemptedFieldPaths = state.validationErrors.map { it.path.joinToString(".") }.toSet()
     if (
       ValidationPresentation.shouldShowSubmitValidationDialog(
         showValidationDialogOnSubmit = showValidationDialogOnSubmit,
@@ -288,12 +291,21 @@ private fun SingleQuestionnaireScreen(
               manager.updateAnswer(linkId, value, text)
             },
             touchedFieldIds = touchedFieldIds,
+            touchedFieldPaths = touchedFieldPaths,
             showAllValidationErrors = showAllValidationErrors,
             submitAttemptedFieldIds = submitAttemptedFieldIds,
+            submitAttemptedFieldPaths = submitAttemptedFieldPaths,
             onRepetitionAdd = { linkId -> manager.addRepetition(linkId) },
-            onRepetitionRemove = { linkId, index -> manager.removeRepetition(linkId, index) },
+            onRepetitionRemove = { linkId, index ->
+              touchedFieldPaths =
+                reindexRepetitionPathsAfterRemoval(touchedFieldPaths, linkId, index)
+              submitAttemptedFieldPaths =
+                reindexRepetitionPathsAfterRemoval(submitAttemptedFieldPaths, linkId, index)
+              manager.removeRepetition(linkId, index)
+            },
             onRepetitionFieldChange = { linkId, index, fieldLinkId, value, text ->
               touchedFieldIds = touchedFieldIds + fieldLinkId
+              touchedFieldPaths = touchedFieldPaths + "$linkId.$index.$fieldLinkId"
               manager.updateInRepetition(linkId, index, fieldLinkId, value, text)
             },
             widgetFactory = widgetFactory,
@@ -339,7 +351,9 @@ private fun PaginatedQuestionnaireScreen(
   var showValidationDialog by remember { mutableStateOf(false) }
   var showAllValidationErrors by remember { mutableStateOf(false) }
   var submitAttemptedFieldIds by remember { mutableStateOf(emptySet<String>()) }
+  var submitAttemptedFieldPaths by remember { mutableStateOf(emptySet<String>()) }
   var touchedFieldIds by remember { mutableStateOf(emptySet<String>()) }
+  var touchedFieldPaths by remember { mutableStateOf(emptySet<String>()) }
 
   if (showDismissDialog && onDismiss != null && mode != QuestionnaireMode.Summary) {
     DismissDialog(
@@ -364,6 +378,7 @@ private fun PaginatedQuestionnaireScreen(
 
   val submitAction = {
     submitAttemptedFieldIds = state.validationErrors.map { it.linkId }.toSet()
+    submitAttemptedFieldPaths = state.validationErrors.map { it.path.joinToString(".") }.toSet()
     if (
       ValidationPresentation.shouldShowSubmitValidationDialog(
         showValidationDialogOnSubmit = showValidationDialogOnSubmit,
@@ -483,9 +498,18 @@ private fun PaginatedQuestionnaireScreen(
             state = state,
             manager = manager,
             touchedFieldIds = touchedFieldIds,
+            touchedFieldPaths = touchedFieldPaths,
             onFieldTouched = { linkId -> touchedFieldIds = touchedFieldIds + linkId },
+            onRepetitionFieldTouched = { path -> touchedFieldPaths = touchedFieldPaths + path },
+            onRepetitionRemoved = { linkId, index ->
+              touchedFieldPaths =
+                reindexRepetitionPathsAfterRemoval(touchedFieldPaths, linkId, index)
+              submitAttemptedFieldPaths =
+                reindexRepetitionPathsAfterRemoval(submitAttemptedFieldPaths, linkId, index)
+            },
             showAllValidationErrors = showAllValidationErrors,
             submitAttemptedFieldIds = submitAttemptedFieldIds,
+            submitAttemptedFieldPaths = submitAttemptedFieldPaths,
             modifier = Modifier.fillMaxSize(),
             widgetFactory = widgetFactory,
           )
@@ -511,9 +535,13 @@ private fun PagerView(
   state: QuestionnaireState,
   manager: QuestionnaireManager,
   touchedFieldIds: Set<String>,
+  touchedFieldPaths: Set<String>,
   onFieldTouched: (String) -> Unit,
+  onRepetitionFieldTouched: (String) -> Unit,
+  onRepetitionRemoved: (String, Int) -> Unit,
   showAllValidationErrors: Boolean,
   submitAttemptedFieldIds: Set<String>,
+  submitAttemptedFieldPaths: Set<String>,
   modifier: Modifier = Modifier,
   widgetFactory: WidgetFactory,
 ) {
@@ -543,12 +571,18 @@ private fun PagerView(
         manager.updateAnswer(linkId, value, text)
       },
       touchedFieldIds = touchedFieldIds,
+      touchedFieldPaths = touchedFieldPaths,
       showAllValidationErrors = showAllValidationErrors,
       submitAttemptedFieldIds = submitAttemptedFieldIds,
+      submitAttemptedFieldPaths = submitAttemptedFieldPaths,
       onRepetitionAdd = { linkId -> manager.addRepetition(linkId) },
-      onRepetitionRemove = { linkId, index -> manager.removeRepetition(linkId, index) },
+      onRepetitionRemove = { linkId, index ->
+        onRepetitionRemoved(linkId, index)
+        manager.removeRepetition(linkId, index)
+      },
       onRepetitionFieldChange = { linkId, index, fieldLinkId, value, text ->
         onFieldTouched(fieldLinkId)
+        onRepetitionFieldTouched("$linkId.$index.$fieldLinkId")
         manager.updateInRepetition(linkId, index, fieldLinkId, value, text)
       },
       widgetFactory = widgetFactory,
@@ -768,6 +802,29 @@ private fun ValidationErrorsDialog(
           Button(onClick = onSubmitAnyway) { Text("Submit anyway") }
         }
       }
+    }
+  }
+}
+
+internal fun reindexRepetitionPathsAfterRemoval(
+  paths: Set<String>,
+  groupLinkId: String,
+  removedIndex: Int,
+): Set<String> {
+  val prefix = "$groupLinkId."
+  return paths.mapNotNullTo(linkedSetOf()) { path ->
+    if (!path.startsWith(prefix)) {
+      return@mapNotNullTo path
+    }
+
+    val remainder = path.removePrefix(prefix)
+    val rowIndexText = remainder.substringBefore('.', missingDelimiterValue = "")
+    val rowIndex = rowIndexText.toIntOrNull() ?: return@mapNotNullTo path
+
+    when {
+      rowIndex == removedIndex -> null
+      rowIndex < removedIndex -> path
+      else -> "$groupLinkId.${rowIndex - 1}.${remainder.substringAfter('.')}"
     }
   }
 }

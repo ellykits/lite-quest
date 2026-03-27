@@ -33,8 +33,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,13 +56,8 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
     val context = LocalFormContext.current
     val repetitions = context.repetitions[item.linkId] ?: emptyList()
 
-    val widgetCache = remember(context.widgetFactory) { mutableMapOf<String, ItemWidget>() }
     val childWidgets =
-      remember(item.items, widgetCache) {
-        item.items.associateWith { childItem ->
-          widgetCache.getOrPut(childItem.linkId) { context.widgetFactory.createWidget(childItem) }
-        }
-      }
+      item.items.associateWith { childItem -> context.widgetFactory.createWidget(childItem) }
 
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
       if (item.text.isNotEmpty()) {
@@ -74,6 +69,28 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
       }
 
       repetitions.forEachIndexed { index, repetitionValues ->
+        val rowPrefix = "${item.linkId}.$index."
+        val rowPathErrors =
+          context.pathErrorMessages
+            .filterKeys { it.startsWith(rowPrefix) }
+            .mapKeys { (path, _) -> path.removePrefix(rowPrefix) }
+        val rowFieldErrors = rowPathErrors.mapKeys { (path, _) -> path.substringAfterLast('.') }
+        val rowContext =
+          context.copy(
+            values = repetitionValues,
+            onValueChange = { fieldLinkId, newValue, text ->
+              context.onRepetitionFieldChange?.invoke(
+                item.linkId,
+                index,
+                fieldLinkId,
+                newValue,
+                text,
+              )
+            },
+            errorMessages = rowFieldErrors,
+            pathErrorMessages = rowPathErrors,
+          )
+
         key("${item.linkId}_rep$index") {
           Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -133,21 +150,21 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
 
               childWidgets.forEach { (childItem, childWidget) ->
                 key("${item.linkId}_$index.${childItem.linkId}") {
-                  childWidget.Render(
-                    value = repetitionValues[childItem.linkId],
-                    onValueChange = { newValue, text ->
-                      context.onRepetitionFieldChange?.invoke(
-                        item.linkId,
-                        index,
-                        childItem.linkId,
-                        newValue,
-                        text,
-                      )
-                    },
-                    errorMessage =
-                      context.pathErrorMessages["${item.linkId}.$index.${childItem.linkId}"]
-                        ?: context.errorMessages[childItem.linkId],
-                  )
+                  CompositionLocalProvider(LocalFormContext provides rowContext) {
+                    childWidget.Render(
+                      value = repetitionValues[childItem.linkId],
+                      onValueChange = { newValue, text ->
+                        context.onRepetitionFieldChange?.invoke(
+                          item.linkId,
+                          index,
+                          childItem.linkId,
+                          newValue,
+                          text,
+                        )
+                      },
+                      errorMessage = rowFieldErrors[childItem.linkId],
+                    )
+                  }
                 }
               }
             }

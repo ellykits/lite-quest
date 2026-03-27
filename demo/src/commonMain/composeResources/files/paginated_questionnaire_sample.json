@@ -15,7 +15,7 @@
           "items": [
             {
               "linkId": "introText",
-              "text": "Welcome to the Community Health Registration. Please ensure all details are accurate.",
+              "text": "Welcome to the Community Health Registration. Please ensure all details are accurate for the Household Head and members.",
               "type": "DISPLAY"
             }
           ]
@@ -36,7 +36,7 @@
       "visibleIf": {
         "==": [
           {
-            "var": "consentSection.consentGiven"
+            "var": "consentGiven"
           },
           true
         ]
@@ -78,7 +78,7 @@
       "visibleIf": {
         "==": [
           {
-            "var": "consentSection.consentGiven"
+            "var": "consentGiven"
           },
           true
         ]
@@ -99,25 +99,25 @@
               "text": "Last Name",
               "type": "STRING",
               "required": true
+            },
+            {
+              "linkId": "fullNameDisplay",
+              "text": "Full Name (Calculated)",
+              "type": "STRING",
+              "readOnly": true,
+              "calculatedExpression": {
+                "cat": [
+                  {
+                    "var": "firstName"
+                  },
+                  " ",
+                  {
+                    "var": "lastName"
+                  }
+                ]
+              }
             }
           ]
-        },
-        {
-          "linkId": "fullNameDisplay",
-          "text": "Full Name (Calculated)",
-          "type": "STRING",
-          "readOnly": true,
-          "calculatedExpression": {
-            "cat": [
-              {
-                "var": "firstName"
-              },
-              " ",
-              {
-                "var": "lastName"
-              }
-            ]
-          }
         },
         {
           "linkId": "demographicsRow",
@@ -152,6 +152,20 @@
                   "display": "Other"
                 }
               ]
+            },
+            {
+              "linkId": "otherGender",
+              "text": "Other Gender",
+              "type": "STRING",
+              "required": true,
+              "visibleIf": {
+                "==": [
+                  {
+                    "var": "gender"
+                  },
+                  "o"
+                ]
+              }
             }
           ]
         },
@@ -174,8 +188,8 @@
               "display": "Teacher"
             },
             {
-              "code": "unemployed",
-              "display": "Currently Unemployed",
+              "code": "none",
+              "display": "None of the above",
               "exclusive": true
             }
           ]
@@ -190,7 +204,7 @@
       "visibleIf": {
         "==": [
           {
-            "var": "consentSection.consentGiven"
+            "var": "consentGiven"
           },
           true
         ]
@@ -211,31 +225,31 @@
               "text": "Weight (kg)",
               "type": "DECIMAL",
               "required": true
-            }
-          ]
-        },
-        {
-          "linkId": "bmiDisplay",
-          "text": "Calculated BMI",
-          "type": "DECIMAL",
-          "readOnly": true,
-          "calculatedExpression": {
-            "/": [
-              {
-                "var": "weight"
-              },
-              {
-                "*": [
+            },
+            {
+              "linkId": "bmiDisplay",
+              "text": "Calculated BMI",
+              "type": "DECIMAL",
+              "readOnly": true,
+              "calculatedExpression": {
+                "/": [
                   {
-                    "var": "height"
+                    "var": "weight"
                   },
                   {
-                    "var": "height"
+                    "*": [
+                      {
+                        "var": "height"
+                      },
+                      {
+                        "var": "height"
+                      }
+                    ]
                   }
                 ]
               }
-            ]
-          }
+            }
+          ]
         },
         {
           "linkId": "visitLog",
@@ -243,7 +257,7 @@
           "items": [
             {
               "linkId": "visitTime",
-              "text": "Registration Date & Time",
+              "text": "Registration Timestamp",
               "type": "DATETIME",
               "required": true,
               "extension": {
@@ -269,7 +283,7 @@
         },
         {
           "linkId": "idDocument",
-          "text": "National ID Attachment",
+          "text": "National ID Scan (Attachment)",
           "type": "ATTACHMENT"
         }
       ]
@@ -282,7 +296,7 @@
       "visibleIf": {
         "==": [
           {
-            "var": "consentSection.consentGiven"
+            "var": "consentGiven"
           },
           true
         ]
@@ -302,7 +316,7 @@
             },
             {
               "linkId": "relationship",
-              "text": "Relationship",
+              "text": "Relationship to Head",
               "type": "CHOICE",
               "required": true,
               "answerOptions": [
@@ -313,6 +327,10 @@
                 {
                   "code": "child",
                   "display": "Child"
+                },
+                {
+                  "code": "other",
+                  "display": "Relative"
                 }
               ]
             }
