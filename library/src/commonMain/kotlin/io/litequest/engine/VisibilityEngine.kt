@@ -67,15 +67,37 @@ class VisibilityEngine(private val evaluator: JsonLogicEvaluator) {
   private fun List<Item>.collectVisibleItems(
     dataContext: Map<String, Any?>,
     parentVisible: Boolean,
+    preserveRepeatDescendants: Boolean = false,
   ): List<Item> {
     return mapNotNull { item ->
-      val itemVisible = parentVisible && (item.visibleIf == null || isVisible(item, dataContext))
+      val itemVisible =
+        if (preserveRepeatDescendants) {
+          parentVisible
+        } else {
+          parentVisible && (item.visibleIf == null || isVisible(item, dataContext))
+        }
       if (!itemVisible) {
         null
       } else if (item.items.isEmpty()) {
         item
+      } else if (item.repeats) {
+        item.copy(
+          items =
+            item.items.collectVisibleItems(
+              dataContext = dataContext,
+              parentVisible = true,
+              preserveRepeatDescendants = true,
+            )
+        )
       } else {
-        item.copy(items = item.items.collectVisibleItems(dataContext, parentVisible = true))
+        item.copy(
+          items =
+            item.items.collectVisibleItems(
+              dataContext = dataContext,
+              parentVisible = true,
+              preserveRepeatDescendants = preserveRepeatDescendants,
+            )
+        )
       }
     }
   }

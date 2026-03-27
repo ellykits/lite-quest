@@ -50,6 +50,7 @@ class QuestionnaireManager(
     val emptyResponse = createEmptyResponse()
     val initialVisibleItems = evaluator.getVisibleItems(emptyResponse)
     val initialCalculatedValues = evaluator.calculateValues(emptyResponse)
+    val initialVisiblePaths = evaluator.getVisiblePaths(emptyResponse, initialCalculatedValues)
     val initialValidationErrors = evaluator.validateResponse(emptyResponse)
     _state =
       MutableStateFlow(
@@ -57,6 +58,7 @@ class QuestionnaireManager(
           questionnaire = questionnaire,
           response = emptyResponse,
           visibleItems = initialVisibleItems,
+          visiblePaths = initialVisiblePaths,
           validationErrors = initialValidationErrors,
           calculatedValues = initialCalculatedValues,
           isSubmitted = false,
@@ -201,6 +203,7 @@ class QuestionnaireManager(
         questionnaire = questionnaire,
         response = cleanedResponse,
         visibleItems = visibleItems,
+        visiblePaths = visiblePaths,
         validationErrors = validationErrors,
         calculatedValues = calculatedValues,
         isSubmitted = _state.value.isSubmitted,

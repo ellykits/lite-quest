@@ -539,6 +539,333 @@ class QuestionnaireManagerTest {
   }
 
   @Test
+  fun testRowScopedVisibilityPathsForRepeatedSiblingFields() {
+    val questionnaire =
+      Questionnaire(
+        id = "receiving-q",
+        title = "Receiving",
+        version = "1.0",
+        items =
+          listOf(
+            Item(
+              linkId = "receivedItems",
+              type = ItemType.GROUP,
+              text = "Received Items",
+              repeats = true,
+              items =
+                listOf(
+                  Item(
+                    linkId = "identificationMethod",
+                    type = ItemType.CHOICE,
+                    answerOptions =
+                      listOf(
+                        io.litequest.model.AnswerOption(code = "SEARCH", display = "Search"),
+                        io.litequest.model.AnswerOption(code = "SCAN", display = "Scan"),
+                      ),
+                  ),
+                  Item(
+                    linkId = "itemId",
+                    type = ItemType.STRING,
+                    visibleIf =
+                      buildJsonObject {
+                        put(
+                          "==",
+                          buildJsonArray {
+                            add(
+                              buildJsonObject { put("var", JsonPrimitive("identificationMethod")) }
+                            )
+                            add(JsonPrimitive("SEARCH"))
+                          },
+                        )
+                      },
+                  ),
+                  Item(
+                    linkId = "barcode",
+                    type = ItemType.BARCODE,
+                    visibleIf =
+                      buildJsonObject {
+                        put(
+                          "==",
+                          buildJsonArray {
+                            add(
+                              buildJsonObject { put("var", JsonPrimitive("identificationMethod")) }
+                            )
+                            add(JsonPrimitive("SCAN"))
+                          },
+                        )
+                      },
+                  ),
+                ),
+            )
+          ),
+      )
+
+    val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
+    manager.addRepetition("receivedItems")
+
+    val repeatChildren =
+      manager.state.value.visibleItems.first { it.linkId == "receivedItems" }.items
+    assertTrue(repeatChildren.any { it.linkId == "itemId" })
+    assertTrue(repeatChildren.any { it.linkId == "barcode" })
+
+    manager.updateInRepetition(
+      "receivedItems",
+      0,
+      "identificationMethod",
+      JsonPrimitive("SCAN"),
+      null,
+    )
+
+    assertTrue("receivedItems.0.identificationMethod" in manager.state.value.visiblePaths)
+    assertTrue("receivedItems.0.barcode" in manager.state.value.visiblePaths)
+    assertFalse("receivedItems.0.itemId" in manager.state.value.visiblePaths)
+
+    manager.updateInRepetition(
+      "receivedItems",
+      0,
+      "identificationMethod",
+      JsonPrimitive("SEARCH"),
+      null,
+    )
+
+    assertTrue("receivedItems.0.itemId" in manager.state.value.visiblePaths)
+    assertFalse("receivedItems.0.barcode" in manager.state.value.visiblePaths)
+  }
+
+  @Test
+  fun testRepeatedVisibilityValidationAndCalculationStayConsistentWhenMethodFlips() {
+    val questionnaire =
+      Questionnaire(
+        id = "receiving-integrated-q",
+        title = "Receiving Integrated",
+        version = "1.0",
+        items =
+          listOf(
+            Item(
+              linkId = "receivedItems",
+              type = ItemType.GROUP,
+              text = "Received Items",
+              repeats = true,
+              items =
+                listOf(
+                  Item(
+                    linkId = "identificationMethod",
+                    type = ItemType.CHOICE,
+                    required = true,
+                    answerOptions =
+                      listOf(
+                        io.litequest.model.AnswerOption(code = "SEARCH", display = "Search"),
+                        io.litequest.model.AnswerOption(code = "SCAN", display = "Scan"),
+                      ),
+                  ),
+                  Item(
+                    linkId = "identifierRow",
+                    type = ItemType.LAYOUT_ROW,
+                    items =
+                      listOf(
+                        Item(
+                          linkId = "itemId",
+                          type = ItemType.STRING,
+                          required = true,
+                          visibleIf =
+                            buildJsonObject {
+                              put(
+                                "==",
+                                buildJsonArray {
+                                  add(
+                                    buildJsonObject {
+                                      put("var", JsonPrimitive("identificationMethod"))
+                                    }
+                                  )
+                                  add(JsonPrimitive("SEARCH"))
+                                },
+                              )
+                            },
+                        ),
+                        Item(
+                          linkId = "barcode",
+                          type = ItemType.BARCODE,
+                          required = true,
+                          visibleIf =
+                            buildJsonObject {
+                              put(
+                                "==",
+                                buildJsonArray {
+                                  add(
+                                    buildJsonObject {
+                                      put("var", JsonPrimitive("identificationMethod"))
+                                    }
+                                  )
+                                  add(JsonPrimitive("SCAN"))
+                                },
+                              )
+                            },
+                        ),
+                      ),
+                  ),
+                ),
+            ),
+            Item(
+              linkId = "selectedIdentifier",
+              type = ItemType.STRING,
+              readOnly = true,
+              calculatedExpression =
+                buildJsonObject {
+                  put(
+                    "if",
+                    buildJsonArray {
+                      add(
+                        buildJsonObject {
+                          put(
+                            "==",
+                            buildJsonArray {
+                              add(
+                                buildJsonObject {
+                                  put(
+                                    "var",
+                                    buildJsonArray {
+                                      add(JsonPrimitive("receivedItems[0].identificationMethod"))
+                                      add(JsonPrimitive(""))
+                                    },
+                                  )
+                                }
+                              )
+                              add(JsonPrimitive("SEARCH"))
+                            },
+                          )
+                        }
+                      )
+                      add(
+                        buildJsonObject {
+                          put(
+                            "var",
+                            buildJsonArray {
+                              add(JsonPrimitive("receivedItems[0].identifierRow.itemId"))
+                              add(JsonPrimitive(""))
+                            },
+                          )
+                        }
+                      )
+                      add(
+                        buildJsonObject {
+                          put(
+                            "==",
+                            buildJsonArray {
+                              add(
+                                buildJsonObject {
+                                  put(
+                                    "var",
+                                    buildJsonArray {
+                                      add(JsonPrimitive("receivedItems[0].identificationMethod"))
+                                      add(JsonPrimitive(""))
+                                    },
+                                  )
+                                }
+                              )
+                              add(JsonPrimitive("SCAN"))
+                            },
+                          )
+                        }
+                      )
+                      add(
+                        buildJsonObject {
+                          put(
+                            "var",
+                            buildJsonArray {
+                              add(JsonPrimitive("receivedItems[0].identifierRow.barcode"))
+                              add(JsonPrimitive(""))
+                            },
+                          )
+                        }
+                      )
+                      add(JsonPrimitive(""))
+                    },
+                  )
+                },
+            ),
+          ),
+      )
+
+    val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
+    manager.addRepetition("receivedItems")
+
+    manager.updateInRepetition(
+      "receivedItems",
+      0,
+      "identificationMethod",
+      JsonPrimitive("SEARCH"),
+      null,
+    )
+
+    assertTrue("receivedItems.0.identifierRow.itemId" in manager.state.value.visiblePaths)
+    assertFalse("receivedItems.0.identifierRow.barcode" in manager.state.value.visiblePaths)
+    assertTrue(
+      manager.state.value.validationErrors.any {
+        it.path == listOf("receivedItems", "0", "identifierRow", "itemId")
+      }
+    )
+    assertTrue(
+      manager.state.value.validationErrors.none {
+        it.path == listOf("receivedItems", "0", "identifierRow", "barcode")
+      }
+    )
+
+    manager.updateInRepetition("receivedItems", 0, "itemId", JsonPrimitive("ITEM-001"), null)
+    assertTrue(manager.state.value.validationErrors.none { it.linkId == "itemId" })
+    assertEquals("ITEM-001", manager.state.value.calculatedValues["selectedIdentifier"])
+
+    manager.updateInRepetition(
+      "receivedItems",
+      0,
+      "identificationMethod",
+      JsonPrimitive("SCAN"),
+      null,
+    )
+
+    val repeatedGroup = manager.state.value.response.items.first { it.linkId == "receivedItems" }
+    val firstRow = repeatedGroup.answers.first()
+    val identifierRow = firstRow.items.first { it.linkId == "identifierRow" }
+    val itemIdResponse = identifierRow.items.first { it.linkId == "itemId" }
+    assertTrue(itemIdResponse.answers.isEmpty(), "Hidden itemId answer should be cleared")
+    assertTrue("receivedItems.0.identifierRow.barcode" in manager.state.value.visiblePaths)
+    assertFalse("receivedItems.0.identifierRow.itemId" in manager.state.value.visiblePaths)
+    assertTrue(
+      manager.state.value.validationErrors.any {
+        it.path == listOf("receivedItems", "0", "identifierRow", "barcode")
+      }
+    )
+    assertEquals("", manager.state.value.calculatedValues["selectedIdentifier"])
+
+    manager.updateInRepetition("receivedItems", 0, "barcode", JsonPrimitive("BC-123"), null)
+    assertTrue(manager.state.value.validationErrors.none { it.linkId == "barcode" })
+    assertEquals("BC-123", manager.state.value.calculatedValues["selectedIdentifier"])
+
+    manager.updateInRepetition(
+      "receivedItems",
+      0,
+      "identificationMethod",
+      JsonPrimitive("SEARCH"),
+      null,
+    )
+
+    val identifierRowAfterSecondFlip =
+      manager.state.value.response.items
+        .first { it.linkId == "receivedItems" }
+        .answers
+        .first()
+        .items
+        .first { it.linkId == "identifierRow" }
+    val barcodeAfterSecondFlip = identifierRowAfterSecondFlip.items.first { it.linkId == "barcode" }
+    assertTrue(barcodeAfterSecondFlip.answers.isEmpty(), "Hidden barcode answer should be cleared")
+    assertTrue(
+      manager.state.value.validationErrors.any {
+        it.path == listOf("receivedItems", "0", "identifierRow", "itemId")
+      }
+    )
+    assertEquals("", manager.state.value.calculatedValues["selectedIdentifier"])
+  }
+
+  @Test
   fun testTransitiveCalculatedValues() {
     val questionnaire =
       Questionnaire(
