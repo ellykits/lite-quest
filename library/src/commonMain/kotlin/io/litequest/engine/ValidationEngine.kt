@@ -38,6 +38,7 @@ class ValidationEngine(private val evaluator: JsonLogicEvaluator) {
     return validateResponseMap(items, responseMap, dataContext, path)
   }
 
+  @Suppress("UNCHECKED_CAST")
   private fun validateResponseMap(
     items: List<Item>,
     responseItems: Map<String, ResponseItem>,

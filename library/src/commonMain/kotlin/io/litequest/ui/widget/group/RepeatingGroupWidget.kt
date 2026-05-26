@@ -134,7 +134,7 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
                     color = MaterialTheme.colorScheme.onSurface,
                   )
                 }
-                if (repetitions.size > 1) {
+                if (repetitions.isNotEmpty()) {
                   OutlinedButton(
                     onClick = { context.onRepetitionRemove?.invoke(item.linkId, index) },
                     modifier = Modifier.height(32.dp),

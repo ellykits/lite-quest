@@ -16,10 +16,13 @@
 package io.litequest.ui.layout
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -48,6 +51,36 @@ object VerticalLayoutStrategy : LayoutStrategy {
       verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
       items(items = items, key = { it.linkId }, contentType = { it.type }) { item ->
+        widgets[item.linkId]?.let { widget ->
+          widget.Render(
+            value = values[item.linkId],
+            onValueChange = { value, text -> onValueChange(item.linkId, value, text) },
+            errorMessage = errorMessages[item.linkId],
+          )
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Layout strategy for embedded forms — uses an eager [Column] so the host screen controls
+ * scrolling.
+ */
+object EmbeddedVerticalLayoutStrategy : LayoutStrategy {
+  @Composable
+  override fun Layout(
+    items: List<Item>,
+    widgets: Map<String, ItemWidget>,
+    onValueChange: (String, JsonElement, String?) -> Unit,
+    values: Map<String, JsonElement?>,
+    errorMessages: Map<String, String>,
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
+      verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+      items.forEach { item ->
         widgets[item.linkId]?.let { widget ->
           widget.Render(
             value = values[item.linkId],

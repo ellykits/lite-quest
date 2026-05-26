@@ -29,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import io.litequest.demo.components.SubmissionHandler
 import io.litequest.demo.navigation.Route
+import io.litequest.demo.screens.EmbeddedFormScreen
 import io.litequest.demo.screens.HomeScreen
 import io.litequest.demo.screens.PaginatedSummaryScreen
 import io.litequest.demo.screens.SinglePageSummaryScreen
@@ -47,6 +48,7 @@ fun App() {
         HomeScreen(
           onNavigate = { route ->
             when (route) {
+              "embedded-form" -> navController.navigate(Route.EmbeddedForm)
               "single-form" -> navController.navigate(Route.SinglePageForm)
               "single-summary" -> navController.navigate(Route.SinglePageSummary)
               "single-readonly" -> navController.navigate(Route.SinglePageReadOnly)
@@ -75,6 +77,7 @@ fun App() {
               onModeChange = { newMode -> mode = newMode },
               onDismiss = { navController.popBackStack() },
               showCloseButton = true,
+              allowSubmitWithErrors = true,
             )
           }
         }
@@ -113,6 +116,7 @@ fun App() {
               onSubmit = { viewModel.submit() },
               onDismiss = { navController.popBackStack() },
               showCloseButton = true,
+              allowSubmitWithErrors = true,
               mode = mode,
               onModeChange = { newMode -> mode = newMode },
             )
@@ -136,6 +140,10 @@ fun App() {
           onBack = { navController.popBackStack() },
           initialMode = QuestionnaireMode.ReadOnly,
         )
+      }
+
+      composable<Route.EmbeddedForm> {
+        EmbeddedFormScreen(onBack = { navController.popBackStack() })
       }
     }
   }
