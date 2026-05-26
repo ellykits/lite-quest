@@ -32,4 +32,6 @@ sealed interface Route {
   @Serializable data object PaginatedSummary : Route
 
   @Serializable data object PaginatedReadOnly : Route
+
+  @Serializable data object EmbeddedForm : Route
 }

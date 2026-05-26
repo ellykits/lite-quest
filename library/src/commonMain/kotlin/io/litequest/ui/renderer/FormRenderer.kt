@@ -15,9 +15,11 @@
 */
 package io.litequest.ui.renderer
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import io.litequest.model.Item
 import io.litequest.model.ResponseItem
 import io.litequest.state.QuestionnaireState
@@ -43,6 +45,7 @@ fun FormRenderer(
   onRepetitionFieldChange: ((String, Int, String, JsonElement, String?) -> Unit)? = null,
   widgetFactory: WidgetFactory,
   layoutStrategy: LayoutStrategy = VerticalLayoutStrategy,
+  modifier: Modifier = Modifier,
 ) {
   // Build widgets from current visible items so nested visibility changes are reflected.
   val widgets =
@@ -125,14 +128,16 @@ fun FormRenderer(
       )
     }
 
-  CompositionLocalProvider(LocalFormContext provides formContext) {
-    layoutStrategy.Layout(
-      items = items,
-      widgets = widgets,
-      onValueChange = onAnswerChange,
-      values = values,
-      errorMessages = errorMessages,
-    )
+  Box(modifier = modifier) {
+    CompositionLocalProvider(LocalFormContext provides formContext) {
+      layoutStrategy.Layout(
+        items = items,
+        widgets = widgets,
+        onValueChange = onAnswerChange,
+        values = values,
+        errorMessages = errorMessages,
+      )
+    }
   }
 }
 

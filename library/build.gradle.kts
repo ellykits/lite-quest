@@ -16,7 +16,7 @@ plugins {
 
 group = "io.github.ellykits.litequest"
 
-version = "1.0.0-alpha08"
+version = "1.0.0-beta01"
 
 kotlin {
   applyDefaultHierarchyTemplate()

@@ -3,7 +3,7 @@
 ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.ellykits.litequest/litequest-library)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-purple.svg)](https://kotlinlang.org)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Desktop-green.svg)](https://kotlinlang.org/docs/multiplatform.html)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-green.svg)](https://kotlinlang.org/docs/multiplatform.html)
 
 A lightweight, FHIR-inspired questionnaire library for Kotlin Multiplatform applications.
 
@@ -18,7 +18,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.ellykits.litequest:litequest-library:1.0.0-alpha07")
+                implementation("io.github.ellykits.litequest:litequest-library:1.0.0-beta01")
             }
         }
     }
@@ -63,7 +63,8 @@ fun MyQuestionnaireScreen() {
         mode = mode,
         onModeChange = { newMode -> mode = newMode },
         onSubmit = { println("Form submitted: ${state.response}") },
-        onDismiss = { /* Handle dismiss */ }
+        onDismiss = { /* Handle dismiss */ },
+        showCloseButton = true,
     )
 }
 ```
@@ -108,6 +109,79 @@ QuestionnaireScreen(
     onDismiss = { /* Handle dismiss */ }
 )
 ```
+
+### QuestionnaireScreen Parameters
+
+| Parameter                      | Type                             | Default    | Description                                                                                                                                          |
+|--------------------------------|----------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`                         | `QuestionnaireType`              | —          | `Single(questionnaire)` or `Paginated(paginatedQuestionnaire)`                                                                                       |
+| `manager`                      | `QuestionnaireManager`           | —          | Reactive state manager                                                                                                                               |
+| `onSubmit`                     | `() -> Unit`                     | —          | Called when the user submits the form                                                                                                                |
+| `modifier`                     | `Modifier`                       | `Modifier` | Applied to the root composable                                                                                                                       |
+| `mode`                         | `QuestionnaireMode`              | `Edit`     | `Edit`, `Summary`, or `ReadOnly`                                                                                                                     |
+| `onModeChange`                 | `((QuestionnaireMode) -> Unit)?` | —          | Required for Review/Edit toggle; pass `null` to hide the button                                                                                      |
+| `onDismiss`                    | `(() -> Unit)?`                  | `null`     | Called when the close button is tapped                                                                                                               |
+| `showCloseButton`              | `Boolean`                        | `false`    | Show the X close button in the top bar (visible in all modes including Summary)                                                                      |
+| `showDismissDialogOnClose`     | `Boolean`                        | `true`     | Show a confirmation dialog before dismissing in Edit mode                                                                                            |
+| `showValidationDialogOnSubmit` | `Boolean`                        | `true`     | Show a dialog listing validation errors when the user submits                                                                                        |
+| `showReview`                   | `Boolean`                        | `true`     | Show the Review/Edit toggle button                                                                                                                   |
+| `allowSubmitWithErrors`        | `Boolean`                        | `false`    | Allow submission when validation errors exist. When `false`, the validation dialog hides the "Submit anyway" button and the submit action is blocked |
+| `customActions`                | `(@Composable () -> Unit)?`      | `null`     | Replace the default Submit/Previous/Next bottom bar with a custom composable                                                                         |
+
+### Embedded Questionnaire
+
+`EmbeddedQuestionnaire` renders only the form fields — no `Scaffold`, no `TopAppBar`, no submit button, no dismiss dialogs. It sizes to fit its items, so the host screen owns the layout, scroll, and submission logic. Validation errors still appear inline as the user interacts with each field.
+
+Read answers at any time via `manager.state`:
+
+```kotlin
+val response = manager.state.value.response
+```
+
+```kotlin
+@Composable
+fun EncounterScreen(onBack: () -> Unit) {
+    val questionnaire = remember { myQuestionnaire() }
+    val manager = remember { QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire)) }
+
+    var clinicianName by remember { mutableStateOf("") }
+    var submitted by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = { /* your top bar */ },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            // Form fields appear here — sized to content, no internal scroll
+            EmbeddedQuestionnaire(
+                manager = manager,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // External inputs that are not part of the questionnaire
+            OutlinedTextField(
+                value = clinicianName,
+                onValueChange = { clinicianName = it },
+                label = { Text("Attending Clinician") },
+            )
+
+            // Custom submit — reads questionnaire answers from manager state
+            Button(onClick = {
+                val response = manager.state.value.response
+                // combine response with clinicianName and submit
+            }) {
+                Text("Record Encounter")
+            }
+        }
+    }
+}
+```
+
+`QuestionnaireScreen` remains the full-screen component that manages its own `Scaffold`, system bar insets, submit flow, and dismiss dialogs. Use `EmbeddedQuestionnaire` when you want to own all of that yourself.
 
 ### JsonLogic Expressions
 
@@ -213,7 +287,7 @@ class RatingWidget(override val item: Item) : ItemWidget {
     }
 }
 
-// 2. Register custom widget in the factory
+// 2. Register a custom widget in the factory
 val factory = DefaultWidgetFactory().apply {
     registerWidget(ItemType("RATING")) { RatingWidget(it) }
 }
@@ -229,7 +303,7 @@ val manager = QuestionnaireManager(
 QuestionnaireScreen(
     type = QuestionnaireType.Single(questionnaire),
     manager = manager,
-    onSubmit = { /* handle submit */ }
+    onSubmit = { /* handle submitting */ }
 )
 ```
 
@@ -254,7 +328,7 @@ library/
 ├── engine/       # JsonLogic evaluation, validation, visibility, calculations
 ├── state/        # QuestionnaireManager - reactive state orchestration
 ├── ui/           # Compose UI components
-│   ├── screen/   # QuestionnaireScreen - unified Edit/Summary screen
+│   ├── screen/   # QuestionnaireScreen (full-screen), EmbeddedQuestionnaire (fields only)
 │   ├── widget/   # Input widgets for different item types
 │   ├── summary/  # Summary/review page components
 │   ├── pagination/ # Multi-page support with navigation
@@ -271,7 +345,7 @@ LiteQuest uses a **custom Kotlin Multiplatform implementation of [JsonLogic](htt
 **Supported Operators:**
 
 | Operator | Category    | Description                                                                                                                                                  | Example                                                      |
-| -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+|----------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
 | `var`    | Variables   | Access form field values with support for **Row-Scoped Evaluation** (e.g. `receivedItems.method` resolves to current row) and dot notation for global paths. | `{"var": "firstName"}` or `{"var": "receivedItems.method"}`  |
 | `==`     | Comparison  | Equality check - returns true if values are equal                                                                                                            | `{"==": [{"var": "age"}, 18]}`                               |
 | `!=`     | Comparison  | Inequality check - returns true if values are not equal                                                                                                      | `{"!=": [{"var": "status"}, "active"]}`                      |
@@ -309,7 +383,7 @@ Answer Change → Recalculate Values → Update Visibility → Revalidate → Em
 ### Widget Types
 
 | ItemType      | Widget               | Data Type    | Features                                        |
-| ------------- | -------------------- | ------------ | ----------------------------------------------- |
+|---------------|----------------------|--------------|-------------------------------------------------|
 | STRING        | TextInputWidget      | String       | Single-line text input                          |
 | TEXT          | TextInputWidget      | String       | Multi-line text area                            |
 | BOOLEAN       | BooleanWidget        | Boolean      | Switch/Checkbox toggle                          |
@@ -335,18 +409,30 @@ Answer Change → Recalculate Values → Update Visibility → Revalidate → Em
 ### Desktop
 
 ```bash
-./gradlew :demo:run
+./gradlew :demo:desktopDemo:desktopRun
 ```
 
 ### Android
 
 ```bash
-./gradlew :demo:installDebug
+./gradlew :demo:androidDemo:installDebug
+```
+
+### Web (JS)
+
+```bash
+./gradlew :demo:webDemo:jsBrowserDevelopmentRun
+```
+
+### Web (Wasm)
+
+```bash
+./gradlew :demo:webDemo:wasmJsBrowserDevelopmentRun
 ```
 
 ### iOS
 
-Open `iosDemo/iosDemo.xcodeproj` in Xcode and run.
+Open `demo/iosDemo/iosDemo.xcodeproj` in Xcode and run on a simulator or device.
 
 ## Development
 
@@ -354,9 +440,11 @@ Open `iosDemo/iosDemo.xcodeproj` in Xcode and run.
 
 ```bash
 # Run all tests
-./gradlew :library:desktopTest
+./gradlew :library:allTests
 
 # Run platform-specific tests
+./gradlew :library:desktopTest
+./gradlew :library:jsBrowserTest
 ./gradlew :library:androidUnitTest
 ./gradlew :library:iosSimulatorArm64Test
 ```
@@ -365,20 +453,21 @@ Open `iosDemo/iosDemo.xcodeproj` in Xcode and run.
 
 ```bash
 # Build library
-./gradlew :library:assemble
+./gradlew :library:build
 
-# Build demo app
-./gradlew :demo:assembleDebug
+# Build Android demo
+./gradlew :demo:androidDemo:assembleDebug
 ```
 
 ## Platform Support
 
-| Platform   | Status          | Min Version          |
-| ---------- | --------------- | -------------------- |
-| Android    | ✅ Stable       | API 24 (Android 7.0) |
-| iOS        | ✅ Stable       | iOS 14.0+            |
-| Desktop    | ✅ Stable       | JVM 11+              |
-| Web (WASM) | ⚠️ Disabled in current build | N/A      |
+| Platform     | Status   | Min Version          |
+|--------------|----------|----------------------|
+| Android      | ✅ Stable | API 24 (Android 7.0) |
+| iOS          | ✅ Stable | iOS 14.0+            |
+| Desktop      | ✅ Stable | JVM 11+              |
+| Web (JS)     | ✅ Stable | —                    |
+| Web (WasmJS) | ✅ Stable | —                    |
 
 ## Documentation
 
@@ -392,8 +481,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 1. Clone the repository
 2. Open in IntelliJ IDEA or Android Studio
-3. Run tests: `./gradlew :library:desktopTest`
-4. Run demo: `./gradlew :demo:run`
+3. Run tests: `./gradlew :library:allTests`
+4. Run demo: `./gradlew :demo:desktopDemo:desktopRun`
 
 ### Code Style
 

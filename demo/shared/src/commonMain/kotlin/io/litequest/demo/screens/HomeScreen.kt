@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.ClipboardCheck
 import com.composables.icons.lucide.Eye
+import com.composables.icons.lucide.Layers
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
 import io.litequest.demo.components.GridCard
@@ -78,6 +79,20 @@ fun HomeScreen(onNavigate: (String) -> Unit) {
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+          Text(
+            text = "Embedded form",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+          )
+          GridCard(
+            title = "Embedded Form",
+            icon = Lucide.Layers,
+            onClick = { onNavigate("embedded-form") },
+            modifier = Modifier.fillMaxWidth(0.33f),
+          )
+
           Text(
             text = "Single Page Forms",
             style = MaterialTheme.typography.titleMedium,
