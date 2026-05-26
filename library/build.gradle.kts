@@ -15,19 +15,26 @@ plugins {
 
 group = "io.github.ellykits.litequest"
 
-version = "1.0.0-alpha07"
+version = "1.0.0-alpha08"
 
 kotlin {
+  applyDefaultHierarchyTemplate()
+
   androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
 
   jvm("desktop") { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
 
-  /*  wasmJs {
+  wasmJs {
     browser()
     binaries.library()
-  }*/
+  }
 
-  listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
+  js {
+    browser()
+    binaries.library()
+  }
+
+  listOf(iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
     iosTarget.binaries.framework {
       baseName = "LiteQuest"
       isStatic = true
@@ -35,59 +42,51 @@ kotlin {
   }
 
   sourceSets {
-    val commonMain by getting {
+    commonMain.dependencies {
+      api(libs.kotlinx.serialization.json)
+      implementation(libs.kotlinx.coroutines.core)
+      implementation(libs.kotlinx.datetime)
+      implementation(libs.ktor.client.core)
+      implementation(libs.ktor.client.content.negotiation)
+      implementation(libs.ktor.serialization.kotlinx.json)
+
+      implementation(libs.foundation)
+      implementation(libs.material3)
+
+      implementation(libs.material.icons.core)
+      implementation(libs.lucide)
+      implementation(libs.filekit.core)
+      implementation(libs.filekit.compose)
+      implementation(libs.coil.compose)
+    }
+
+    commonTest.dependencies {
+      implementation(kotlin("test"))
+      implementation(libs.kotlinx.coroutines.test)
+    }
+
+    androidMain.dependencies {
+      implementation(libs.kscan)
+      implementation(libs.ktor.client.android)
+      implementation(libs.androidx.activity.compose)
+      implementation(libs.androidx.core.ktx)
+    }
+
+    val desktopMain by getting {
       dependencies {
-        api(libs.kotlinx.serialization.json)
-        implementation(libs.kotlinx.coroutines.core)
-        implementation(libs.kotlinx.datetime)
-        implementation(libs.ktor.client.core)
-        implementation(libs.ktor.client.content.negotiation)
-        implementation(libs.ktor.serialization.kotlinx.json)
-
-        implementation(libs.runtime)
-        implementation(libs.foundation)
-        implementation(libs.material3)
-        implementation(libs.ui)
-
-        implementation(libs.material.icons.core)
-        implementation(libs.lucide)
         implementation(libs.kscan)
-        implementation(libs.filekit.core)
-        implementation(libs.filekit.compose)
-        implementation(libs.coil.compose)
+        implementation(libs.ktor.client.cio)
       }
     }
 
-    val commonTest by getting {
-      dependencies {
-        implementation(kotlin("test"))
-        implementation(libs.kotlinx.coroutines.test)
-      }
+    iosMain.dependencies {
+      implementation(libs.kscan)
+      implementation(libs.ktor.client.darwin)
     }
 
-    val androidMain by getting {
-      dependencies {
-        implementation(libs.ktor.client.android)
-        implementation(libs.androidx.activity.compose)
-        implementation(libs.androidx.core.ktx)
-      }
-    }
+    val webMain by getting { dependencies { implementation(libs.ktor.client.js) } }
 
-    val desktopMain by getting { dependencies { implementation(libs.ktor.client.cio) } }
-
-    //    val wasmJsMain by getting { dependencies { implementation(libs.ktor.client.js) } }
-
-    val iosX64Main by getting
-    val iosArm64Main by getting
-    val iosSimulatorArm64Main by getting
-    val iosMain by creating {
-      dependsOn(commonMain)
-      iosX64Main.dependsOn(this)
-      iosArm64Main.dependsOn(this)
-      iosSimulatorArm64Main.dependsOn(this)
-
-      dependencies { implementation(libs.ktor.client.darwin) }
-    }
+    wasmJsMain.dependencies { implementation(libs.kscan) }
   }
 }
 
@@ -103,11 +102,12 @@ android {
   }
 }
 
-signing {
-  // This checks if any task in the current execution is a MavenLocal task
-  val isMavenLocal =
-    gradle.taskGraph.allTasks.any { it.name.contains("MavenLocal", ignoreCase = true) }
-  isRequired = !isMavenLocal
+signing { isRequired = true }
+
+gradle.taskGraph.whenReady {
+  if (allTasks.any { it.name.contains("MavenLocal", ignoreCase = true) }) {
+    tasks.withType<Sign>().configureEach { isEnabled = false }
+  }
 }
 
 // Prepare for publishing

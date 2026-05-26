@@ -91,17 +91,9 @@ internal fun AttachmentPickerComponent(
   LaunchedEffect(attachment) {
     if (attachment == null) {
       imagePreviewBytes = null
-    } else if (imagePreviewBytes == null) {
-      val isImage = attachment.contentType.startsWith("image/")
-      if (isImage) {
-        try {
-          val file = PlatformFile(attachment.url)
-          imagePreviewBytes = file.readBytes()
-        } catch (e: Exception) {
-          imagePreviewBytes = null
-        }
-      }
     }
+    // Bytes are captured at selection time; path-based re-read is not
+    // available on all platforms (e.g., wasmJs has no file system access).
   }
 
   fun handleFileSelection(platformFile: PlatformFile) {

@@ -9,10 +9,11 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
         mavenLocal()
+        maven("https://jetbrains.space")
     }
 }
 plugins {
-  id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
+  id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 dependencyResolutionManagement {
@@ -20,5 +21,6 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         mavenLocal()
+        maven("https://jetbrains.space")
     }
 }

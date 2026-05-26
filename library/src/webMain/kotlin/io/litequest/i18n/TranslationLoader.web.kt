@@ -23,7 +23,7 @@ import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-private class WasmJsTranslationLoader : TranslationLoader {
+private class WebTranslationLoader : TranslationLoader {
   private val client =
     HttpClient(Js) {
       install(ContentNegotiation) {
@@ -41,4 +41,4 @@ private class WasmJsTranslationLoader : TranslationLoader {
   }
 }
 
-actual fun createTranslationLoader(): TranslationLoader = WasmJsTranslationLoader()
+actual fun createTranslationLoader(): TranslationLoader = WebTranslationLoader()

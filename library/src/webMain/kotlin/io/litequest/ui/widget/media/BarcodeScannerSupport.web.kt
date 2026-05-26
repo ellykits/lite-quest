@@ -24,7 +24,7 @@ actual fun BarcodeScannerView(
   onResult: (String) -> Unit,
   onCancel: () -> Unit,
 ) {
-  // Not supported
+  // Not supported on web
 }
 
 actual val isBarcodeScannerSupported: Boolean = false

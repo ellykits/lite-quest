@@ -19,7 +19,7 @@ import io.github.vinceglb.filekit.PlatformFile
 
 actual suspend fun copyToAppStorage(file: PlatformFile): PlatformFile {
   throw UnsupportedOperationException(
-    "File persistence is not supported on WASM. Files are only available during the current session."
+    "File persistence is not supported on web. Files are only available during the current session."
   )
 }
 

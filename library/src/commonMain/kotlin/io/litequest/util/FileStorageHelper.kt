@@ -18,7 +18,6 @@ package io.litequest.util
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
-import io.github.vinceglb.filekit.path
 import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
 import io.litequest.model.Attachment
@@ -40,7 +39,7 @@ object FileStorageHelper {
       contentType = mimeType,
       size = storedFile.size(),
       title = storedFile.name,
-      url = storedFile.path,
+      url = storedFile.name,
     )
   }
 
