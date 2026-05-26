@@ -182,11 +182,11 @@ class CalculatedValuesEngineTest {
 
     val dataContext1 = mutableMapOf<String, Any?>("amount" to 150.0)
     val results1 = engine.evaluate(dataContext1)
-    assertEquals(10.0, results1["discount"])
+    assertEquals(10.0, (results1["discount"] as Number).toDouble())
 
     val dataContext2 = mutableMapOf<String, Any?>("amount" to 50.0)
     val results2 = engine.evaluate(dataContext2)
-    assertEquals(0.0, results2["discount"])
+    assertEquals(0.0, (results2["discount"] as Number).toDouble())
   }
 
   @Test

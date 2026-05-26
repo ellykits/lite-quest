@@ -26,7 +26,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -56,8 +55,9 @@ class QuestionnaireManagerTest {
         QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
       }
 
-    assertTrue(
-      error.message?.contains("Duplicate linkId values are not allowed") == true,
+    assertEquals(
+      error.message?.contains("Duplicate linkId values are not allowed"),
+      true,
       "Error message should clearly describe duplicate linkId guard",
     )
   }
@@ -241,10 +241,10 @@ class QuestionnaireManagerTest {
     var parentGroup = response.items.find { it.linkId == "parentGroup" }
     assertTrue(parentGroup != null, "Parent group should exist when visible")
 
-    val nestedField1 = parentGroup.items?.find { it.linkId == "nestedField1" }
-    val nestedField2 = parentGroup?.items?.find { it.linkId == "nestedField2" }
-    assertTrue(nestedField1?.answers?.isNotEmpty() == true, "nestedField1 should have answers")
-    assertTrue(nestedField2?.answers?.isNotEmpty() == true, "nestedField2 should have answers")
+    val nestedField1 = parentGroup.items.find { it.linkId == "nestedField1" }
+    val nestedField2 = parentGroup.items.find { it.linkId == "nestedField2" }
+    assertEquals(nestedField1?.answers?.isNotEmpty(), true, "nestedField1 should have answers")
+    assertEquals(nestedField2?.answers?.isNotEmpty(), true, "nestedField2 should have answers")
 
     manager.updateAnswer("showGroup", JsonPrimitive(false))
 
@@ -512,7 +512,7 @@ class QuestionnaireManagerTest {
     manager.updateAnswer("globalShow", JsonPrimitive(true))
     manager.addRepetition("group")
 
-    // 2. Update childField in first repetition
+    // 2. Update childField in the first repetition
     manager.updateInRepetition("group", 0, "childField", JsonPrimitive("some value"))
 
     // Verify answer is there
@@ -532,8 +532,9 @@ class QuestionnaireManagerTest {
     val groupAfterHide = manager.state.value.response.items.find { it.linkId == "group" }
     val answerAfterHide = groupAfterHide?.answers?.getOrNull(0)
     val fieldAfterHide = answerAfterHide?.items?.find { it.linkId == "childField" }
-    assertTrue(
-      fieldAfterHide?.answers?.isEmpty() == true,
+    assertEquals(
+      fieldAfterHide?.answers?.isEmpty(),
+      true,
       "Answer inside repetition should be cleared by skip logic",
     )
   }

@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "9.0.1"
 android-compileSdk = "36"
 android-minSdk = "24"
 android-targetSdk = "36"
@@ -54,14 +54,16 @@ filekit-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", versi
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
 material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
+spotless-plugin-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 
 [plugins]
-androidApplication = { id = "com.android.application", version.ref = "agp" }
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
-composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
-composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
-spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+androidApplication              = { id = "com.android.application",                        version.ref = "agp" }
+androidMultiplatformLibrary     = { id = "com.android.kotlin.multiplatform.library",        version.ref = "agp" }
+kotlinJvm                       = { id = "org.jetbrains.kotlin.jvm",                        version.ref = "kotlin" }
+kotlinMultiplatform             = { id = "org.jetbrains.kotlin.multiplatform",              version.ref = "kotlin" }
+kotlinSerialization             = { id = "org.jetbrains.kotlin.plugin.serialization",       version.ref = "kotlin" }
+composeMultiplatform            = { id = "org.jetbrains.compose",                           version.ref = "compose-plugin" }
+composeCompiler                 = { id = "org.jetbrains.kotlin.plugin.compose",             version.ref = "kotlin" }
+maven-publish                   = { id = "com.vanniktech.maven.publish",                    version.ref = "maven-publish" }
+spotless                        = { id = "com.diffplug.spotless",                           version.ref = "spotless" }
 

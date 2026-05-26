@@ -1,48 +1,12 @@
 plugins {
-    alias(libs.plugins.kotlinMultiplatform) apply false
-    alias(libs.plugins.kotlinSerialization) apply false
-    alias(libs.plugins.androidApplication) apply false
-    alias(libs.plugins.androidLibrary) apply false
-    alias(libs.plugins.composeMultiplatform) apply false
-    alias(libs.plugins.composeCompiler) apply false
-    alias(libs.plugins.spotless)
-}
-
-subprojects {
-    apply(plugin = "com.diffplug.spotless")
-
-    configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-        kotlin {
-            target("**/*.kt")
-            ktlint(rootProject.libs.versions.ktlint.get()).editorConfigOverride(
-                mapOf(
-                    "ktlint_standard_function-naming" to "disabled",
-                    "ktlint_standard_filename" to "disabled"
-                )
-            )
-            ktfmt().googleStyle()
-            trimTrailingWhitespace()
-            licenseHeaderFile(rootProject.file("LICENSE"))
-            endWithNewline()
-        }
-
-        kotlinGradle {
-            target("*.gradle.kts")
-            ktlint(rootProject.libs.versions.ktlint.get())
-            ktfmt().googleStyle()
-        }
-
-        format("xml") {
-            target("**/*.xml")
-            leadingTabsToSpaces(2)
-            trimTrailingWhitespace()
-            endWithNewline()
-        }
-
-        format("json") {
-            target("**/*.json")
-            leadingTabsToSpaces(2)
-            trimTrailingWhitespace()
-        }
-    }
+  id("spotless-conventions")
+  alias(libs.plugins.kotlinMultiplatform) apply false
+  alias(libs.plugins.kotlinSerialization) apply false
+  alias(libs.plugins.kotlinJvm) apply false
+  alias(libs.plugins.androidApplication) apply false
+  alias(libs.plugins.androidMultiplatformLibrary) apply false
+  alias(libs.plugins.composeMultiplatform) apply false
+  alias(libs.plugins.composeCompiler) apply false
+  // Declared here so all subprojects share one classloader scope for Spotless's build service
+  alias(libs.plugins.spotless) apply false
 }

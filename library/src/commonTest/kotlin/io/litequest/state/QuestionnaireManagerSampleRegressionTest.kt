@@ -15,6 +15,7 @@
 */
 package io.litequest.state
 
+import io.github.ellykits.litequest.library.generated.resources.Res
 import io.litequest.engine.LiteQuestEvaluator
 import io.litequest.model.Answer
 import io.litequest.model.Item
@@ -25,14 +26,17 @@ import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 class QuestionnaireManagerSampleRegressionTest {
   private val json = Json { ignoreUnknownKeys = true }
 
+  @OptIn(ExperimentalResourceApi::class)
   @Test
-  fun sampleFlow_updatesAnswers_skipLogic_validation_calculated_and_generatedResponse() {
+  fun sampleFlow_updatesAnswers_skipLogic_validation_calculated_and_generatedResponse() = runTest {
     val questionnaire = loadQuestionnaireSample()
     val expectedResponse = loadResponseSample()
     val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
@@ -79,8 +83,9 @@ class QuestionnaireManagerSampleRegressionTest {
     assertResponseMatchesExpected(ungatedExpected, ungatedActual, calculatedLinkIds)
   }
 
+  @OptIn(ExperimentalResourceApi::class)
   @Test
-  fun sampleValidation_requiredFieldHiddenThenVisible_behavesCorrectly() {
+  fun sampleValidation_requiredFieldHiddenThenVisible_behavesCorrectly() = runTest {
     val questionnaire = loadQuestionnaireSample().withRequiredField("firstName")
     val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
 
@@ -240,12 +245,18 @@ class QuestionnaireManagerSampleRegressionTest {
     return items.firstOrNull { it.linkId == linkId }
   }
 
-  private fun loadQuestionnaireSample(): Questionnaire {
-    return json.decodeFromString(loadProjectFileText("files/single_page_questionnaire_sample.json"))
+  @OptIn(ExperimentalResourceApi::class)
+  private suspend fun loadQuestionnaireSample(): Questionnaire {
+    return json.decodeFromString(
+      Res.readBytes("files/single_page_questionnaire_sample.json").decodeToString()
+    )
   }
 
-  private fun loadResponseSample(): QuestionnaireResponse {
-    return json.decodeFromString(loadProjectFileText("files/single_page_response_sample.json"))
+  @OptIn(ExperimentalResourceApi::class)
+  private suspend fun loadResponseSample(): QuestionnaireResponse {
+    return json.decodeFromString(
+      Res.readBytes("files/single_page_response_sample.json").decodeToString()
+    )
   }
 
   private fun Questionnaire.withRequiredField(linkId: String): Questionnaire {
@@ -262,5 +273,3 @@ class QuestionnaireManagerSampleRegressionTest {
     }
   }
 }
-
-expect fun loadProjectFileText(path: String): String

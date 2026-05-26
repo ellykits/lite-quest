@@ -4,9 +4,10 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
+  id("spotless-conventions")
   alias(libs.plugins.kotlinMultiplatform)
   alias(libs.plugins.kotlinSerialization)
-  alias(libs.plugins.androidLibrary)
+  alias(libs.plugins.androidMultiplatformLibrary)
   alias(libs.plugins.composeMultiplatform)
   alias(libs.plugins.composeCompiler)
   alias(libs.plugins.maven.publish)
@@ -20,7 +21,13 @@ version = "1.0.0-alpha08"
 kotlin {
   applyDefaultHierarchyTemplate()
 
-  androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
+  androidLibrary {
+    namespace = "io.github.ellykits.litequest.library"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    minSdk = libs.versions.android.minSdk.get().toInt()
+    compilerOptions { jvmTarget = JvmTarget.JVM_11 }
+    androidResources { enable = true }
+  }
 
   jvm("desktop") { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
 
@@ -52,6 +59,7 @@ kotlin {
 
       implementation(libs.foundation)
       implementation(libs.material3)
+      implementation(libs.components.resources)
 
       implementation(libs.material.icons.core)
       implementation(libs.lucide)
@@ -84,21 +92,9 @@ kotlin {
       implementation(libs.ktor.client.darwin)
     }
 
-    val webMain by getting { dependencies { implementation(libs.ktor.client.js) } }
+    jsMain.dependencies { implementation(libs.ktor.client.js) }
 
     wasmJsMain.dependencies { implementation(libs.kscan) }
-  }
-}
-
-android {
-  namespace = "io.github.ellykits.litequest.library"
-  compileSdk = 36
-
-  defaultConfig { minSdk = 24 }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
   }
 }
 
@@ -110,7 +106,6 @@ gradle.taskGraph.whenReady {
   }
 }
 
-// Prepare for publishing
 mavenPublishing {
   publishToMavenCentral()
 
