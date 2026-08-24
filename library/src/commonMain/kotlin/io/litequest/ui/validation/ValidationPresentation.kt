@@ -67,6 +67,12 @@ internal object ValidationPresentation {
     return showValidationDialogOnSubmit && mode != QuestionnaireMode.ReadOnly && errors.isNotEmpty()
   }
 
+  fun errorMessagesByLinkId(errors: List<ValidationError>): Map<String, String> =
+    errors.associate { it.linkId to formatValidationReason(it) }
+
+  fun errorMessagesByPath(errors: List<ValidationError>): Map<String, String> =
+    errors.associate { it.path.joinToString(".") to formatValidationReason(it) }
+
   fun formatValidationReason(error: ValidationError): String {
     val message = error.message.trim()
     return when {

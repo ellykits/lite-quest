@@ -164,4 +164,20 @@ class ValidationPresentationTest {
     val reason = ValidationPresentation.formatValidationReason(errorB)
     assertEquals("fieldB.range", reason)
   }
+
+  @Test
+  fun errorMessagesByLinkId_presentsRequiredKey_asSentence() {
+    val messages = ValidationPresentation.errorMessagesByLinkId(listOf(errorA, errorB))
+
+    assertEquals("This field is required.", messages["fieldA"])
+    assertEquals("fieldB.range", messages["fieldB"])
+  }
+
+  @Test
+  fun errorMessagesByPath_presentsRequiredKey_asSentence() {
+    val messages = ValidationPresentation.errorMessagesByPath(listOf(repeatedErrorA0, errorB))
+
+    assertEquals("This field is required.", messages["repeatGroup.0.fieldA"])
+    assertEquals("fieldB.range", messages["section.fieldB"])
+  }
 }
