@@ -220,6 +220,7 @@ private fun SingleQuestionnaireScreen(
           state = state,
           paginatedQuestionnaire = null,
           onSubmit = ctx.submitAction,
+          widgetFactory = widgetFactory,
           modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp),
         )
     }
@@ -321,6 +322,7 @@ private fun PaginatedQuestionnaireScreen(
           state = state,
           paginatedQuestionnaire = paginatedQuestionnaire,
           onSubmit = ctx.submitAction,
+          widgetFactory = widgetFactory,
           modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 4.dp),
         )
     }

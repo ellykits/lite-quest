@@ -95,11 +95,11 @@ fun FormRenderer(
     }
   val errorMessages =
     remember(visibleValidationErrors) {
-      visibleValidationErrors.associate { it.linkId to it.message }
+      ValidationPresentation.errorMessagesByLinkId(visibleValidationErrors)
     }
   val pathErrorMessages =
     remember(visibleValidationErrors) {
-      visibleValidationErrors.associate { it.path.joinToString(".") to it.message }
+      ValidationPresentation.errorMessagesByPath(visibleValidationErrors)
     }
 
   val formContext =

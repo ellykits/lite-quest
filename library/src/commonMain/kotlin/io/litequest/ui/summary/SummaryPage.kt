@@ -45,6 +45,7 @@ import io.litequest.model.Item
 import io.litequest.model.ItemType
 import io.litequest.state.QuestionnaireState
 import io.litequest.ui.pagination.PaginatedQuestionnaire
+import io.litequest.ui.widget.WidgetFactory
 import io.litequest.util.DataContextBuilder
 import kotlin.math.absoluteValue
 
@@ -55,6 +56,7 @@ fun SummaryPage(
   modifier: Modifier = Modifier,
   paginatedQuestionnaire: PaginatedQuestionnaire? = null,
   onSubmit: (() -> Unit)? = null,
+  widgetFactory: WidgetFactory? = null,
 ) {
   val shouldShowPageHeaders =
     paginatedQuestionnaire?.let { paginated -> paginated.pages.any { page -> page.items.size > 1 } }
@@ -81,6 +83,7 @@ fun SummaryPage(
             items = page.items,
             flatAnswers = flatAnswers,
             visibleItems = state.visibleItems,
+            widgetFactory = widgetFactory,
           )
         }
       }
@@ -97,7 +100,7 @@ fun SummaryPage(
             verticalArrangement = Arrangement.spacedBy(16.dp),
           ) {
             state.visibleItems.forEach { item ->
-              SummaryItem(item = item, flatAnswers = flatAnswers)
+              SummaryItem(item = item, flatAnswers = flatAnswers, widgetFactory = widgetFactory)
             }
           }
         }
@@ -113,6 +116,7 @@ private fun PaginatedPageCard(
   items: List<Item>,
   flatAnswers: Map<String, Any?>,
   visibleItems: List<Item>,
+  widgetFactory: WidgetFactory?,
   modifier: Modifier = Modifier,
 ) {
   Card(
@@ -173,7 +177,7 @@ private fun PaginatedPageCard(
           val isVisibleOrHasAnswer = isVisible || hasAnswer
 
           if (isVisibleOrHasAnswer) {
-            SummaryItem(item = item, flatAnswers = flatAnswers)
+            SummaryItem(item = item, flatAnswers = flatAnswers, widgetFactory = widgetFactory)
           }
         }
       }
@@ -182,38 +186,51 @@ private fun PaginatedPageCard(
 }
 
 @Composable
-private fun SummaryItem(item: Item, flatAnswers: Map<String, Any?>, level: Int = 0) {
+private fun SummaryItem(
+  item: Item,
+  flatAnswers: Map<String, Any?>,
+  widgetFactory: WidgetFactory?,
+  level: Int = 0,
+) {
   val value = flatAnswers[item.linkId]
 
   when (item.type) {
     ItemType.GROUP -> {
       if (item.repeats) {
         if (value != null) {
-          RenderRepeatingGroup(item, value)
+          RenderRepeatingGroup(item, value, widgetFactory)
         }
       } else {
-        RenderNonRepeatingGroup(item, flatAnswers, level)
+        RenderNonRepeatingGroup(item, flatAnswers, widgetFactory, level)
       }
     }
     ItemType.LAYOUT_ROW,
     ItemType.LAYOUT_COLUMN,
     ItemType.LAYOUT_BOX -> {
       item.items.forEach { childItem ->
-        SummaryItem(item = childItem, flatAnswers = flatAnswers, level = level)
+        SummaryItem(
+          item = childItem,
+          flatAnswers = flatAnswers,
+          widgetFactory = widgetFactory,
+          level = level,
+        )
       }
     }
     ItemType.DISPLAY -> {}
     else -> {
       if (value != null && !isEmptyValue(value)) {
-        val displayValue = getChoiceDisplayValue(value, item)
-        SummaryFieldItem(label = item.text, value = displayValue, type = item.type, item = item)
+        SummaryFieldItem(
+          label = item.text,
+          displayValue = resolveDisplayText(value, item, widgetFactory),
+          type = item.type,
+        )
       }
     }
   }
 }
 
 @Composable
-private fun RenderRepeatingGroup(item: Item, value: Any?) {
+private fun RenderRepeatingGroup(item: Item, value: Any?, widgetFactory: WidgetFactory?) {
   if (value !is List<*> || value.isEmpty()) return
 
   Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -245,17 +262,13 @@ private fun RenderRepeatingGroup(item: Item, value: Any?) {
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            item.items.forEach { childItem ->
-              val childValue = instanceValue[childItem.linkId]
-              if (childValue != null) {
-                val displayValue = getChoiceDisplayValue(childValue, childItem)
-                SummaryFieldItem(
-                  label = childItem.text,
-                  value = displayValue,
-                  type = childItem.type,
-                  item = childItem,
-                )
-              }
+            repetitionDisplayValues(item, instanceValue, widgetFactory).forEach {
+              (childItem, displayValue) ->
+              SummaryFieldItem(
+                label = childItem.text,
+                displayValue = displayValue,
+                type = childItem.type,
+              )
             }
           }
         }
@@ -265,7 +278,12 @@ private fun RenderRepeatingGroup(item: Item, value: Any?) {
 }
 
 @Composable
-private fun RenderNonRepeatingGroup(item: Item, flatAnswers: Map<String, Any?>, level: Int) {
+private fun RenderNonRepeatingGroup(
+  item: Item,
+  flatAnswers: Map<String, Any?>,
+  widgetFactory: WidgetFactory?,
+  level: Int,
+) {
   Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
     if (item.text.isNotEmpty()) {
       Text(
@@ -276,7 +294,12 @@ private fun RenderNonRepeatingGroup(item: Item, flatAnswers: Map<String, Any?>, 
     }
 
     item.items.forEach { childItem ->
-      SummaryItem(item = childItem, flatAnswers = flatAnswers, level = level + 1)
+      SummaryItem(
+        item = childItem,
+        flatAnswers = flatAnswers,
+        widgetFactory = widgetFactory,
+        level = level + 1,
+      )
     }
   }
 }
@@ -297,12 +320,10 @@ private fun hasAnyChildValues(item: Item, flatAnswers: Map<String, Any?>): Boole
 @Composable
 private fun SummaryFieldItem(
   label: String,
-  value: Any,
+  displayValue: String,
   type: ItemType,
   modifier: Modifier = Modifier,
-  item: Item? = null,
 ) {
-  val displayValue = formatValueForDisplay(value, type, item)
   val icon = getIconForType(type)
 
   if (label.isEmpty()) {
@@ -335,6 +356,25 @@ private fun SummaryFieldItem(
     }
   }
 }
+
+/**
+ * Resolves the review text for [value], letting the widget that owns the answer decide and falling
+ * back to the library's own formatting when it declines.
+ */
+internal fun resolveDisplayText(value: Any, item: Item, widgetFactory: WidgetFactory?): String =
+  widgetFactory?.createWidget(item)?.formatForReview(value)
+    ?: formatValueForDisplay(getChoiceDisplayValue(value, item), item.type, item)
+
+internal fun repetitionDisplayValues(
+  item: Item,
+  instance: Map<*, *>,
+  widgetFactory: WidgetFactory?,
+): List<Pair<Item, String>> =
+  item.items.mapNotNull { childItem ->
+    instance[childItem.linkId]?.let {
+      childItem to resolveDisplayText(it, childItem, widgetFactory)
+    }
+  }
 
 private fun formatValueForDisplay(value: Any, type: ItemType, item: Item? = null): String {
   return when (type) {

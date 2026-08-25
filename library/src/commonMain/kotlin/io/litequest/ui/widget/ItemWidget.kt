@@ -28,4 +28,15 @@ interface ItemWidget {
     onValueChange: (JsonElement, String?) -> Unit,
     errorMessage: String? = null,
   )
+
+  /**
+   * Returns how [value] should read in review and read-only modes, or `null` to let the library
+   * format it.
+   *
+   * Widgets that store a structured answer override this so an operator sees a readable value
+   * instead of the raw structure. [value] arrives in the plain Kotlin form `DataContextBuilder`
+   * produces - objects as `Map<String, Any?>`, arrays as `List<Any?>`, primitives unwrapped -
+   * rather than as a [JsonElement].
+   */
+  fun formatForReview(value: Any): String? = null
 }
