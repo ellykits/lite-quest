@@ -79,6 +79,7 @@ class RepeatingGroupWidget(override val item: Item) : ItemWidget {
         val rowContext =
           context.copy(
             values = repetitionValues,
+            enclosingValues = context.enclosingValues + context.values,
             onValueChange = { fieldLinkId, newValue, text ->
               context.onRepetitionFieldChange?.invoke(
                 item.linkId,

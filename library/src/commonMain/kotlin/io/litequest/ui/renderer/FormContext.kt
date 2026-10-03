@@ -33,6 +33,12 @@ data class FormContext(
   val onRepetitionAdd: ((String) -> Unit)? = null,
   val onRepetitionRemove: ((String, Int) -> Unit)? = null,
   val onRepetitionFieldChange: ((String, Int, String, JsonElement, String?) -> Unit)? = null,
+  /**
+   * The answers of the scopes enclosing a repeating group's row, so a row field can depend on a
+   * form-level answer. Kept apart from [values] so a row field never reads a form-level answer that
+   * shares its linkId.
+   */
+  val enclosingValues: Map<String, JsonElement?> = emptyMap(),
 ) {
   fun childPath(linkId: String): String {
     return if (pathPrefix.isEmpty()) linkId else "$pathPrefix.$linkId"
