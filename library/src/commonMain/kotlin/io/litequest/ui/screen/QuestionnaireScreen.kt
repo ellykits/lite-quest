@@ -103,6 +103,7 @@ fun QuestionnaireScreen(
   showReview: Boolean = true,
   allowSubmitWithErrors: Boolean = false,
   customActions: (@Composable () -> Unit)? = null,
+  submitLabel: String? = null,
 ) {
   val state by manager.state.collectAsState()
   when (type) {
@@ -121,6 +122,7 @@ fun QuestionnaireScreen(
         showReview = showReview,
         allowSubmitWithErrors = allowSubmitWithErrors,
         customActions = customActions,
+        submitLabel = submitLabel,
         modifier = modifier,
         widgetFactory = manager.widgetFactory,
       )
@@ -137,6 +139,7 @@ fun QuestionnaireScreen(
         showReview = showReview,
         allowSubmitWithErrors = allowSubmitWithErrors,
         customActions = customActions,
+        submitLabel = submitLabel,
         modifier = modifier,
         mode = mode,
         onModeChange = onModeChange,
@@ -160,6 +163,7 @@ private fun SingleQuestionnaireScreen(
   showReview: Boolean,
   allowSubmitWithErrors: Boolean,
   customActions: (@Composable () -> Unit)?,
+  submitLabel: String?,
   modifier: Modifier,
   widgetFactory: WidgetFactory,
 ) {
@@ -175,6 +179,7 @@ private fun SingleQuestionnaireScreen(
     showReview = showReview,
     allowSubmitWithErrors = allowSubmitWithErrors,
     customActions = customActions,
+    submitLabel = submitLabel,
     modifier = modifier,
     titleContent = {
       Text(
@@ -240,6 +245,7 @@ private fun PaginatedQuestionnaireScreen(
   showReview: Boolean,
   allowSubmitWithErrors: Boolean,
   customActions: (@Composable () -> Unit)?,
+  submitLabel: String?,
   modifier: Modifier,
   mode: QuestionnaireMode,
   onModeChange: ((QuestionnaireMode) -> Unit)?,
@@ -262,6 +268,7 @@ private fun PaginatedQuestionnaireScreen(
     showReview = showReview,
     allowSubmitWithErrors = allowSubmitWithErrors,
     customActions = customActions,
+    submitLabel = submitLabel,
     modifier = modifier,
     pageNavigator = pageNavigator,
     totalPages = totalPages,
@@ -357,6 +364,7 @@ private fun QuestionnaireScaffold(
   showReview: Boolean,
   allowSubmitWithErrors: Boolean,
   customActions: (@Composable () -> Unit)?,
+  submitLabel: String?,
   modifier: Modifier,
   pageNavigator: PageNavigator? = null,
   totalPages: Int? = null,
@@ -486,6 +494,7 @@ private fun QuestionnaireScaffold(
             mode = mode,
             pageNavigator = pageNavigator,
             totalPages = totalPages,
+            submitLabel = submitLabel,
           )
         }
       }
@@ -565,6 +574,7 @@ private fun DefaultFormActions(
   mode: QuestionnaireMode,
   pageNavigator: PageNavigator? = null,
   totalPages: Int? = null,
+  submitLabel: String? = null,
 ) {
   val currentPageIndex = pageNavigator?.currentPageIndex?.collectAsState()?.value ?: 0
   val isLastPage = pageNavigator != null && totalPages != null && currentPageIndex == totalPages - 1
@@ -619,7 +629,7 @@ private fun DefaultFormActions(
           modifier = Modifier.height(36.dp),
           shape = MaterialTheme.shapes.large,
         ) {
-          Text("Submit", style = MaterialTheme.typography.labelLarge)
+          Text(submitLabel ?: "Submit", style = MaterialTheme.typography.labelLarge)
           Spacer(Modifier.width(6.dp))
           Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
