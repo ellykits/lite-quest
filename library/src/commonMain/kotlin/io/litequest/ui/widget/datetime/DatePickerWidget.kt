@@ -57,12 +57,12 @@ class DatePickerWidget(override val item: Item) : ItemWidget {
     var showDialog by remember { mutableStateOf(false) }
     val dateString = value?.jsonPrimitive?.content ?: ""
 
-    val displayPattern = item.extension["displayFormat"]?.jsonPrimitive?.content ?: "yyyy-MM-dd"
+    val displayPattern = item.extension["displayFormat"]?.jsonPrimitive?.content
     val outputPattern = item.extension["outputFormat"]?.jsonPrimitive?.content ?: "yyyy-MM-dd"
     val minDate = item.extension["minDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it) }
     val maxDate = item.extension["maxDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it) }
 
-    val displayFormat = LocalDate.Format { byUnicodePattern(displayPattern) }
+    val displayFormat = displayPattern?.let { LocalDate.Format { byUnicodePattern(it) } }
     val outputFormat = LocalDate.Format { byUnicodePattern(outputPattern) }
 
     val currentDate =
@@ -77,7 +77,9 @@ class DatePickerWidget(override val item: Item) : ItemWidget {
     val displayValue =
       dateString
         .takeIf { it.isNotEmpty() }
-        ?.let { dateString.parseLocalDate()?.let { displayFormat.format(it) } } ?: ""
+        ?.let {
+          dateString.parseLocalDate()?.let { date -> displayFormat?.format(date) ?: date.toWords() }
+        } ?: ""
 
     DateTimeTrigger(
       label = item.text,

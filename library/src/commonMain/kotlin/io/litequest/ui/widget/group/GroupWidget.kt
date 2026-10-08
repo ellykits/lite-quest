@@ -43,6 +43,8 @@ import io.litequest.model.Item
 import io.litequest.ui.renderer.LocalFormContext
 import io.litequest.ui.widget.ItemWidget
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 class GroupWidget(override val item: Item) : ItemWidget {
   @Composable
@@ -53,7 +55,9 @@ class GroupWidget(override val item: Item) : ItemWidget {
   ) {
     val context = LocalFormContext.current
     val nestedContext = context.copy(pathPrefix = context.childPath(item.linkId))
-    var expanded by rememberSaveable { mutableStateOf(true) }
+    var expanded by rememberSaveable {
+      mutableStateOf(item.extension["collapsed"]?.jsonPrimitive?.booleanOrNull != true)
+    }
     val rotationAngle by animateFloatAsState(if (expanded) 180f else 0f)
 
     val childWidgets =

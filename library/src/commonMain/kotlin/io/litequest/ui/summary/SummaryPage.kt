@@ -46,6 +46,8 @@ import io.litequest.model.ItemType
 import io.litequest.state.QuestionnaireState
 import io.litequest.ui.pagination.PaginatedQuestionnaire
 import io.litequest.ui.widget.WidgetFactory
+import io.litequest.ui.widget.datetime.formatDateTimeWords
+import io.litequest.ui.widget.datetime.formatDateWords
 import io.litequest.util.DataContextBuilder
 import kotlin.math.absoluteValue
 
@@ -396,9 +398,9 @@ private fun formatValueForDisplay(value: Any, type: ItemType, item: Item? = null
         else -> value.toString()
       }
     }
-    ItemType.DATE -> formatDate(value.toString(), item)
+    ItemType.DATE -> formatDateWords(value.toString())
     ItemType.TIME -> formatTime(value.toString(), item)
-    ItemType.DATETIME -> formatDateTime(value.toString(), item)
+    ItemType.DATETIME -> formatDateTimeWords(value.toString())
     ItemType.DECIMAL -> {
       when (value) {
         is Double -> formatDecimal(value)
@@ -445,17 +447,8 @@ private fun formatDecimal(value: Double): String {
   return "$intPart.${decimalPart.toString().padStart(2, '0')}"
 }
 
-private fun formatDate(dateString: String, item: Item?): String {
-  return dateString
-}
-
 private fun formatTime(timeString: String, item: Item?): String {
   return timeString
-}
-
-private fun formatDateTime(dateTimeString: String, item: Item?): String {
-  val cleaned = dateTimeString.replace("Z", "").replace("+00:00", "")
-  return cleaned.replace("T", " ")
 }
 
 private fun getIconForType(type: ItemType): ImageVector? {
