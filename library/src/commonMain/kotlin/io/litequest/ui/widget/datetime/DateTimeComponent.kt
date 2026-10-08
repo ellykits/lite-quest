@@ -96,3 +96,17 @@ internal fun String.parseLocalDateTime(): LocalDateTime? =
       LocalDateTime.parse(cleaned)
     }
     .getOrNull()
+
+internal fun LocalDate.toWords(): String =
+  "${dayOfWeek.shortName()} $day ${month.shortName()} $year"
+
+internal fun LocalDateTime.toWords(): String =
+  "${date.toWords()} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
+
+internal fun formatDateWords(value: String): String = value.parseLocalDate()?.toWords() ?: value
+
+internal fun formatDateTimeWords(value: String): String =
+  value.parseLocalDateTime()?.toWords() ?: value
+
+private fun Enum<*>.shortName(): String =
+  name.take(3).lowercase().replaceFirstChar { it.uppercase() }

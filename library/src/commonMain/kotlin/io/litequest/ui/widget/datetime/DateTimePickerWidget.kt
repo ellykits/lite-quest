@@ -60,13 +60,14 @@ class DateTimePickerWidget(override val item: Item) : ItemWidget {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    val displayPattern =
-      item.extension["displayFormat"]?.jsonPrimitive?.content ?: "yyyy-MM-dd HH:mm"
+    val displayPattern = item.extension["displayFormat"]?.jsonPrimitive?.content
     val outputPattern =
       item.extension["outputFormat"]?.jsonPrimitive?.content ?: "yyyy-MM-dd'T'HH:mm:ss"
 
     val displayFormat =
-      remember(displayPattern) { LocalDateTime.Format { byUnicodePattern(displayPattern) } }
+      remember(displayPattern) {
+        displayPattern?.let { LocalDateTime.Format { byUnicodePattern(it) } }
+      }
     val outputFormat =
       remember(outputPattern) { LocalDateTime.Format { byUnicodePattern(outputPattern) } }
 
@@ -91,7 +92,11 @@ class DateTimePickerWidget(override val item: Item) : ItemWidget {
       remember(dateTimeString, displayFormat) {
         dateTimeString
           .takeIf { it.isNotEmpty() }
-          ?.let { dateTimeString.parseLocalDateTime()?.let { displayFormat.format(it) } } ?: ""
+          ?.let {
+            dateTimeString.parseLocalDateTime()?.let { dt ->
+              displayFormat?.format(dt) ?: dt.toWords()
+            }
+          } ?: ""
       }
 
     DateTimeTrigger(
