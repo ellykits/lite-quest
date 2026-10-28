@@ -117,7 +117,7 @@ class VisibilityEngine(private val evaluator: JsonLogicEvaluator) {
         return@forEach
       }
 
-      if (item.repeats) {
+      if (item.repeats && item.items.isNotEmpty()) {
         val responseItem = responseMap[item.linkId]
         val repetitionData = dataContext[item.linkId] as? List<*>
         val currentPath = if (pathPrefix.isEmpty()) item.linkId else "$pathPrefix.${item.linkId}"
