@@ -53,4 +53,43 @@ class RepeatingChoiceTest {
     val answer = manager.state.value.response.items.single { it.linkId == "taxCodes" }.answers
     assertEquals(listOf(ticked), answer.map { it.value })
   }
+
+  @Test
+  fun aMultiSelectChoiceInARepeatingGroupKeepsEveryTick() {
+    val questionnaire =
+      Questionnaire(
+        id = "lines",
+        version = "1.0",
+        title = "Lines",
+        items =
+          listOf(
+            Item(
+              linkId = "lines",
+              type = ItemType.GROUP,
+              text = "Lines",
+              repeats = true,
+              items =
+                listOf(
+                  Item(
+                    linkId = "taxCodes",
+                    type = ItemType.CHOICE,
+                    text = "Tax codes",
+                    repeats = true,
+                    answerOptions =
+                      listOf(AnswerOption("vat", "VAT 16%"), AnswerOption("levy", "Levy 2%")),
+                  )
+                ),
+            )
+          ),
+      )
+    val manager = QuestionnaireManager(questionnaire, LiteQuestEvaluator(questionnaire))
+    val ticked = JsonArray(listOf(JsonPrimitive("vat"), JsonPrimitive("levy")))
+    manager.addRepetition("lines")
+
+    manager.updateInRepetition("lines", 0, "taxCodes", ticked)
+
+    val row = manager.state.value.response.items.single { it.linkId == "lines" }.answers.single()
+    val codes = row.items.single { it.linkId == "taxCodes" }.answers
+    assertEquals(listOf(ticked), codes.map { it.value })
+  }
 }
