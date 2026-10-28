@@ -16,6 +16,7 @@ jobs:
         with:
           distribution: 'jetbrains'
           java-version: 21
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish to MavenCentral
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
         env:
